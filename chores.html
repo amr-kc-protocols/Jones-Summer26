@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Family Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f0e8;
+    --card: #fffdf8;
+    --border: #e8e0d0;
+    --text: #2d2416;
+    --text-soft: #7a6d5a;
+    --accent: #ff6b35;
+    --accent2: #4ecdc4;
+    --accent3: #ffe66d;
+    --green: #06d6a0;
+    --red: #ef476f;
+    --shadow: 0 4px 20px rgba(45,36,22,0.10);
+    --shadow-sm: 0 2px 8px rgba(45,36,22,0.07);
+    --radius: 20px;
+    --radius-sm: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Nunito Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--text);
+    color: #fffdf8;
+    padding: 16px 20px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-title {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+  }
+  .header-title span { color: var(--accent3); }
+  .header-date {
+    font-size: 12px;
+    color: rgba(255,253,248,0.6);
+    margin-top: 2px;
+  }
+  .admin-btn {
+    background: rgba(255,253,248,0.12);
+    border: 1.5px solid rgba(255,253,248,0.2);
+    border-radius: 10px;
+    color: #fffdf8;
+    font-size: 13px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .admin-btn:active { background: rgba(255,253,248,0.22); }
+
+  /* ── KID TABS ── */
+  .kid-tabs {
+    display: flex;
+    background: var(--text);
+    padding: 0 12px 14px;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .kid-tabs::-webkit-scrollbar { display: none; }
+  .kid-tab {
+    flex-shrink: 0;
+    padding: 10px 22px;
+    border-radius: 30px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    background: rgba(255,253,248,0.12);
+    color: rgba(255,253,248,0.6);
+  }
+  .kid-tab.active {
+    color: var(--text);
+    background: var(--accent3);
+  }
+  .kid-tab:active { transform: scale(0.96); }
+
+  /* ── MAIN CONTENT ── */
+  .main { padding: 16px; max-width: 800px; margin: 0 auto; }
+
+  .kid-panel { display: none; }
+  .kid-panel.active { display: block; }
+
+  /* ── SECTION HEADERS ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 20px 0 12px;
+  }
+  .section-title {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 18px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title .icon { font-size: 20px; }
+
+  /* ── CALENDAR STRIP ── */
+  .calendar-week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .day-label {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-bottom: 4px;
+  }
+  .day-cell {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    min-height: 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    position: relative;
+  }
+  .day-cell.today { border-color: var(--accent); background: #fff5f0; }
+  .day-cell.has-events::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .day-cell .day-num {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--text);
+    line-height: 1;
+  }
+  .day-cell.today .day-num {
+    color: var(--accent);
+  }
+  .day-cell .event-chip {
+    font-size: 9px;
+    font-weight: 700;
+    background: var(--accent2);
+    color: white;
+    border-radius: 4px;
+    padding: 2px 4px;
+    line-height: 1.2;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── EVENT LIST ── */
+  .event-list { display: flex; flex-direction: column; gap: 8px; }
+  .event-card {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+  .event-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .event-info { flex: 1; min-width: 0; }
+  .event-name {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .event-time {
+    font-size: 12px;
+    color: var(--text-soft);
+    margin-top: 2px;
+  }
+
+  /* ── CHORES ── */
+  .chore-list { display: flex; flex-direction: column; gap: 10px; }
+  .chore-item {
+    background: var(--card);
+    border: 2.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: var(--shadow-sm);
+    user-select: none;
+    -webkit-user-select: none;
+    min-height: 64px;
+    active-state: scale(0.97);
+  }
+  .chore-item:active { transform: scale(0.97); }
+  .chore-item.done {
+    background: #f0fdf8;
+    border-color: var(--green);
+    opacity: 0.85;
+  }
+  .chore-check {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 3px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.2s;
+    background: white;
+  }
+  .chore-item.done .chore-check {
+    background: var(--green);
+    border-color: var(--green);
+    color: white;
+  }
+  .chore-text { flex: 1; }
+  .chore-name {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+  }
+  .chore-item.done .chore-name {
+    text-decoration: line-through;
+    color: var(--text-soft);
+  }
+  .chore-freq {
+    font-size: 12px;
+    color: var(--text-soft);
+    margin-top: 2px;
+    font-weight: 600;
+  }
+  .chore-points {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 18px;
+    color: var(--accent);
+  }
+  .chore-item.done .chore-points { color: var(--green); }
+
+  /* ── PROGRESS BAR ── */
+  .progress-card {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    margin-bottom: 8px;
+    box-shadow: var(--shadow-sm);
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  .progress-bar-bg {
+    background: var(--border);
+    border-radius: 99px;
+    height: 16px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent2), var(--green));
+    transition: width 0.4s ease;
+  }
+  .progress-stars {
+    margin-top: 8px;
+    font-size: 22px;
+    letter-spacing: 2px;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 32px 20px;
+    color: var(--text-soft);
+    font-size: 14px;
+  }
+  .empty-state .emoji { font-size: 48px; display: block; margin-bottom: 8px; }
+
+  /* ── MODAL OVERLAY ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(45,36,22,0.55);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card);
+    border-radius: 28px 28px 0 0;
+    padding: 24px 20px 40px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .modal-handle {
+    width: 40px;
+    height: 5px;
+    background: var(--border);
+    border-radius: 99px;
+    margin: 0 auto 20px;
+  }
+  .modal-title {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+  .modal-section-title {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-soft);
+    margin: 20px 0 10px;
+  }
+
+  /* ── FORM ELEMENTS ── */
+  .form-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-end; }
+  .form-group { flex: 1; }
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  input, select, textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-family: 'Nunito Sans', sans-serif;
+    color: var(--text);
+    background: white;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent2); }
+
+  .btn {
+    padding: 14px 20px;
+    border-radius: var(--radius-sm);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--text); color: var(--accent3); width: 100%; justify-content: center; }
+  .btn-danger { background: var(--red); color: white; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-soft);
+    border: 2px solid var(--border);
+  }
+  .btn-sm { padding: 8px 14px; font-size: 13px; border-radius: 8px; }
+
+  /* ── ADMIN ITEMS ── */
+  .admin-item {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .admin-item-text { flex: 1; min-width: 0; }
+  .admin-item-name { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .admin-item-sub { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+
+  /* ── COLOR CHIPS ── */
+  .color-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .color-chip {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: border-color 0.15s;
+  }
+  .color-chip.selected { border-color: var(--text); }
+
+  /* ── PIN MODAL ── */
+  .pin-dots { display: flex; gap: 12px; justify-content: center; margin: 20px 0; }
+  .pin-dot {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 2.5px solid var(--border);
+    background: white;
+    transition: all 0.15s;
+  }
+  .pin-dot.filled { background: var(--text); border-color: var(--text); }
+  .pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 8px; }
+  .pin-key {
+    padding: 18px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    text-align: center;
+    border: 2.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    background: white;
+    transition: all 0.1s;
+  }
+  .pin-key:active { background: var(--bg); transform: scale(0.94); }
+  .pin-key.del { font-size: 18px; color: var(--text-soft); }
+
+  /* ── CELEBRATION ── */
+  .celebrate {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 80px;
+    z-index: 999;
+    pointer-events: none;
+    animation: pop 0.6s ease forwards;
+  }
+  @keyframes pop {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+    80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+  }
+
+  /* ── WEEK LABEL ── */
+  .week-reset-notice {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-soft);
+    font-weight: 600;
+    padding: 8px 0 4px;
+  }
+
+  /* ── POINTS BADGE ── */
+  .kid-header-card {
+    background: linear-gradient(135deg, var(--text) 0%, #4a3c28 100%);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    color: white;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .kid-header-name {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 24px;
+  }
+  .kid-header-points {
+    text-align: right;
+  }
+  .kid-header-points .num {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 32px;
+    color: var(--accent3);
+    line-height: 1;
+  }
+  .kid-header-points .label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (min-width: 600px) {
+    .calendar-week { gap: 8px; }
+    .day-cell { min-height: 72px; padding: 12px 6px; }
+    .chore-name { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">Family <span>Hub</span></div>
+    <div class="header-date" id="headerDate"></div>
+  </div>
+  <button class="admin-btn" onclick="openPinModal()">⚙️ Admin</button>
+</div>
+
+<div class="kid-tabs" id="kidTabs"></div>
+
+<div class="main" id="mainContent"></div>
+
+<!-- ── PIN MODAL ── -->
+<div class="modal-overlay" id="pinModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Parent Access</div>
+    <div class="pin-dots" id="pinDots"></div>
+    <div id="pinError" style="text-align:center;color:var(--red);font-size:13px;font-weight:700;min-height:18px;margin-bottom:8px;"></div>
+    <div class="pin-keypad" id="pinKeypad"></div>
+  </div>
+</div>
+
+<!-- ── ADMIN MODAL ── -->
+<div class="modal-overlay" id="adminModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div class="modal-title" style="margin:0;">Admin Panel</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('adminModal')">Close</button>
+    </div>
+
+    <!-- Kids management -->
+    <div class="modal-section-title">👦 Kids</div>
+    <div id="adminKidList"></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="newKidName" placeholder="e.g. Liam" maxlength="20">
+      </div>
+      <div class="form-group">
+        <label>Emoji</label>
+        <input type="text" id="newKidEmoji" placeholder="🧒" maxlength="2" style="text-align:center;font-size:22px;">
+      </div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="addKid()" style="width:auto;margin-bottom:4px;">+ Add Kid</button>
+
+    <!-- Chores management -->
+    <div class="modal-section-title">✅ Add Chore</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Kid</label>
+        <select id="choreKidSelect"></select>
+      </div>
+      <div class="form-group">
+        <label>Points</label>
+        <input type="number" id="chorePoints" value="10" min="1" max="100">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Chore Name</label>
+        <input type="text" id="choreName" placeholder="e.g. Make bed" maxlength="40">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Frequency</label>
+        <select id="choreFreq">
+          <option value="Daily">Daily</option>
+          <option value="Weekly">Weekly</option>
+          <option value="Mon/Wed/Fri">Mon/Wed/Fri</option>
+          <option value="Tue/Thu">Tue/Thu</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="addChore()" style="width:auto;">+ Add Chore</button>
+
+    <!-- Events management -->
+    <div class="modal-section-title">📅 Add Event</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Kid</label>
+        <select id="eventKidSelect"></select>
+      </div>
+      <div class="form-group">
+        <label>Color</label>
+        <div class="color-row" id="eventColorRow"></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Event Name</label>
+        <input type="text" id="eventName" placeholder="e.g. Soccer practice" maxlength="40">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="eventDate">
+      </div>
+      <div class="form-group">
+        <label>Time (optional)</label>
+        <input type="time" id="eventTime">
+      </div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="addEvent()" style="width:auto;">+ Add Event</button>
+
+    <!-- Settings -->
+    <div class="modal-section-title">⚙️ Settings</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Admin PIN (4 digits)</label>
+        <input type="number" id="adminPin" placeholder="1234" maxlength="4">
+      </div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="savePin()" style="width:auto;margin-bottom:12px;">Save PIN</button>
+
+    <div class="form-row">
+      <button class="btn btn-danger btn-sm" onclick="resetWeek()">🔄 Reset This Week</button>
+    </div>
+
+    <div style="height:20px;"></div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+const COLORS = ['#4ecdc4','#ff6b35','#ffe66d','#ef476f','#06d6a0','#a29bfe','#fd79a8','#0984e3'];
+const CELEBRATIONS = ['🎉','⭐','🌟','🏆','💪','🔥','✨','🎊'];
+
+function getWeekKey() {
+  const now = new Date();
+  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const day = d.getUTCDay();
+  d.setUTCDate(d.getUTCDate() - day); // Sunday
+  return `week_${d.getUTCFullYear()}_${d.getUTCMonth()}_${d.getUTCDate()}`;
+}
+
+function load(key, def) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; }
+}
+function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+let state = {
+  kids: load('fh_kids', [
+    { id: 'k1', name: 'Kid 1', emoji: '🧒' },
+    { id: 'k2', name: 'Kid 2', emoji: '🧒' },
+    { id: 'k3', name: 'Kid 3', emoji: '🧒' },
+  ]),
+  chores: load('fh_chores', {}),   // { kidId: [{id,name,points,freq}] }
+  events: load('fh_events', {}),   // { kidId: [{id,name,date,time,color}] }
+  completed: load('fh_done_' + getWeekKey(), {}), // { kidId: [choreId] }
+  pin: load('fh_pin', '1234'),
+  selectedColor: COLORS[0],
+};
+
+let activeKid = state.kids[0]?.id || null;
+let pinBuffer = '';
+
+// ── INIT ──
+function init() {
+  checkWeekReset();
+  renderHeader();
+  renderTabs();
+  renderAll();
+  populateAdminForms();
+  renderEventColorRow();
+}
+
+function checkWeekReset() {
+  const wk = getWeekKey();
+  const stored = load('fh_last_week', null);
+  if (stored !== wk) {
+    save('fh_done_' + wk, {});
+    save('fh_last_week', wk);
+    state.completed = {};
+  }
+}
+
+function renderHeader() {
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now = new Date();
+  document.getElementById('headerDate').textContent =
+    `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`;
+}
+
+// ── TABS ──
+function renderTabs() {
+  const el = document.getElementById('kidTabs');
+  el.innerHTML = state.kids.map(k =>
+    `<button class="kid-tab ${k.id === activeKid ? 'active' : ''}" onclick="switchKid('${k.id}')">
+      ${k.emoji} ${k.name}
+    </button>`
+  ).join('');
+}
+
+function switchKid(id) {
+  activeKid = id;
+  renderTabs();
+  renderAll();
+}
+
+// ── MAIN RENDER ──
+function renderAll() {
+  const el = document.getElementById('mainContent');
+  el.innerHTML = state.kids.map(k => renderKidPanel(k)).join('');
+}
+
+function renderKidPanel(kid) {
+  const chores = state.chores[kid.id] || [];
+  const events = (state.events[kid.id] || []).filter(e => {
+    const d = new Date(e.date + 'T00:00:00');
+    const now = new Date();
+    const diff = (d - now) / 86400000;
+    return diff >= -1 && diff <= 30;
+  }).sort((a,b) => a.date.localeCompare(b.date));
+  const completed = state.completed[kid.id] || [];
+  const doneCount = completed.length;
+  const totalCount = chores.length;
+  const totalPoints = chores.filter(c => completed.includes(c.id)).reduce((s,c) => s+c.points, 0);
+  const maxPoints = chores.reduce((s,c) => s+c.points, 0);
+  const pct = totalCount ? Math.round(doneCount/totalCount*100) : 0;
+  const stars = '⭐'.repeat(Math.floor(pct/25));
+
+  const isActive = kid.id === activeKid;
+
+  return `<div class="kid-panel ${isActive ? 'active' : ''}">
+    <div class="kid-header-card">
+      <div class="kid-header-name">${kid.emoji} ${kid.name}</div>
+      <div class="kid-header-points">
+        <div class="num">${totalPoints}</div>
+        <div class="label">pts this week</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title"><span class="icon">✅</span> Chores</div>
+    </div>
+    ${totalCount > 0 ? `
+    <div class="progress-card">
+      <div class="progress-label">
+        <span>${doneCount} of ${totalCount} done</span>
+        <span>${pct}%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" style="width:${pct}%"></div>
+      </div>
+      ${stars ? `<div class="progress-stars">${stars}</div>` : ''}
+    </div>` : ''}
+    <div class="chore-list">
+      ${chores.length === 0
+        ? `<div class="empty-state"><span class="emoji">📋</span>No chores yet — ask a parent to add some!</div>`
+        : chores.map(c => renderChore(kid.id, c, completed.includes(c.id))).join('')
+      }
+    </div>
+
+    <div class="section-header">
+      <div class="section-title"><span class="icon">📅</span> Upcoming</div>
+    </div>
+    ${renderCalendarWeek(kid.id)}
+    <div class="event-list" style="margin-top:12px;">
+      ${events.length === 0
+        ? `<div class="empty-state"><span class="emoji">🗓️</span>Nothing coming up!</div>`
+        : events.slice(0,8).map(e => renderEvent(e)).join('')
+      }
+    </div>
+    <div style="height:24px;"></div>
+  </div>`;
+}
+
+function renderChore(kidId, chore, done) {
+  return `<div class="chore-item ${done ? 'done' : ''}" onclick="toggleChore('${kidId}','${chore.id}')">
+    <div class="chore-check">${done ? '✓' : ''}</div>
+    <div class="chore-text">
+      <div class="chore-name">${chore.name}</div>
+      <div class="chore-freq">${chore.freq}</div>
+    </div>
+    <div class="chore-points">${chore.points}pts</div>
+  </div>`;
+}
+
+function renderEvent(ev) {
+  const d = new Date(ev.date + 'T00:00:00');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const dateStr = `${days[d.getDay()]} ${months[d.getMonth()]} ${d.getDate()}`;
+  const timeStr = ev.time ? formatTime(ev.time) : '';
+  return `<div class="event-card">
+    <div class="event-dot" style="background:${ev.color || COLORS[0]}"></div>
+    <div class="event-info">
+      <div class="event-name">${ev.name}</div>
+      <div class="event-time">${dateStr}${timeStr ? ' · ' + timeStr : ''}</div>
+    </div>
+  </div>`;
+}
+
+function renderCalendarWeek(kidId) {
+  const days = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  const now = new Date();
+  const today = now.getDay();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - today);
+
+  const events = state.events[kidId] || [];
+
+  let cells = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(startOfWeek);
+    d.setDate(startOfWeek.getDate() + i);
+    const isToday = i === today;
+    const dateStr = d.toISOString().slice(0,10);
+    const dayEvents = events.filter(e => e.date === dateStr);
+    const evChips = dayEvents.slice(0,2).map(e =>
+      `<div class="event-chip" style="background:${e.color}">${e.name}</div>`
+    ).join('');
+    cells += `<div class="day-cell ${isToday?'today':''} ${dayEvents.length?'has-events':''}">
+      <div class="day-num">${d.getDate()}</div>
+      ${evChips}
+    </div>`;
+  }
+
+  return `<div class="calendar-week" style="margin-bottom:8px;">
+    ${days.map(d => `<div class="day-label">${d}</div>`).join('')}
+    ${cells}
+  </div>`;
+}
+
+// ── TOGGLE CHORE ──
+function toggleChore(kidId, choreId) {
+  if (!state.completed[kidId]) state.completed[kidId] = [];
+  const arr = state.completed[kidId];
+  const idx = arr.indexOf(choreId);
+  if (idx === -1) {
+    arr.push(choreId);
+    celebrate();
+  } else {
+    arr.splice(idx, 1);
+  }
+  save('fh_done_' + getWeekKey(), state.completed);
+  renderAll();
+}
+
+function celebrate() {
+  const el = document.createElement('div');
+  el.className = 'celebrate';
+  el.textContent = CELEBRATIONS[Math.floor(Math.random() * CELEBRATIONS.length)];
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 700);
+}
+
+function formatTime(t) {
+  const [h, m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hr = h % 12 || 12;
+  return `${hr}:${m.toString().padStart(2,'0')} ${ampm}`;
+}
+
+// ── PIN MODAL ──
+function openPinModal() {
+  pinBuffer = '';
+  updatePinDots();
+  document.getElementById('pinError').textContent = '';
+  document.getElementById('pinModal').classList.add('open');
+  renderPinKeypad();
+}
+
+function renderPinKeypad() {
+  const kp = document.getElementById('pinKeypad');
+  const nums = [1,2,3,4,5,6,7,8,9,'','0','⌫'];
+  kp.innerHTML = nums.map(n =>
+    n === '' ? `<div></div>` :
+    `<div class="pin-key ${n==='⌫'?'del':''}" onclick="pinPress('${n}')">${n}</div>`
+  ).join('');
+  // init dots
+  document.getElementById('pinDots').innerHTML = [0,1,2,3].map(i =>
+    `<div class="pin-dot" id="pd${i}"></div>`
+  ).join('');
+}
+
+function updatePinDots() {
+  [0,1,2,3].forEach(i => {
+    const d = document.getElementById('pd'+i);
+    if (d) d.classList.toggle('filled', i < pinBuffer.length);
+  });
+}
+
+function pinPress(k) {
+  if (k === '⌫') {
+    pinBuffer = pinBuffer.slice(0,-1);
+    updatePinDots();
+    return;
+  }
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += k;
+  updatePinDots();
+  if (pinBuffer.length === 4) {
+    setTimeout(checkPin, 150);
+  }
+}
+
+function checkPin() {
+  if (pinBuffer === state.pin) {
+    document.getElementById('pinModal').classList.remove('open');
+    pinBuffer = '';
+    openAdminModal();
+  } else {
+    document.getElementById('pinError').textContent = 'Wrong PIN, try again';
+    pinBuffer = '';
+    updatePinDots();
+  }
+}
+
+// ── ADMIN MODAL ──
+function openAdminModal() {
+  document.getElementById('adminModal').classList.add('open');
+  renderAdminKids();
+  populateAdminForms();
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); });
+});
+
+function renderAdminKids() {
+  const el = document.getElementById('adminKidList');
+  el.innerHTML = state.kids.map(k =>
+    `<div class="admin-item">
+      <div class="admin-item-text">
+        <div class="admin-item-name">${k.emoji} ${k.name}</div>
+        <div class="admin-item-sub">${(state.chores[k.id]||[]).length} chores · ${(state.events[k.id]||[]).length} events</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="removeKid('${k.id}')">Remove</button>
+    </div>`
+  ).join('') || '<div style="color:var(--text-soft);font-size:14px;padding:8px 0;">No kids added yet.</div>';
+}
+
+function populateAdminForms() {
+  ['choreKidSelect','eventKidSelect'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = state.kids.map(k =>
+      `<option value="${k.id}">${k.emoji} ${k.name}</option>`
+    ).join('');
+  });
+}
+
+function renderEventColorRow() {
+  const el = document.getElementById('eventColorRow');
+  if (!el) return;
+  el.innerHTML = COLORS.map(c =>
+    `<div class="color-chip ${c === state.selectedColor ? 'selected' : ''}"
+      style="background:${c}" onclick="selectColor('${c}')"></div>`
+  ).join('');
+}
+
+function selectColor(c) {
+  state.selectedColor = c;
+  renderEventColorRow();
+}
+
+// ── ADMIN ACTIONS ──
+function addKid() {
+  const name = document.getElementById('newKidName').value.trim();
+  const emoji = document.getElementById('newKidEmoji').value.trim() || '🧒';
+  if (!name) return;
+  const id = 'k' + Date.now();
+  state.kids.push({ id, name, emoji });
+  save('fh_kids', state.kids);
+  document.getElementById('newKidName').value = '';
+  document.getElementById('newKidEmoji').value = '';
+  renderAdminKids();
+  populateAdminForms();
+  renderTabs();
+  renderAll();
+}
+
+function removeKid(id) {
+  if (!confirm('Remove this kid and all their data?')) return;
+  state.kids = state.kids.filter(k => k.id !== id);
+  delete state.chores[id];
+  delete state.events[id];
+  delete state.completed[id];
+  save('fh_kids', state.kids);
+  save('fh_chores', state.chores);
+  save('fh_events', state.events);
+  save('fh_done_' + getWeekKey(), state.completed);
+  if (activeKid === id) activeKid = state.kids[0]?.id || null;
+  renderAdminKids();
+  populateAdminForms();
+  renderTabs();
+  renderAll();
+}
+
+function addChore() {
+  const kidId = document.getElementById('choreKidSelect').value;
+  const name = document.getElementById('choreName').value.trim();
+  const points = parseInt(document.getElementById('chorePoints').value) || 10;
+  const freq = document.getElementById('choreFreq').value;
+  if (!name || !kidId) return;
+  if (!state.chores[kidId]) state.chores[kidId] = [];
+  state.chores[kidId].push({ id: 'c' + Date.now(), name, points, freq });
+  save('fh_chores', state.chores);
+  document.getElementById('choreName').value = '';
+  renderAll();
+  renderAdminKids();
+}
+
+function addEvent() {
+  const kidId = document.getElementById('eventKidSelect').value;
+  const name = document.getElementById('eventName').value.trim();
+  const date = document.getElementById('eventDate').value;
+  const time = document.getElementById('eventTime').value;
+  if (!name || !kidId || !date) return;
+  if (!state.events[kidId]) state.events[kidId] = [];
+  state.events[kidId].push({ id: 'e' + Date.now(), name, date, time, color: state.selectedColor });
+  save('fh_events', state.events);
+  document.getElementById('eventName').value = '';
+  document.getElementById('eventDate').value = '';
+  document.getElementById('eventTime').value = '';
+  renderAll();
+  renderAdminKids();
+}
+
+function savePin() {
+  const p = document.getElementById('adminPin').value.trim();
+  if (!/^\d{4}$/.test(p)) { alert('PIN must be exactly 4 digits'); return; }
+  state.pin = p;
+  save('fh_pin', p);
+  document.getElementById('adminPin').value = '';
+  alert('PIN saved!');
+}
+
+function resetWeek() {
+  if (!confirm('Reset all chore completions for this week?')) return;
+  state.completed = {};
+  save('fh_done_' + getWeekKey(), {});
+  renderAll();
+}
+
+// ── START ──
+init();
+</script>
+</body>
+</html>
