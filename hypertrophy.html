@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Hypertrophy II — Full Body</title>
+<style>
+:root{
+  --bg:#0f1216; --card:#171b21; --card2:#1d222a; --border:#2a3038;
+  --text:#eef1f5; --text-soft:#9aa4b2; --accent:#ff5a3c; --accent2:#3ecf8e;
+  --accent3:#ffcf56; --blue:#4f9dff; --red:#ff5a5a;
+  --radius:16px; --radius-sm:10px;
+  --shadow:0 4px 20px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);
+  min-height:100vh;padding-bottom:76px;-webkit-font-smoothing:antialiased;
+}
+a{color:inherit;}
+.header{
+  background:linear-gradient(135deg,#1a1f26,#12151a);color:#fff;padding:16px 18px 14px;
+  position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border);
+}
+.header-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.header-title{font-size:17px;font-weight:800;letter-spacing:.2px;}
+.header-sub{font-size:11.5px;color:var(--text-soft);margin-top:2px;font-weight:600;}
+.week-pill{
+  background:var(--accent);color:#fff;font-weight:800;font-size:13px;padding:7px 14px;
+  border-radius:999px;border:none;display:flex;align-items:center;gap:6px;cursor:pointer;
+}
+main{padding:14px 14px 20px;max-width:640px;margin:0 auto;}
+.card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;margin-bottom:14px;box-shadow:var(--shadow);
+}
+.card h2{font-size:15px;font-weight:800;margin-bottom:10px;letter-spacing:.2px;}
+.card h3{font-size:13.5px;font-weight:700;margin-bottom:6px;color:var(--text);}
+.muted{color:var(--text-soft);}
+.small{font-size:12px;}
+.tiny{font-size:11px;}
+.tag{
+  display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;
+  padding:3px 8px;border-radius:6px;background:var(--card2);color:var(--text-soft);border:1px solid var(--border);
+}
+.tag.a{background:rgba(255,90,60,.15);color:var(--accent);border-color:rgba(255,90,60,.3);}
+.tag.b{background:rgba(79,157,255,.15);color:var(--blue);border-color:rgba(79,157,255,.3);}
+.tag.g{background:rgba(62,207,142,.15);color:var(--accent2);border-color:rgba(62,207,142,.3);}
+.seg{
+  display:flex;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:3px;gap:3px;
+}
+.seg button{
+  flex:1;background:transparent;border:none;color:var(--text-soft);font-weight:700;font-size:12.5px;
+  padding:9px 6px;border-radius:9px;cursor:pointer;transition:.15s;
+}
+.seg button.active{background:var(--accent);color:#fff;}
+.seg button.active.blue{background:var(--blue);}
+.seg button.active.green{background:var(--accent2);color:#0f1216;}
+.exercise{border-top:1px solid var(--border);padding-top:12px;margin-top:12px;}
+.exercise:first-child{border-top:none;padding-top:0;margin-top:0;}
+.ex-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px;}
+.ex-name{font-weight:800;font-size:14.5px;}
+.ex-prog{font-size:12.5px;color:var(--text-soft);line-height:1.45;margin:4px 0 10px;white-space:pre-wrap;}
+table.sets{width:100%;border-collapse:collapse;margin-bottom:6px;}
+table.sets th{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-soft);text-align:left;padding:0 4px 6px;font-weight:700;}
+table.sets td{padding:3px 4px;}
+table.sets input{
+  width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);
+  padding:8px 6px;font-size:14px;font-weight:600;text-align:center;font-family:inherit;
+}
+table.sets input:focus{outline:2px solid var(--accent);border-color:transparent;}
+.set-del{background:none;border:none;color:var(--text-soft);font-size:16px;cursor:pointer;padding:4px;}
+.row-actions{display:flex;gap:8px;margin-top:6px;}
+.btn{
+  border:none;border-radius:10px;font-weight:700;font-size:12.5px;padding:9px 14px;cursor:pointer;
+  background:var(--card2);color:var(--text);border:1px solid var(--border);
+}
+.btn.primary{background:var(--accent);color:#fff;}
+.btn.ghost{background:transparent;border:1px dashed var(--border);color:var(--text-soft);}
+.btn.block{width:100%;text-align:center;}
+.stat-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.stat{
+  background:var(--card2);border-radius:10px;padding:8px 10px;flex:1;min-width:76px;text-align:center;
+}
+.stat .v{font-size:15px;font-weight:800;color:var(--accent3);}
+.stat .l{font-size:9.5px;text-transform:uppercase;color:var(--text-soft);font-weight:700;letter-spacing:.3px;margin-top:1px;}
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:11.5px;font-weight:700;color:var(--text-soft);text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px;}
+.field input, .field select{
+  width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);
+  padding:11px 12px;font-size:14.5px;font-family:inherit;font-weight:600;
+}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;background:#12151a;border-top:1px solid var(--border);
+  display:flex;z-index:200;padding-bottom:env(safe-area-inset-bottom);
+}
+.bottom-nav button{
+  flex:1;background:none;border:none;color:var(--text-soft);padding:9px 2px 8px;font-size:9.5px;
+  font-weight:700;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;letter-spacing:.2px;
+}
+.bottom-nav button .ic{font-size:19px;}
+.bottom-nav button.active{color:var(--accent);}
+.tab{display:none;}
+.tab.active{display:block;}
+.divider{height:1px;background:var(--border);margin:14px 0;}
+.list-item{
+  display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--border);
+  font-size:13px;
+}
+.list-item:first-child{border-top:none;}
+.pillrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.pill{
+  background:var(--card2);border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:12px;
+  font-weight:700;cursor:pointer;color:var(--text-soft);
+}
+.pill.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.week-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+.week-grid button{
+  aspect-ratio:1;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text-soft);
+  font-weight:800;font-size:13px;cursor:pointer;
+}
+.week-grid button.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.week-grid button.logged::after{content:'●';display:block;font-size:6px;color:var(--accent2);}
+.calc-table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:8px;}
+.calc-table th,.calc-table td{padding:6px 3px;text-align:center;border-bottom:1px solid var(--border);}
+.calc-table th{color:var(--text-soft);font-weight:700;font-size:9.5px;text-transform:uppercase;}
+.calc-table td.hi{color:var(--accent3);font-weight:800;}
+.note{
+  background:rgba(79,157,255,.08);border:1px solid rgba(79,157,255,.25);border-radius:10px;padding:10px 12px;
+  font-size:12px;color:#c7d9f5;line-height:1.5;margin-top:10px;
+}
+.warn{
+  background:rgba(255,90,60,.08);border:1px solid rgba(255,90,60,.25);border-radius:10px;padding:10px 12px;
+  font-size:12px;color:#ffcbc0;line-height:1.5;margin-top:10px;
+}
+.textlink{background:none;border:none;color:var(--blue);font-weight:700;font-size:12.5px;cursor:pointer;padding:0;}
+.savedtoast{
+  position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:var(--accent2);color:#0f1216;
+  font-weight:800;font-size:12px;padding:8px 16px;border-radius:999px;opacity:0;transition:opacity .25s;
+  pointer-events:none;z-index:300;
+}
+.savedtoast.show{opacity:1;}
+h1,h2,h3{color:var(--text);}
+::-webkit-scrollbar{display:none;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-row">
+    <div>
+      <div class="header-title">Hypertrophy II · Full Body</div>
+      <div class="header-sub" id="headerSub">Barbell Medicine template · 10 weeks</div>
+    </div>
+    <button class="week-pill" id="weekPill" onclick="jumpTo('program')">Wk —</button>
+  </div>
+</div>
+
+<main>
+  <div class="tab active" id="tab-today"></div>
+  <div class="tab" id="tab-extras"></div>
+  <div class="tab" id="tab-conditioning"></div>
+  <div class="tab" id="tab-progress"></div>
+  <div class="tab" id="tab-program"></div>
+  <div class="tab" id="tab-calc"></div>
+  <div class="tab" id="tab-settings"></div>
+</main>
+
+<div class="savedtoast" id="savedToast">Saved</div>
+
+<nav class="bottom-nav">
+  <button data-tab="today" onclick="jumpTo('today')"><span class="ic">🏋️</span>Today</button>
+  <button data-tab="extras" onclick="jumpTo('extras')"><span class="ic">➕</span>Extras</button>
+  <button data-tab="conditioning" onclick="jumpTo('conditioning')"><span class="ic">🏃</span>Cardio</button>
+  <button data-tab="progress" onclick="jumpTo('progress')"><span class="ic">📈</span>Progress</button>
+  <button data-tab="program" onclick="jumpTo('program')"><span class="ic">📋</span>Program</button>
+  <button data-tab="calc" onclick="jumpTo('calc')"><span class="ic">🧮</span>Calc</button>
+  <button data-tab="settings" onclick="jumpTo('settings')"><span class="ic">⚙️</span>Settings</button>
+</nav>
+
+<script>
+const PROGRAM_WEEKS = [{"week":1,"squat":{"name":"2-Count Paused Squat","prog":"8 reps @ RPE 6, 8 reps @ RPE 7, 8 reps @ RPE 8. Do Asending Sets. No back off sets."},"press":{"name":"1-Count Paused Bench","prog":"8 reps @ RPE 6, 8 reps @ RPE 7, 8 reps @ RPE 8. Do Asending Sets. No back off sets."},"row":{"name":"Chin-Up","prog":"8 reps @ RPE 6, 8 reps @ RPE 7, 8 reps @ RPE 8. Do Asending Sets. No back off sets."},"quad":{"name":"Leg Extensions","prog":"12 reps @ RPE 7, 12 reps @ RPE 8, 12 reps @ RPE 9. Do Ascending Sets. No back off sets."},"chestAcc":{"name":"Dumbbell Flye (Incline)","prog":"12 reps @ RPE 7, 12 reps @ RPE 8, 12 reps @ RPE 9. Do Ascending Sets. No back off sets."},"hinge":{"name":"Romanian Deadlift","prog":"8 reps @ RPE 6, 8 reps @ RPE 7, 8 reps @ RPE 8. Do Asending Sets. No back off sets."},"press2":{"name":"Machine Chest Press","prog":"12 reps @ RPE 7, 12 reps @ RPE 8, 12 reps @ RPE 9. Do Ascending Sets. No back off sets."},"row2":{"name":"Chest-Supported Row","prog":"12 reps @ RPE 7, 12 reps @ RPE 8, 12 reps @ RPE 9. Do Ascending Sets. No back off sets."},"hamstrings":{"name":"Lying Hamstring Curl","prog":"12 reps @ RPE 7, 12 reps @ RPE 8, 12 reps @ RPE 9. Do Ascending Sets. No back off sets."},"trunk":{"name":"Back Extensions","prog":"Do 3 sets of ~ 10 to 15 reps to RPE 7-8 (2-3 reps in reserve)"},"suppHinge":{"name":"Hip Thrust","prog":"12 reps @ RPE 6, 12 reps @ RPE 7, 12 reps @ RPE 8. Do Ascending Sets. No back off sets."},"suppSquat":{"name":"Hack Squat","prog":"10 reps @ RPE 6, 10 reps @ RPE 7, 10 reps @ RPE 8. Do Asending Sets. No back off sets."},"suppPress2":{"name":"High Incline Bench","prog":"10 reps @ RPE 6, 10 reps @ RPE 7, 10 reps @ RPE 8. Do Ascending Sets. No back off sets."},"suppRow2":{"name":"Seated Row","prog":"12 reps @ RPE 7, 12 reps @ RPE 8, 12 reps @ RPE 9. Do Ascending Sets. No back off sets."},"calves":{"name":"Standing Calf Raise","prog":"12 reps @ RPE 7, 12 reps @ RPE 8, 12 reps @ RPE 9. Do Ascending Sets. No back off sets."},"backAcc":{"name":"Lateral Raises","prog":"12 reps @ RPE 7, 12 reps @ RPE 8, 12 reps @ RPE 9. Do Ascending Sets. No back off sets."},"conditioning":"\u2022One 50-minute session Zone 1 (RPE 3-4, ~60-70% maximum HR)\n\u2022Three 30-minute sessions Zone 2 (RPE 4-6,~70-80% maximum HR)\nPick any mode of exercise you like. See PDF for further instructions.","trunkGPP":{"name":"Knee Raises","prog":"10 to 15 reps @ RPE 7x 3 sets"},"tri1":{"name":"V-Grip Press Down","prog":"12 reps @ RPE 7, 12 reps @ RPE 8, 12 reps @ RPE 9. Do Ascending Sets. No back off sets."},"tri2":{"name":"Overhead Cable Triceps Extension","prog":"12 reps @ RPE 7, 12 reps @ RPE 8, 12 reps @ RPE 9. Do Ascending Sets. No back off sets."},"bi1":{"name":"Incline Dumbbell Curl","prog":"12 reps @ RPE 9. Use the same weight and perform 4 more sets of maximum reps to RPE 7."},"bi2":{"name":"Cable Curl","prog":"12 reps @ RPE 9. Use the same weight and perform 4 more sets of maximum reps to RPE 7."}},{"week":2,"squat":{"name":"2-Count Paused Squat","prog":"5 to 8 Reps @ RPE 6. Repeat the same weight x 2 sets of 5-8 reps. RPE can go up to @ 8 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"press":{"name":"1-Count Paused Bench","prog":"5 to 8 Reps @ RPE 6. Repeat the same weight x 3 sets of 5-8 reps. RPE can go up to @ 8 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"row":{"name":"Chin-Up","prog":"8 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"quad":{"name":"Leg Extensions","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"chestAcc":{"name":"Dumbbell Flye (Incline)","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 2 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"hinge":{"name":"Romanian Deadlift","prog":"5 to 8 Reps @ RPE 6. Repeat the same weight x 2 sets of 5-8 reps. RPE can go up to @ 8 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"press2":{"name":"Machine Chest Press","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"row2":{"name":"Chest-Supported Row","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"hamstrings":{"name":"Lying Hamstring Curl","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"trunk":{"name":"Back Extensions","prog":"Do 4 sets of ~ 10 to 15 reps to RPE 7-8 (2-3 reps in reserve)"},"suppHinge":{"name":"Hip Thrust","prog":"12 reps @ RPE 8. Use the same weight and perform 1 more set of maximum reps to RPE 7."},"suppSquat":{"name":"Hack Squat","prog":"10 reps @ RPE 8. Use the same weight and perform 2 more sets of maximum reps to RPE 7."},"suppPress2":{"name":"High Incline Bench","prog":"10 reps @ RPE 8. Use the same weight and perform 2 more sets of maximum reps to RPE 7."},"suppRow2":{"name":"Seated Row","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"calves":{"name":"Standing Calf Raise","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"backAcc":{"name":"Lateral Raises","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 2 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"conditioning":"\u2022One 60-minute session Zone 1 (RPE 3-4, 60-70% maximum HR)\n\u2022Three 30-minute sessions Zone 2 (RPE 4-6,~70-80% maximum HR)\nPick any mode of exercise you like. See PDF for further instructions.","trunkGPP":{"name":"Knee Raises","prog":"10 to 15 reps @ RPE 7x 4 sets"},"tri1":{"name":"V-Grip Press Down","prog":"12 reps @ RPE 9. Use the same weight and perform 3 more sets of maximum reps to RPE 8."},"tri2":{"name":"Overhead Cable Triceps Extension","prog":"12 reps @ RPE 9. Use the same weight and perform 3 more sets of maximum reps to RPE 8."},"bi1":{"name":"Incline Dumbbell Curl","prog":"12 reps @ RPE 9. Use the same weight and perform 4 more sets of maximum reps to RPE 8."},"bi2":{"name":"Cable Curl","prog":"12 reps @ RPE 9. Use the same weight and perform 4 more sets of maximum reps to RPE 8."}},{"week":3,"squat":{"name":"2-Count Paused Squat","prog":"5 to 8 Reps @ RPE 6. Repeat the same weight x 2 sets of 5-8 reps. RPE can go up to @ 8 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"press":{"name":"1-Count Paused Bench","prog":"5 to 8 Reps @ RPE 6. Repeat the same weight x 3 sets of 5-8 reps. RPE can go up to @ 8 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"row":{"name":"Chin-Up","prog":"8 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"quad":{"name":"Leg Extensions","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"chestAcc":{"name":"Dumbbell Flye (Incline)","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 2 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"hinge":{"name":"Romanian Deadlift","prog":"5 to 8 Reps @ RPE 6. Repeat the same weight x 2 sets of 5-8 reps. RPE can go up to @ 8 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"press2":{"name":"Machine Chest Press","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"row2":{"name":"Chest-Supported Row","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"hamstrings":{"name":"Lying Hamstring Curl","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"trunk":{"name":"Back Extensions","prog":"Do 4 sets of ~ 10 to 15 reps to RPE 7-8 (2-3 reps in reserve)"},"suppHinge":{"name":"Hip Thrust","prog":"12 reps @ RPE 8. Use the same weight and perform 2 more sets of maximum reps to RPE 7."},"suppSquat":{"name":"Hack Squat","prog":"10 reps @ RPE 8. Use the same weight and perform 2 more sets of maximum reps to RPE 7."},"suppPress2":{"name":"High Incline Bench","prog":"10 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"suppRow2":{"name":"Seated Row","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"calves":{"name":"Standing Calf Raise","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"backAcc":{"name":"Lateral Raises","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 2 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"conditioning":"\u2022One 60-minute session Zone 1 (RPE 3-4, 60-70% maximum HR)\n\u2022Three 30-minute sessions Zone 2 (RPE 4-6,~70-80% maximum HR)\nPick any mode of exercise you like. See PDF for further instructions.","trunkGPP":{"name":"Knee Raises","prog":"10 to 15 reps @ RPE 7x 4 sets"},"tri1":{"name":"V-Grip Press Down","prog":"12 reps @ RPE 9. Use the same weight and perform 3 more sets of maximum reps to RPE 8."},"tri2":{"name":"Overhead Cable Triceps Extension","prog":"12 reps @ RPE 9. Use the same weight and perform 3 more sets of maximum reps to RPE 8."},"bi1":{"name":"Incline Dumbbell Curl","prog":"12 reps @ RPE 9. Use the same weight and perform 4 more sets of maximum reps to RPE 8."},"bi2":{"name":"Cable Curl","prog":"12 reps @ RPE 9. Use the same weight and perform 4 more sets of maximum reps to RPE 8."}},{"week":4,"squat":{"name":"2-Count Paused Squat","prog":"5 to 8 Reps @ RPE 6. Repeat the same weight x 2 sets of 5-8 reps. RPE can go up to @ 8 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"press":{"name":"1-Count Paused Bench","prog":"5 to 8 Reps @ RPE 6. Repeat the same weight x 3 sets of 5-8 reps. RPE can go up to @ 8 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"row":{"name":"Chin-Up","prog":"8 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"quad":{"name":"Leg Extensions","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"chestAcc":{"name":"Dumbbell Flye (Incline)","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 2 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"hinge":{"name":"Romanian Deadlift","prog":"5 to 8 Reps @ RPE 6. Repeat the same weight x 2 sets of 5-8 reps. RPE can go up to @ 8 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"press2":{"name":"Machine Chest Press","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"row2":{"name":"Chest-Supported Row","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"hamstrings":{"name":"Lying Hamstring Curl","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"trunk":{"name":"Back Extensions","prog":"Do 4 sets of ~ 10 to 15 reps to RPE 7-8 (2-3 reps in reserve)"},"suppHinge":{"name":"Hip Thrust","prog":"12 reps @ RPE 8. Use the same weight and perform 2 more sets of maximum reps to RPE 7."},"suppSquat":{"name":"Hack Squat","prog":"10 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"suppPress2":{"name":"High Incline Bench","prog":"10 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"suppRow2":{"name":"Seated Row","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"calves":{"name":"Standing Calf Raise","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"backAcc":{"name":"Lateral Raises","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 2 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"conditioning":"\u2022One 60-minute session Zone 1 (RPE 3-4, 60-70% maximum HR)\n\u2022Three 30-minute sessions Zone 2 (RPE 4-6,~70-80% maximum HR)\nPick any mode of exercise you like. See PDF for further instructions.","trunkGPP":{"name":"Knee Raises","prog":"10 to 15 reps @ RPE 7x 4 sets"},"tri1":{"name":"V-Grip Press Down","prog":"12 reps @ RPE 9. Use the same weight and perform 3 more sets of maximum reps to RPE 8."},"tri2":{"name":"Overhead Cable Triceps Extension","prog":"12 reps @ RPE 9. Use the same weight and perform 3 more sets of maximum reps to RPE 8."},"bi1":{"name":"Incline Dumbbell Curl","prog":"12 reps @ RPE 9. Use the same weight and perform 4 more sets of maximum reps to RPE 8."},"bi2":{"name":"Cable Curl","prog":"12 reps @ RPE 9. Use the same weight and perform 4 more sets of maximum reps to RPE 8."}},{"week":5,"squat":{"name":"2-Count Paused Squat","prog":"5 to 8 Reps @ RPE 6. Repeat the same weight x 2 sets of 5-8 reps. RPE can go up to @ 8 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"press":{"name":"1-Count Paused Bench","prog":"5 to 8 Reps @ RPE 6. Repeat the same weight x 3 sets of 5-8 reps. RPE can go up to @ 8 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"row":{"name":"Chin-Up","prog":"8 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"quad":{"name":"Leg Extensions","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"chestAcc":{"name":"Dumbbell Flye (Incline)","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 2 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"hinge":{"name":"Romanian Deadlift","prog":"5 to 8 Reps @ RPE 6. Repeat the same weight x 2 sets of 5-8 reps. RPE can go up to @ 8 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"press2":{"name":"Machine Chest Press","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"row2":{"name":"Chest-Supported Row","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"hamstrings":{"name":"Lying Hamstring Curl","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"trunk":{"name":"Back Extensions","prog":"Do 4 sets of ~ 10 to 15 reps to RPE 7-8 (2-3 reps in reserve)"},"suppHinge":{"name":"Hip Thrust","prog":"12 reps @ RPE 8. Use the same weight and perform 2 more sets of maximum reps to RPE 7."},"suppSquat":{"name":"Hack Squat","prog":"10 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"suppPress2":{"name":"High Incline Bench","prog":"10 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"suppRow2":{"name":"Seated Row","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"calves":{"name":"Standing Calf Raise","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"backAcc":{"name":"Lateral Raises","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 2 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"conditioning":"\u2022One 60-minute session Zone 1 (RPE 3-4, 60-70% maximum HR)\n\u2022Three 30-minute sessions Zone 2 (RPE 4-6,~70-80% maximum HR)\nPick any mode of exercise you like. See PDF for further instructions.","trunkGPP":{"name":"Knee Raises","prog":"10 to 15 reps @ RPE 7x 4 sets"},"tri1":{"name":"V-Grip Press Down","prog":"12 reps @ RPE 9. Use the same weight and perform 3 more sets of maximum reps to RPE 8."},"tri2":{"name":"Overhead Cable Triceps Extension","prog":"12 reps @ RPE 9. Use the same weight and perform 3 more sets of maximum reps to RPE 8."},"bi1":{"name":"Incline Dumbbell Curl","prog":"12 reps @ RPE 9. Use the same weight and perform 4 more sets of maximum reps to RPE 8."},"bi2":{"name":"Cable Curl","prog":"12 reps @ RPE 9. Use the same weight and perform 4 more sets of maximum reps to RPE 8."}},{"week":6,"squat":{"name":"2-Count Paused Squat","prog":"8 reps @ RPE 7, 8 reps @ RPE 8, 8 reps @ RPE 9. Do Ascending Sets. No back off sets."},"press":{"name":"1-Count Paused Bench","prog":"8 reps @ RPE 7, 8 reps @ RPE 8, 8 reps @ RPE 9. Do Ascending Sets. No back off sets."},"row":{"name":"Chin-Up","prog":"8 reps @ RPE 7, 8 reps @ RPE 8, 8 reps @ RPE 9. Do Asending Sets. No back off sets."},"quad":{"name":"Leg Extensions","prog":"12 reps @ RPE 7, 12 reps @ RPE 8, 12 reps @ RPE 9. Do Ascending Sets. No back off sets."},"chestAcc":{"name":"Dumbbell Flye (Incline)","prog":"12 reps @ RPE 7, 12 reps @ RPE 8, 12 reps @ RPE 9. Do Ascending Sets. No back off sets."},"hinge":{"name":"Romanian Deadlift","prog":"8 reps @ RPE 7, 8 reps @ RPE 8, 8 reps @ RPE 9. Do Ascending Sets. No back off sets."},"press2":{"name":"Machine Chest Press","prog":"12 reps @ RPE 8, 12 reps @ RPE 9, 12 reps @ RPE 10. Do Ascending Sets. No back off sets."},"row2":{"name":"Chest-Supported Row","prog":"12 reps @ RPE 8, 12 reps @ RPE 9, 12 reps @ RPE 10. Do Ascending Sets. No back off sets."},"hamstrings":{"name":"Lying Hamstring Curl","prog":"12 reps @ RPE 7, 12 reps @ RPE 8, 12 reps @ RPE 9. Do Ascending Sets. No back off sets."},"trunk":{"name":"Back Extensions","prog":"Do 3 sets of ~ 10 to 15 reps to RPE 7-8 (2-3 reps in reserve)"},"suppHinge":{"name":"Hip Thrust","prog":"12 reps @ RPE 7, 12 reps @ RPE 8, 12 reps @ RPE 9. Do Ascending Sets. No back off sets."},"suppSquat":{"name":"Hack Squat","prog":"10 reps @ RPE 7, 10 reps @ RPE 8, 10 reps @ RPE 9. Do Ascending Sets. No back off sets."},"suppPress2":{"name":"High Incline Bench","prog":"10 reps @ RPE 7, 10 reps @ RPE 8, 10 reps @ RPE 9. Do Ascending Sets. No back off sets."},"suppRow2":{"name":"Seated Row","prog":"12 reps @ RPE 8, 12 reps @ RPE 9, 12 reps @ RPE 10. Do Ascending Sets. No back off sets."},"calves":{"name":"Standing Calf Raise","prog":"12 reps @ RPE 7, 12 reps @ RPE 8, 12 reps @ RPE 9. Do Ascending Sets. No back off sets."},"backAcc":{"name":"Lateral Raises","prog":"12 reps @ RPE 7, 12 reps @ RPE 8, 12 reps @ RPE 9. Do Ascending Sets. No back off sets."},"conditioning":"\u2022One 60-minute session Zone 1 (RPE 3-4, 60-70% maximum HR)\n\u2022Three 30-minute sessions Zone 2 (RPE 4-6,~70-80% maximum HR)\nPick any mode of exercise you like. See PDF for further instructions.","trunkGPP":{"name":"Knee Raises","prog":"10 to 15 reps @ RPE 7x 3 sets"},"tri1":{"name":"V-Grip Press Down","prog":"12 reps @ RPE 8, 12 reps @ RPE 9, 12 reps @ RPE 10. Do Ascending Sets. No back off sets."},"tri2":{"name":"Overhead Cable Triceps Extension","prog":"12 reps @ RPE 8, 12 reps @ RPE 9, 12 reps @ RPE 10. Do Ascending Sets. No back off sets."},"bi1":{"name":"Incline Dumbbell Curl","prog":"12 reps @ RPE 8, 12 reps @ RPE 9, 12 reps @ RPE 10. Do Ascending Sets. No back off sets."},"bi2":{"name":"Cable Curl","prog":"12 reps @ RPE 8, 12 reps @ RPE 9, 12 reps @ RPE 10. Do Ascending Sets. No back off sets."}},{"week":7,"squat":{"name":"2-Count Paused Squat","prog":"5 to 8 Reps @ RPE 7. Repeat the same weight x 2 sets of 5-8 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"press":{"name":"1-Count Paused Bench","prog":"5 to 8 Reps @ RPE 7. Repeat the same weight x 3 sets of 5-8 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"row":{"name":"Chin-Up","prog":"8 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"quad":{"name":"Leg Extensions","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"chestAcc":{"name":"Dumbbell Flye (Incline)","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 2 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"hinge":{"name":"Romanian Deadlift","prog":"5 to 8 Reps @ RPE 6. Repeat the same weight x 2 sets of 5-8 reps. RPE can go up to @ 8 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"press2":{"name":"Machine Chest Press","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"row2":{"name":"Chest-Supported Row","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"hamstrings":{"name":"Lying Hamstring Curl","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"trunk":{"name":"Back Extensions","prog":"Do 4 sets of ~ 10 to 15 reps to RPE 7-8 (2-3 reps in reserve)"},"suppHinge":{"name":"Hip Thrust","prog":"12 reps @ RPE 8. Use the same weight and perform 2 more sets of maximum reps to RPE 7."},"suppSquat":{"name":"Hack Squat","prog":"10 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"suppPress2":{"name":"High Incline Bench","prog":"10 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"suppRow2":{"name":"Seated Row","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"calves":{"name":"Standing Calf Raise","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"backAcc":{"name":"Lateral Raises","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 2 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"conditioning":"\u2022 Three 30-minute sessions Zone 2 (RPE 4-6,~70-80% maximum HR)\n\u2022 One 30-minute bout Zone 1 (RPE 3-4, 60-70% maximum HR), then 10s sprints (RPE 9-10) EMOM x 10-minutes (rounds) , then 20 more minutes of Zone 1\nPick any mode of exercise you like. See PDF for further instructions.","trunkGPP":{"name":"Knee Raises","prog":"10 to 15 reps @ RPE 7x 4 sets"},"tri1":{"name":"V-Grip Press Down","prog":"12 reps @ RPE 9. Use the same weight and perform 3 more sets of maximum reps to RPE 8."},"tri2":{"name":"Overhead Cable Triceps Extension","prog":"12 reps @ RPE 9. Use the same weight and perform 3 more sets of maximum reps to RPE 8."},"bi1":{"name":"Incline Dumbbell Curl","prog":"12 reps @ RPE 9. Use the same weight and perform 4 more sets of maximum reps to RPE 8."},"bi2":{"name":"Cable Curl","prog":"12 reps @ RPE 9. Use the same weight and perform 4 more sets of maximum reps to RPE 8."}},{"week":8,"squat":{"name":"2-Count Paused Squat","prog":"5 to 8 Reps @ RPE 7. Repeat the same weight x 2 sets of 5-8 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"press":{"name":"1-Count Paused Bench","prog":"5 to 8 Reps @ RPE 7. Repeat the same weight x 3 sets of 5-8 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"row":{"name":"Chin-Up","prog":"8 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"quad":{"name":"Leg Extensions","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"chestAcc":{"name":"Dumbbell Flye (Incline)","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 2 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"hinge":{"name":"Romanian Deadlift","prog":"5 to 8 Reps @ RPE 6. Repeat the same weight x 2 sets of 5-8 reps. RPE can go up to @ 8 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"press2":{"name":"Machine Chest Press","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"row2":{"name":"Chest-Supported Row","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"hamstrings":{"name":"Lying Hamstring Curl","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"trunk":{"name":"Back Extensions","prog":"Do 4 sets of ~ 10 to 15 reps to RPE 7-8 (2-3 reps in reserve)"},"suppHinge":{"name":"Hip Thrust","prog":"12 reps @ RPE 8. Use the same weight and perform 2 more sets of maximum reps to RPE 7."},"suppSquat":{"name":"Hack Squat","prog":"10 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"suppPress2":{"name":"High Incline Bench","prog":"10 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"suppRow2":{"name":"Seated Row","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"calves":{"name":"Standing Calf Raise","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"backAcc":{"name":"Lateral Raises","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 2 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"conditioning":"\u2022 Three 30-minute sessions Zone 2 (RPE 4-6,~70-80% maximum HR)\n\u2022 One 30-minute bout Zone 1 (RPE 3-4, 60-70% maximum HR), then 10s sprints (RPE 9-10) EMOM x 10-minutes (rounds) , then 20 more minutes of Zone 1\nPick any mode of exercise you like. See PDF for further instructions.","trunkGPP":{"name":"Knee Raises","prog":"10 to 15 reps @ RPE 7x 4 sets"},"tri1":{"name":"V-Grip Press Down","prog":"12 reps @ RPE 9. Use the same weight and perform 3 more sets of maximum reps to RPE 8."},"tri2":{"name":"Overhead Cable Triceps Extension","prog":"12 reps @ RPE 9. Use the same weight and perform 3 more sets of maximum reps to RPE 8."},"bi1":{"name":"Incline Dumbbell Curl","prog":"12 reps @ RPE 9. Use the same weight and perform 4 more sets of maximum reps to RPE 8."},"bi2":{"name":"Cable Curl","prog":"12 reps @ RPE 9. Use the same weight and perform 4 more sets of maximum reps to RPE 8."}},{"week":9,"squat":{"name":"2-Count Paused Squat","prog":"5 to 8 Reps @ RPE 7. Repeat the same weight x 2 sets of 5-8 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"press":{"name":"1-Count Paused Bench","prog":"5 to 8 Reps @ RPE 7. Repeat the same weight x 3 sets of 5-8 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"row":{"name":"Chin-Up","prog":"8 reps @ RPE 7, 8 reps @ RPE 8, 8 reps @ RPE 9. Do Asending Sets. No back off sets."},"quad":{"name":"Leg Extensions","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"chestAcc":{"name":"Dumbbell Flye (Incline)","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 2 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"hinge":{"name":"Romanian Deadlift","prog":"8 reps @ RPE 7, 8 reps @ RPE 8, 8 reps @ RPE 9. Do Ascending Sets. No back off sets."},"press2":{"name":"Machine Chest Press","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"row2":{"name":"Chest-Supported Row","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"hamstrings":{"name":"Lying Hamstring Curl","prog":"12 reps @ RPE 7, 12 reps @ RPE 8, 12 reps @ RPE 9. Do Ascending Sets. No back off sets."},"trunk":{"name":"Back Extensions","prog":"Do 4 sets of ~ 10 to 15 reps to RPE 7-8 (2-3 reps in reserve)"},"suppHinge":{"name":"Hip Thrust","prog":"12 reps @ RPE 8. Use the same weight and perform 2 more sets of maximum reps to RPE 7."},"suppSquat":{"name":"Hack Squat","prog":"10 reps @ RPE 7, 10 reps @ RPE 8, 10 reps @ RPE 9. Do Ascending Sets. No back off sets."},"suppPress2":{"name":"High Incline Bench","prog":"10 reps @ RPE 7, 10 reps @ RPE 8, 10 reps @ RPE 9. Do Ascending Sets. No back off sets."},"suppRow2":{"name":"Seated Row","prog":"12 reps @ RPE 8, 12 reps @ RPE 9, 12 reps @ RPE 10. Do Ascending Sets. No back off sets."},"calves":{"name":"Standing Calf Raise","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"backAcc":{"name":"Lateral Raises","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 2 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"conditioning":"\u2022 Three 30-minute sessions Zone 2 (RPE 4-6,~70-80% maximum HR)\n\u2022 One 30-minute bout Zone 1 (RPE 3-4, 60-70% maximum HR), then 10s sprints (RPE 9-10) EMOM x 10-minutes (rounds) , then 20 more minutes of Zone 1\nPick any mode of exercise you like. See PDF for further instructions.","trunkGPP":{"name":"Knee Raises","prog":"10 to 15 reps @ RPE 7x 4 sets"},"tri1":{"name":"V-Grip Press Down","prog":"12 reps @ RPE 9. Use the same weight and perform 3 more sets of maximum reps to RPE 8."},"tri2":{"name":"Overhead Cable Triceps Extension","prog":"12 reps @ RPE 9. Use the same weight and perform 3 more sets of maximum reps to RPE 8."},"bi1":{"name":"Incline Dumbbell Curl","prog":"12 reps @ RPE 9. Use the same weight and perform 4 more sets of maximum reps to RPE 8."},"bi2":{"name":"Cable Curl","prog":"12 reps @ RPE 9. Use the same weight and perform 4 more sets of maximum reps to RPE 8."}},{"week":10,"squat":{"name":"2-Count Paused Squat","prog":"5 to 8 Reps @ RPE 7. Repeat the same weight x 2 sets of 5-8 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"press":{"name":"1-Count Paused Bench","prog":"5 to 8 Reps @ RPE 7. Repeat the same weight x 3 sets of 5-8 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"row":{"name":"Chin-Up","prog":"8 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"quad":{"name":"Leg Extensions","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"chestAcc":{"name":"Dumbbell Flye (Incline)","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 2 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"hinge":{"name":"Romanian Deadlift","prog":"5 to 8 Reps @ RPE 7. Repeat the same weight x 2 sets of 5-8 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"press2":{"name":"Machine Chest Press","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"row2":{"name":"Chest-Supported Row","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"hamstrings":{"name":"Lying Hamstring Curl","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"trunk":{"name":"Back Extensions","prog":"Do 4 sets of ~ 10 to 15 reps to RPE 7-8 (2-3 reps in reserve)"},"suppHinge":{"name":"Hip Thrust","prog":"12 reps @ RPE 8. Use the same weight and perform 2 more sets of maximum reps to RPE 7."},"suppSquat":{"name":"Hack Squat","prog":"10 reps @ RPE 8. Use the same weight and perform 2 more sets of maximum reps to RPE 7."},"suppPress2":{"name":"High Incline Bench","prog":"10 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"suppRow2":{"name":"Seated Row","prog":"12 reps @ RPE 8. Use the same weight and perform 3 more sets of maximum reps to RPE 7."},"calves":{"name":"Standing Calf Raise","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 3 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"backAcc":{"name":"Lateral Raises","prog":"8-12 Reps @ RPE 7. Repeat the same weight x 2 sets of 8-12 reps. RPE can go up to @ 9 for these sets.  \nIf you max the reps per set, add weight the following week. If not, plan on adding reps."},"conditioning":"\u2022 Three 30-minute sessions Zone 2 (RPE 4-6,~70-80% maximum HR)\n\u2022 One 30-minute bout Zone 1 (RPE 3-4, 60-70% maximum HR), then 10s sprints (RPE 9-10) EMOM x 10-minutes (rounds) , then 20 more minutes of Zone 1\nPick any mode of exercise you like. See PDF for further instructions.","trunkGPP":{"name":"Knee Raises","prog":"10 to 15 reps @ RPE 7x 4 sets"},"tri1":{"name":"V-Grip Press Down","prog":"12 reps @ RPE 9. Use the same weight and perform 3 more sets of maximum reps to RPE 8."},"tri2":{"name":"Overhead Cable Triceps Extension","prog":"12 reps @ RPE 9. Use the same weight and perform 3 more sets of maximum reps to RPE 8."},"bi1":{"name":"Incline Dumbbell Curl","prog":"12 reps @ RPE 9. Use the same weight and perform 4 more sets of maximum reps to RPE 8."},"bi2":{"name":"Cable Curl","prog":"12 reps @ RPE 9. Use the same weight and perform 4 more sets of maximum reps to RPE 8."}}];
+const RPE_PCT = {"6.0":[0.864,0.837,0.811,0.787,0.762,0.74,0.707,0.681,0.654,0.627],"6.5":[0.878,0.85,0.824,0.799,0.774,0.751,0.723,0.694,0.667,0.64],"7.0":[0.892,0.863,0.837,0.811,0.786,0.762,0.739,0.707,0.68,0.653],"7.5":[0.907,0.878,0.85,0.824,0.799,0.774,0.751,0.723,0.694,0.667],"8.0":[0.922,0.892,0.863,0.837,0.811,0.786,0.762,0.739,0.707,0.68],"8.5":[0.939,0.907,0.878,0.85,0.824,0.799,0.774,0.751,0.723,0.694],"9.0":[0.955,0.922,0.892,0.863,0.837,0.811,0.786,0.762,0.739,0.707],"9.5":[0.978,0.939,0.907,0.878,0.85,0.824,0.799,0.774,0.751,0.723],"10.0":[1,0.955,0.922,0.892,0.863,0.837,0.811,0.786,0.762,0.739]};
+const SLOTS = [{"key":"squat","day":"A","label":"Squat","sub":"Main Squat"},{"key":"press","day":"A","label":"Bench Press","sub":"Main Press"},{"key":"row","day":"A","label":"Vertical Pull","sub":"Main Row"},{"key":"quad","day":"A","label":"Quad Isolation","sub":"Quad"},{"key":"chestAcc","day":"A","label":"Chest Accessory","sub":"Chest"},{"key":"hinge","day":"B","label":"Hip Hinge","sub":"Main Hinge"},{"key":"press2","day":"B","label":"Press Accessory","sub":"Supp Press"},{"key":"row2","day":"B","label":"Horizontal Pull","sub":"Supp Row"},{"key":"hamstrings","day":"B","label":"Hamstring Isolation","sub":"Hamstrings"},{"key":"trunk","day":"B","label":"Lower Back / Trunk","sub":"Trunk"},{"key":"suppHinge","day":"X","label":"Hip Thrust","sub":"Hinge accessory","pair":"B"},{"key":"suppSquat","day":"X","label":"Hack Squat","sub":"Squat accessory","pair":"A"},{"key":"suppPress2","day":"X","label":"Incline Press","sub":"Press accessory","pair":"A"},{"key":"suppRow2","day":"X","label":"Seated Row","sub":"Row accessory","pair":"B"},{"key":"calves","day":"X","label":"Calves","sub":"Calf accessory","pair":"A"},{"key":"backAcc","day":"X","label":"Lateral Raises","sub":"Rear delt / upper back","pair":"B"},{"key":"trunkGPP","day":"G","label":"Trunk (GPP)","sub":"GPP","pair":"A"},{"key":"tri1","day":"G","label":"Triceps #1 (GPP)","sub":"GPP","pair":"A"},{"key":"tri2","day":"G","label":"Triceps #2 (GPP)","sub":"GPP","pair":"A"},{"key":"bi1","day":"G","label":"Biceps #1 (GPP)","sub":"GPP","pair":"B"},{"key":"bi2","day":"G","label":"Biceps #2 (GPP)","sub":"GPP","pair":"B"}];
+
+</script>
+<script>
+/* ---------- State ---------- */
+const STORAGE_KEY = 'hyp2_fullbody_state_v1';
+const DAY_LABELS = {A:'Day A · Squat & Push/Pull', B:'Day B · Hinge & Push/Pull', X:'Accessory', G:'GPP'};
+const MAIN_LIFTS = ['squat','hinge','press','press2','row','row2'];
+
+let STATE = loadState();
+
+function defaultState(){
+  return {
+    meta:{ startDate:'', age:'', units:'lb', overrides:{} },
+    logs:{},           // key -> {sets:[{w,r,p}], time:'', srpe:''}
+    conditioningLogs:[],// [{week,date,zone,duration,rpe,notes}]
+    ui:{ day:'A', occ:1, extrasWeek:null, progWeek:null },
+    currentWeek: 1
+  };
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    return Object.assign(defaultState(), parsed, {
+      meta: Object.assign(defaultState().meta, parsed.meta||{}),
+      ui: Object.assign(defaultState().ui, parsed.ui||{})
+    });
+  }catch(e){ return defaultState(); }
+}
+let saveTimer=null;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE));
+    toast();
+  }, 250);
+}
+function toast(){
+  const el = document.getElementById('savedToast');
+  el.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>el.classList.remove('show'), 900);
+}
+
+/* ---------- Helpers ---------- */
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function getWeek(n){ return PROGRAM_WEEKS[n-1]; }
+function getSlot(key){ return SLOTS.find(s=>s.key===key); }
+function exName(key, weekObj){
+  const ov = STATE.meta.overrides[key];
+  return ov && ov.trim() ? ov.trim() : weekObj[key].name;
+}
+function clamp(v,lo,hi){ return Math.max(lo, Math.min(hi, v)); }
+
+function computeE1RM(w,r,p){
+  if(w==null || r==null || p==null || isNaN(w) || isNaN(r) || isNaN(p) || w<=0 || r<=0) return null;
+  const reps = clamp(Math.round(r), 1, 10);
+  let rpe = Math.round(p*2)/2;
+  rpe = clamp(rpe, 6.0, 10.0);
+  const row = RPE_PCT[rpe.toFixed(1)];
+  if(!row) return null;
+  const pct = row[reps-1];
+  if(!pct) return null;
+  return w/pct;
+}
+function targetWeight(e1rm, reps, rpe){
+  reps = clamp(Math.round(reps),1,10);
+  rpe = clamp(Math.round(rpe*2)/2, 6.0, 10.0);
+  const row = RPE_PCT[rpe.toFixed(1)];
+  if(!row) return null;
+  return e1rm*row[reps-1];
+}
+function logKey(week, slot, occ){ return `${week}_${slot}_${occ}`; }
+function getLog(key){
+  if(!STATE.logs[key]) STATE.logs[key] = {sets:[{w:null,r:null,p:null},{w:null,r:null,p:null},{w:null,r:null,p:null}], time:'', srpe:''};
+  return STATE.logs[key];
+}
+function exerciseStats(key){
+  const log = STATE.logs[key];
+  if(!log) return {tonnage:0, avgInt:null, e1rm:null, hasData:false};
+  let tonnage=0, best=null, hasData=false;
+  const validSets=[];
+  (log.sets||[]).forEach(s=>{
+    if(s.w!=null && s.r!=null && s.w!=='' && s.r!==''){
+      hasData=true;
+      tonnage += (parseFloat(s.w)||0) * (parseFloat(s.r)||0);
+      if(s.p!=null && s.p!==''){
+        const e = computeE1RM(parseFloat(s.w), parseFloat(s.r), parseFloat(s.p));
+        if(e!=null){
+          validSets.push({w:parseFloat(s.w), e1rm:e});
+          if(best==null || e>best) best=e;
+        }
+      }
+    }
+  });
+  let avgInt=null;
+  if(best && validSets.length){
+    avgInt = validSets.reduce((a,s)=>a+(s.w/best),0)/validSets.length;
+  }
+  return {tonnage, avgInt, e1rm:best, hasData};
+}
+
+function weekFromToday(){
+  if(!STATE.meta.startDate) return STATE.currentWeek||1;
+  const start = new Date(STATE.meta.startDate+'T00:00:00');
+  const now = new Date();
+  const diffDays = Math.floor((now-start)/86400000);
+  return clamp(Math.floor(diffDays/7)+1, 1, 10);
+}
+function hrZones(age){
+  age = parseFloat(age);
+  if(!age || age<=0) return null;
+  const hrmax = 208 - 0.7*age;
+  return {
+    hrmax: Math.round(hrmax),
+    zone1: [Math.round(hrmax*0.60), Math.round(hrmax*0.70)],
+    zone2: [Math.round(hrmax*0.70), Math.round(hrmax*0.80)],
+  };
+}
+function parseTargetMinutes(text){
+  let t = text.replace(/\bOne\b/gi,'1').replace(/\bTwo\b/gi,'2').replace(/\bThree\b/gi,'3').replace(/\bFour\b/gi,'4').replace(/\bFive\b/gi,'5');
+  let total=0, m;
+  const re1=/(\d+)\s+(\d+)[\s-]*minute[s]?\s+(session|sessions|bout|bouts)/gi;
+  while((m=re1.exec(t))){ total += parseInt(m[1])*parseInt(m[2]); }
+  const re2=/(\d+)\s*more minutes/gi;
+  while((m=re2.exec(t))){ total += parseInt(m[1]); }
+  const re3=/x\s*(\d+)[\s-]*minutes/gi;
+  while((m=re3.exec(t))){ total += parseInt(m[1]); }
+  return total;
+}
+
+/* ---------- Nav ---------- */
+function jumpTo(tabName){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+tabName).classList.add('active');
+  document.querySelectorAll('.bottom-nav button').forEach(b=>b.classList.toggle('active', b.dataset.tab===tabName));
+  const renderers = {today:renderToday, extras:renderExtras, conditioning:renderConditioning, progress:renderProgress, program:renderProgram, calc:renderCalc, settings:renderSettings};
+  if(renderers[tabName]) renderers[tabName]();
+  window.scrollTo(0,0);
+}
+function refreshHeader(){
+  document.getElementById('weekPill').textContent = 'Wk ' + STATE.currentWeek;
+  const w = getWeek(STATE.currentWeek);
+  document.getElementById('headerSub').textContent = `Week ${STATE.currentWeek} of 10 · ${w.squat.prog.match(/Ascending|Asending/) ? 'Ramping week' : 'Progression week'}`;
+}
+
+/* ---------- Set table rendering ---------- */
+function setsTableHtml(key){
+  const log = getLog(key);
+  const rows = log.sets.map((s,i)=>`
+    <tr>
+      <td class="tiny muted" style="width:22px;text-align:center">${i+1}</td>
+      <td><input type="number" inputmode="decimal" placeholder="lb" value="${s.w??''}" data-logkey="${key}" data-idx="${i}" data-field="w"></td>
+      <td><input type="number" inputmode="numeric" placeholder="reps" value="${s.r??''}" data-logkey="${key}" data-idx="${i}" data-field="r"></td>
+      <td><input type="number" step="0.5" inputmode="decimal" placeholder="RPE" value="${s.p??''}" data-logkey="${key}" data-idx="${i}" data-field="p"></td>
+      <td><button class="set-del" onclick="delSet('${key}',${i})">✕</button></td>
+    </tr>`).join('');
+  const stats = exerciseStats(key);
+  return `
+    <table class="sets" data-logkey="${key}">
+      <thead><tr><th></th><th>Weight</th><th>Reps</th><th>RPE</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="row-actions">
+      <button class="btn ghost" onclick="addSet('${key}')">+ Add set</button>
+    </div>
+    <div class="stat-row" id="stats-${key}">${statHtml(stats)}</div>
+  `;
+}
+function statHtml(stats){
+  return `
+    <div class="stat"><div class="v">${stats.tonnage?Math.round(stats.tonnage).toLocaleString():'—'}</div><div class="l">Tonnage</div></div>
+    <div class="stat"><div class="v">${stats.e1rm?Math.round(stats.e1rm):'—'}</div><div class="l">Est. 1RM</div></div>
+    <div class="stat"><div class="v">${stats.avgInt?Math.round(stats.avgInt*100)+'%':'—'}</div><div class="l">Avg Int.</div></div>
+  `;
+}
+function addSet(key){
+  const log = getLog(key);
+  log.sets.push({w:null,r:null,p:null});
+  save();
+  rerenderExercise(key);
+}
+function delSet(key,idx){
+  const log = getLog(key);
+  log.sets.splice(idx,1);
+  if(log.sets.length===0) log.sets.push({w:null,r:null,p:null});
+  save();
+  rerenderExercise(key);
+}
+function rerenderExercise(key){
+  const table = document.querySelector(`table.sets[data-logkey="${key}"]`);
+  if(table && table.parentElement){
+    table.parentElement.innerHTML = setsTableHtml(key);
+  }
+}
+document.addEventListener('input', e=>{
+  const el = e.target;
+  if(el.matches('table.sets input')){
+    const key = el.dataset.logkey, idx = +el.dataset.idx, field = el.dataset.field;
+    const log = getLog(key);
+    const val = el.value === '' ? null : parseFloat(el.value);
+    log.sets[idx][field] = val;
+    save();
+    const statsEl = document.getElementById('stats-'+key);
+    if(statsEl) statsEl.innerHTML = statHtml(exerciseStats(key));
+  }
+  if(el.matches('[data-sessionmeta]')){
+    const key = el.dataset.sessionmeta, field = el.dataset.field;
+    const log = getLog(key);
+    log[field] = el.value;
+    save();
+  }
+});
+
+/* ---------- Today Tab ---------- */
+function renderToday(){
+  refreshHeader();
+  const week = STATE.currentWeek;
+  const w = getWeek(week);
+  const day = STATE.ui.day, occ = STATE.ui.occ;
+  const slots = SLOTS.filter(s=>s.day===day);
+  const sessionKey = `${week}_SESSION_${day}_${occ}`;
+  const sessLog = getLog(sessionKey);
+
+  let html = `
+  <div class="card">
+    <div class="pillrow">
+      ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="pill ${n===week?'active':''}" onclick="setWeek(${n})">${n}</button>`).join('')}
+    </div>
+    <div class="seg" style="margin-bottom:8px;">
+      <button class="${day==='A'?'active':''}" onclick="setDay('A')">Day A</button>
+      <button class="${day==='B'?'active':''}" onclick="setDay('B')">Day B</button>
+    </div>
+    <div class="seg">
+      <button class="${occ==1?'active blue':''}" onclick="setOcc(1)">Session 1 (e.g. Mon/Tue)</button>
+      <button class="${occ==2?'active blue':''}" onclick="setOcc(2)">Session 2 (e.g. Thu/Fri)</button>
+    </div>
+    <div class="note" style="margin-top:10px;">
+      <b>${DAY_LABELS[day]}</b> runs twice weekly — same exercises, log each session separately so you can see set-to-set progress.
+    </div>
+  </div>
+  <div class="card">
+    <h2>Exercises</h2>
+    ${slots.map(s=>exerciseBlock(s,w,week,occ)).join('')}
+  </div>
+  <div class="card">
+    <h2>Session Summary</h2>
+    <div class="grid2">
+      <div class="field"><label>Session time (min)</label><input type="number" data-sessionmeta="${sessionKey}" data-field="time" value="${esc(sessLog.time)}"></div>
+      <div class="field"><label>Session RPE (1-10)</label><input type="number" step="0.5" data-sessionmeta="${sessionKey}" data-field="srpe" value="${esc(sessLog.srpe)}"></div>
+    </div>
+    <div class="tiny muted">Rate overall session fatigue: 5 = easy, 8 = tough but repeatable tomorrow, 10 = maximal.</div>
+  </div>
+  `;
+  document.getElementById('tab-today').innerHTML = html;
+}
+function exerciseBlock(s, w, week, occ){
+  const key = logKey(week, s.key, occ);
+  const name = exName(s.key, w);
+  const prog = w[s.key].prog;
+  return `
+    <div class="exercise">
+      <div class="ex-head">
+        <div>
+          <div class="ex-name">${esc(name)}</div>
+          <div class="tiny muted">${esc(s.label)}</div>
+        </div>
+        <span class="tag ${s.day.toLowerCase()}">${esc(s.sub||s.day)}</span>
+      </div>
+      <div class="ex-prog">${esc(prog)}</div>
+      ${setsTableHtml(key)}
+    </div>
+  `;
+}
+function setWeek(n){ STATE.currentWeek=n; save(); renderToday(); }
+function setDay(d){ STATE.ui.day=d; save(); renderToday(); }
+function setOcc(o){ STATE.ui.occ=o; save(); renderToday(); }
+
+/* ---------- Extras Tab ---------- */
+function renderExtras(){
+  const week = STATE.currentWeek;
+  const w = getWeek(week);
+  const groups = [
+    {pair:'A', title:'Pairs well with Day A', color:'a'},
+    {pair:'B', title:'Pairs well with Day B', color:'b'},
+  ];
+  let html = `<div class="card">
+    <h2>Extras &amp; GPP — Week ${week}</h2>
+    <div class="small muted">These accessory and GPP movements carry the rest of the template's volume (calves, glute/ham accessory work, arms, trunk). Barbell Medicine's own guidance: do them whenever fits — after a lifting session, before conditioning, or standalone. Aim for most of these across the week, roughly 4x/week for the GPP arm/trunk items.</div>
+  </div>`;
+  groups.forEach(g=>{
+    const slots = SLOTS.filter(s=>(s.day==='X'||s.day==='G') && s.pair===g.pair);
+    html += `<div class="card">
+      <h2><span class="tag ${g.color}">${g.pair==='A'?'Day A':'Day B'}</span> ${g.title}</h2>
+      ${slots.map(s=>exerciseBlock(s,w,week,1)).join('')}
+    </div>`;
+  });
+  document.getElementById('tab-extras').innerHTML = html;
+}
+
+/* ---------- Conditioning Tab ---------- */
+function renderConditioning(){
+  const week = STATE.currentWeek;
+  const w = getWeek(week);
+  const zones = hrZones(STATE.meta.age);
+  const targetMin = parseTargetMinutes(w.conditioning);
+  const weekLogs = STATE.conditioningLogs.filter(l=>l.week===week);
+  const loggedMin = weekLogs.reduce((a,l)=>a+(parseFloat(l.duration)||0),0);
+
+  const lines = w.conditioning.split('\n').filter(Boolean);
+
+  let html = `
+  <div class="card">
+    <h2>Running Conditioning — Week ${week}</h2>
+    <div class="pillrow">
+      ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="pill ${n===week?'active':''}" onclick="setWeekCond(${n})">${n}</button>`).join('')}
+    </div>
+    <div class="divider"></div>
+    ${lines.map(l=>`<div class="small" style="margin-bottom:6px;line-height:1.5;">${esc(l).replace(/Zone 1/g,'<b style="color:var(--accent3)">Zone 1 (easy run)</b>').replace(/Zone 2/g,'<b style="color:var(--blue)">Zone 2 (steady run)</b>')}</div>`).join('')}
+    <div class="stat-row">
+      <div class="stat"><div class="v">${targetMin||'—'}</div><div class="l">Target min/wk</div></div>
+      <div class="stat"><div class="v">${loggedMin}</div><div class="l">Logged min/wk</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Your Heart Rate Zones</h2>
+    <div class="field"><label>Age</label><input type="number" id="condAge" value="${esc(STATE.meta.age)}" placeholder="e.g. 32"></div>
+    ${zones ? `
+      <div class="stat-row">
+        <div class="stat"><div class="v">${zones.hrmax}</div><div class="l">Max HR (bpm)</div></div>
+        <div class="stat"><div class="v">${zones.zone1[0]}–${zones.zone1[1]}</div><div class="l">Zone 1</div></div>
+        <div class="stat"><div class="v">${zones.zone2[0]}–${zones.zone2[1]}</div><div class="l">Zone 2</div></div>
+      </div>
+      <div class="tiny muted" style="margin-top:8px;">HRmax = 208 − (0.7 × age). Zone 1 = 60–70% HRmax, conversational pace. Zone 2 = 70–80% HRmax, "short sentences only" pace.</div>
+    ` : `<div class="tiny muted">Enter your age to see bpm targets for each zone.</div>`}
+  </div>
+
+  <div class="card">
+    <h2>Log a Run</h2>
+    <div class="grid2">
+      <div class="field"><label>Date</label><input type="date" id="condDate" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div class="field"><label>Zone</label>
+        <select id="condZone">
+          <option value="Zone 1 (easy)">Zone 1 (easy)</option>
+          <option value="Zone 2 (steady)">Zone 2 (steady)</option>
+          <option value="Sprints/Intervals">Sprints / Intervals</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Duration (min)</label><input type="number" id="condDur"></div>
+      <div class="field"><label>Avg HR (optional)</label><input type="number" id="condHR"></div>
+    </div>
+    <div class="field"><label>Notes</label><input type="text" id="condNotes" placeholder="route, pace, how it felt…"></div>
+    <button class="btn primary block" onclick="addCondLog()">+ Log run</button>
+  </div>
+
+  <div class="card">
+    <h2>This Week's Runs</h2>
+    ${weekLogs.length ? weekLogs.map((l,i)=>`
+      <div class="list-item">
+        <div>
+          <div style="font-weight:700">${esc(l.zone)} · ${l.duration} min</div>
+          <div class="tiny muted">${esc(l.date)}${l.hr?` · ${l.hr} bpm avg`:''}${l.notes?` · ${esc(l.notes)}`:''}</div>
+        </div>
+        <button class="set-del" onclick="delCondLog(${STATE.conditioningLogs.indexOf(l)})">✕</button>
+      </div>`).join('') : `<div class="small muted">No runs logged yet this week.</div>`}
+  </div>
+  `;
+  document.getElementById('tab-conditioning').innerHTML = html;
+  document.getElementById('condAge').addEventListener('input', e=>{ STATE.meta.age = e.target.value; save(); renderConditioning(); });
+}
+function setWeekCond(n){ STATE.currentWeek=n; save(); renderConditioning(); }
+function addCondLog(){
+  const date = document.getElementById('condDate').value;
+  const zone = document.getElementById('condZone').value;
+  const duration = document.getElementById('condDur').value;
+  const hr = document.getElementById('condHR').value;
+  const notes = document.getElementById('condNotes').value;
+  if(!duration){ alert('Enter a duration.'); return; }
+  STATE.conditioningLogs.push({week:STATE.currentWeek, date, zone, duration, hr, notes});
+  save();
+  renderConditioning();
+}
+function delCondLog(i){
+  STATE.conditioningLogs.splice(i,1);
+  save();
+  renderConditioning();
+}
+
+/* ---------- Progress Tab ---------- */
+function renderProgress(){
+  let html = `<div class="card"><h2>Estimated 1RM Trend</h2><div class="small muted">Best logged set each week (using the RPE% chart), across both weekly sessions.</div></div>`;
+  MAIN_LIFTS.forEach(key=>{
+    const slot = getSlot(key);
+    const pts = [];
+    for(let wk=1; wk<=10; wk++){
+      const k1 = logKey(wk,key,1), k2 = logKey(wk,key,2);
+      const s1 = STATE.logs[k1] ? exerciseStats(k1) : null;
+      const s2 = STATE.logs[k2] ? exerciseStats(k2) : null;
+      let best=null;
+      if(s1 && s1.e1rm) best = s1.e1rm;
+      if(s2 && s2.e1rm && (best==null || s2.e1rm>best)) best = s2.e1rm;
+      pts.push(best);
+    }
+    const max = Math.max(...pts.filter(x=>x!=null), 1);
+    const w1 = getWeek(1);
+    html += `<div class="card">
+      <h3>${esc(exName(key,w1))} <span class="tiny muted">(${esc(slot.sub)})</span></h3>
+      <div style="display:flex;align-items:flex-end;gap:4px;height:70px;margin-top:10px;">
+        ${pts.map((p,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;">
+            <div style="width:100%;background:${p?'var(--accent)':'var(--card2)'};border-radius:4px 4px 0 0;height:${p? Math.max(6,(p/max)*100):4}%;"></div>
+            <div class="tiny muted" style="margin-top:3px;">${i+1}</div>
+          </div>`).join('')}
+      </div>
+      <div class="tiny muted" style="margin-top:6px;">${pts.some(p=>p) ? 'Latest: ' + Math.round(pts.filter(p=>p).slice(-1)[0]) + ' est. 1RM' : 'No sets logged yet.'}</div>
+    </div>`;
+  });
+  document.getElementById('tab-progress').innerHTML = html;
+}
+
+/* ---------- Program Tab (read-only browser) ---------- */
+function renderProgram(){
+  const week = STATE.ui.progWeek || STATE.currentWeek;
+  const w = getWeek(week);
+  let html = `
+  <div class="card">
+    <h2>Program Overview</h2>
+    <div class="week-grid" style="margin-top:8px;">
+      ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="${n===week?'active':''}" onclick="setProgWeek(${n})">${n}</button>`).join('')}
+    </div>
+  </div>
+  <div class="card">
+    <h2><span class="tag a">Day A</span> ×2/week</h2>
+    ${SLOTS.filter(s=>s.day==='A').map(s=>`<div class="exercise"><div class="ex-name">${esc(exName(s.key,w))}</div><div class="tiny muted">${esc(s.label)}</div><div class="ex-prog">${esc(w[s.key].prog)}</div></div>`).join('')}
+  </div>
+  <div class="card">
+    <h2><span class="tag b">Day B</span> ×2/week</h2>
+    ${SLOTS.filter(s=>s.day==='B').map(s=>`<div class="exercise"><div class="ex-name">${esc(exName(s.key,w))}</div><div class="tiny muted">${esc(s.label)}</div><div class="ex-prog">${esc(w[s.key].prog)}</div></div>`).join('')}
+  </div>
+  <div class="card">
+    <h2>Extras / Accessory</h2>
+    ${SLOTS.filter(s=>s.day==='X').map(s=>`<div class="exercise"><div class="ex-name">${esc(exName(s.key,w))}</div><div class="tiny muted">pairs with Day ${s.pair}</div><div class="ex-prog">${esc(w[s.key].prog)}</div></div>`).join('')}
+  </div>
+  <div class="card">
+    <h2><span class="tag g">GPP</span> Trunk &amp; Arms</h2>
+    ${SLOTS.filter(s=>s.day==='G').map(s=>`<div class="exercise"><div class="ex-name">${esc(exName(s.key,w))}</div><div class="tiny muted">pairs with Day ${s.pair}</div><div class="ex-prog">${esc(w[s.key].prog)}</div></div>`).join('')}
+  </div>
+  <div class="card">
+    <h2>Conditioning</h2>
+    <div class="ex-prog" style="margin:0;">${esc(w.conditioning)}</div>
+  </div>
+  `;
+  document.getElementById('tab-program').innerHTML = html;
+}
+function setProgWeek(n){ STATE.ui.progWeek = n; save(); renderProgram(); }
+
+/* ---------- Calculators Tab ---------- */
+function renderCalc(){
+  let html = `
+  <div class="card">
+    <h2>Estimated 1RM Calculator</h2>
+    <div class="small muted">Enter a weight, rep count, and RPE from any set to estimate your one-rep max.</div>
+    <div class="grid2" style="margin-top:10px;">
+      <div class="field"><label>Weight</label><input type="number" id="calcW"></div>
+      <div class="field"><label>Reps</label><input type="number" id="calcR"></div>
+    </div>
+    <div class="field"><label>RPE</label><input type="number" step="0.5" id="calcP" value="8"></div>
+    <button class="btn primary block" onclick="runCalc1RM()">Calculate</button>
+    <div id="calc1RMOut" class="stat-row"></div>
+  </div>
+  <div class="card">
+    <h2>Target Weight Table</h2>
+    <div class="small muted">Given an estimated 1RM, find the weight for any rep × RPE target — same chart Barbell Medicine uses to plan next week's loads.</div>
+    <div class="field" style="margin-top:10px;"><label>Estimated 1RM</label><input type="number" id="calc1RMIn" placeholder="e.g. 315"></div>
+    <button class="btn primary block" onclick="runCalcTable()">Build table</button>
+    <div id="calcTableOut" style="overflow-x:auto;"></div>
+  </div>
+  <div class="card">
+    <h2>Heart Rate Zones</h2>
+    <div class="field"><label>Age</label><input type="number" id="calcAge" value="${esc(STATE.meta.age)}"></div>
+    <button class="btn primary block" onclick="runCalcHR()">Calculate</button>
+    <div id="calcHROut" class="stat-row"></div>
+  </div>
+  <div class="card">
+    <h2>Daily Protein Target</h2>
+    <div class="small muted">Barbell Medicine recommends ~1.6 g/kg bodyweight/day for building & maintaining muscle.</div>
+    <div class="field" style="margin-top:10px;"><label>Bodyweight (lb)</label><input type="number" id="calcBW"></div>
+    <button class="btn primary block" onclick="runCalcProtein()">Calculate</button>
+    <div id="calcProteinOut" class="stat-row"></div>
+  </div>
+  `;
+  document.getElementById('tab-calc').innerHTML = html;
+}
+function runCalc1RM(){
+  const w = parseFloat(document.getElementById('calcW').value);
+  const r = parseFloat(document.getElementById('calcR').value);
+  const p = parseFloat(document.getElementById('calcP').value);
+  const e = computeE1RM(w,r,p);
+  document.getElementById('calc1RMOut').innerHTML = e ? `<div class="stat"><div class="v">${Math.round(e)}</div><div class="l">Est. 1RM</div></div>` : `<div class="small muted">Enter valid weight, reps (1-10), and RPE (6-10).</div>`;
+}
+function runCalcTable(){
+  const e1 = parseFloat(document.getElementById('calc1RMIn').value);
+  if(!e1){ document.getElementById('calcTableOut').innerHTML=''; return; }
+  const rpes = [10,9.5,9,8.5,8,7.5,7,6.5,6];
+  let rows = rpes.map(rpe=>{
+    const cells = [];
+    for(let reps=1; reps<=10; reps++){
+      cells.push(`<td>${Math.round(targetWeight(e1,reps,rpe))}</td>`);
+    }
+    return `<tr><th>${rpe}</th>${cells.join('')}</tr>`;
+  }).join('');
+  document.getElementById('calcTableOut').innerHTML = `
+    <table class="calc-table">
+      <thead><tr><th>RPE\\Reps</th>${[1,2,3,4,5,6,7,8,9,10].map(n=>`<th>${n}</th>`).join('')}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+function runCalcHR(){
+  const age = document.getElementById('calcAge').value;
+  const z = hrZones(age);
+  document.getElementById('calcHROut').innerHTML = z ? `
+    <div class="stat"><div class="v">${z.hrmax}</div><div class="l">Max HR</div></div>
+    <div class="stat"><div class="v">${z.zone1[0]}–${z.zone1[1]}</div><div class="l">Zone 1</div></div>
+    <div class="stat"><div class="v">${z.zone2[0]}–${z.zone2[1]}</div><div class="l">Zone 2</div></div>
+  ` : `<div class="small muted">Enter a valid age.</div>`;
+}
+function runCalcProtein(){
+  const bw = parseFloat(document.getElementById('calcBW').value);
+  if(!bw){ document.getElementById('calcProteinOut').innerHTML=''; return; }
+  const kg = bw/2.20462;
+  const g = kg*1.6;
+  document.getElementById('calcProteinOut').innerHTML = `
+    <div class="stat"><div class="v">${Math.round(g)}g</div><div class="l">Protein / day</div></div>
+    <div class="stat"><div class="v">${Math.round(g/4)}</div><div class="l">Meals of ~25-35g</div></div>
+  `;
+}
+
+/* ---------- Settings Tab ---------- */
+function renderSettings(){
+  let html = `
+  <div class="card">
+    <h2>Program Setup</h2>
+    <div class="field"><label>Start date (Sunday of Week 1)</label><input type="date" id="setStart" value="${esc(STATE.meta.startDate)}"></div>
+    <div class="tiny muted" style="margin-top:-6px;margin-bottom:12px;">Used to auto-highlight the current week. You can always jump weeks manually.</div>
+    <div class="field"><label>Age (for heart-rate zones)</label><input type="number" id="setAge" value="${esc(STATE.meta.age)}"></div>
+    <button class="btn primary block" onclick="saveSettingsGeneral()">Save</button>
+  </div>
+  <div class="card">
+    <h2>Exercise Names</h2>
+    <div class="small muted">Rename any slot — your changes apply across all 10 weeks, same as the original template's Exercise Selection tab.</div>
+    <div class="divider"></div>
+    ${SLOTS.map(s=>{
+      const w1 = getWeek(1);
+      return `<div class="field">
+        <label>${esc(s.label)} <span class="tiny muted">(default: ${esc(w1[s.key].name)})</span></label>
+        <input type="text" data-override="${s.key}" value="${esc(STATE.meta.overrides[s.key]||'')}" placeholder="${esc(w1[s.key].name)}">
+      </div>`;
+    }).join('')}
+  </div>
+  <div class="card">
+    <h2>Data</h2>
+    <button class="btn block" onclick="exportData()">Export backup (.json)</button>
+    <div style="height:8px;"></div>
+    <label class="btn block" style="display:block;text-align:center;cursor:pointer;">
+      Import backup
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+    </label>
+    <div style="height:8px;"></div>
+    <button class="btn block" style="color:var(--red);border-color:var(--red);" onclick="resetAll()">Reset all data</button>
+  </div>
+  <div class="card">
+    <h2>About this program</h2>
+    <div class="small muted" style="line-height:1.6;">
+      Built on Barbell Medicine's Hypertrophy II (Block I, 10 weeks). The original upper/lower split has been
+      reorganized into a full-body Day A / Day B rotation, each run twice weekly. Squat and Bench default to
+      paused variations. Running conditioning targets are translated to RPE + heart-rate zones per BBM's own
+      formulas. All data is stored locally on this device only.
+    </div>
+  </div>
+  `;
+  document.getElementById('tab-settings').innerHTML = html;
+  document.querySelectorAll('[data-override]').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      STATE.meta.overrides[e.target.dataset.override] = e.target.value;
+      save();
+    });
+  });
+  document.getElementById('importFile').addEventListener('change', importData);
+}
+function saveSettingsGeneral(){
+  STATE.meta.startDate = document.getElementById('setStart').value;
+  STATE.meta.age = document.getElementById('setAge').value;
+  STATE.currentWeek = weekFromToday();
+  save();
+  toast();
+  refreshHeader();
+}
+function exportData(){
+  const blob = new Blob([JSON.stringify(STATE,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'hypertrophy2-backup.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function importData(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try{
+      const parsed = JSON.parse(ev.target.result);
+      STATE = Object.assign(defaultState(), parsed);
+      save();
+      alert('Import successful.');
+      renderSettings();
+      refreshHeader();
+    }catch(err){ alert('Could not read that file.'); }
+  };
+  reader.readAsText(file);
+}
+function resetAll(){
+  if(!confirm('This clears all logged sets, conditioning logs, and settings on this device. Continue?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  STATE = defaultState();
+  save();
+  jumpTo('today');
+}
+
+/* ---------- Boot ---------- */
+(function init(){
+  if(STATE.meta.startDate && !localStorage.getItem(STORAGE_KEY+'_boot')){
+    STATE.currentWeek = weekFromToday();
+  }
+  refreshHeader();
+  jumpTo('today');
+})();
+
+</script>
+</body>
+</html>
