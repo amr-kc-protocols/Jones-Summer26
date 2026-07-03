@@ -1,0 +1,16 @@
+{
+  "name": "Hypertrophy II — Full Body",
+  "short_name": "Hypertrophy II",
+  "description": "10-week Barbell Medicine Hypertrophy II full-body training log with RPE calculations and running conditioning",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f1216",
+  "theme_color": "#12151a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
