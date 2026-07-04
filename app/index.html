@@ -6,151 +6,192 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#12151a">
+<meta name="theme-color" content="#0c0e11">
 <title>Hypertrophy II — Full Body</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <style>
 :root{
-  --bg:#0f1216; --card:#171b21; --card2:#1d222a; --border:#2a3038;
-  --text:#eef1f5; --text-soft:#9aa4b2; --accent:#ff5a3c; --accent2:#3ecf8e;
-  --accent3:#ffcf56; --blue:#4f9dff; --red:#ff5a5a;
-  --radius:16px; --radius-sm:10px;
-  --shadow:0 4px 20px rgba(0,0,0,.35);
+  --bg:#0c0e11; --surface:#13161b; --surface2:#1b2028; --line:#252b34;
+  --ink:#f2f4f7; --dim:#8c95a3; --accent:#ff5a3c; --good:#3ecf8e; --red:#ff5a5a;
+  --r:14px; --r-sm:10px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{scrollbar-width:none;}
 body{
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);
-  min-height:100vh;padding-bottom:76px;-webkit-font-smoothing:antialiased;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:78px;
+  -webkit-font-smoothing:antialiased;font-size:14px;line-height:1.45;
 }
-a{color:inherit;}
+::-webkit-scrollbar{display:none;}
+button{font-family:inherit;}
+b{font-weight:700;}
+
+/* ── header ── */
 .header{
-  background:linear-gradient(135deg,#1a1f26,#12151a);color:#fff;padding:16px 18px 14px;
-  position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border);
+  background:rgba(12,14,17,.86);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  padding:14px 16px;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--line);
 }
-.header-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.header-title{font-size:17px;font-weight:800;letter-spacing:.2px;}
-.header-sub{font-size:11.5px;color:var(--text-soft);margin-top:2px;font-weight:600;}
+.header-row{display:flex;align-items:center;justify-content:space-between;gap:10px;max-width:560px;margin:0 auto;}
+.header-title{font-size:15px;font-weight:800;letter-spacing:-.1px;}
+.header-sub{font-size:11px;color:var(--dim);margin-top:1px;font-weight:500;}
 .week-pill{
-  background:var(--accent);color:#fff;font-weight:800;font-size:13px;padding:7px 14px;
-  border-radius:999px;border:none;display:flex;align-items:center;gap:6px;cursor:pointer;
+  background:var(--accent);color:#fff;font-weight:800;font-size:12.5px;padding:6px 13px;
+  border-radius:999px;border:none;cursor:pointer;font-variant-numeric:tabular-nums;
 }
-main{padding:14px 14px 20px;max-width:640px;margin:0 auto;}
+
+main{padding:12px 12px 20px;max-width:560px;margin:0 auto;}
+
+/* ── cards ── */
 .card{
-  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
-  padding:16px;margin-bottom:14px;box-shadow:var(--shadow);
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:14px;margin-bottom:10px;
 }
-.card h2{font-size:15px;font-weight:800;margin-bottom:10px;letter-spacing:.2px;}
-.card h3{font-size:13.5px;font-weight:700;margin-bottom:6px;color:var(--text);}
-.muted{color:var(--text-soft);}
-.small{font-size:12px;}
+.card h2{font-size:13px;font-weight:700;margin-bottom:10px;letter-spacing:-.1px;}
+.card h3{font-size:13px;font-weight:700;margin-bottom:4px;}
+.muted,.dim{color:var(--dim);}
+.small{font-size:12.5px;}
 .tiny{font-size:11px;}
-.tag{
-  display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;
-  padding:3px 8px;border-radius:6px;background:var(--card2);color:var(--text-soft);border:1px solid var(--border);
+.divider{height:1px;background:var(--line);margin:12px 0;}
+
+/* ── today line ── */
+.today-line{display:flex;align-items:center;gap:8px;font-size:13px;min-height:20px;flex-wrap:wrap;}
+.today-line .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none;}
+.today-line .dot.rest{background:var(--dim);}
+
+/* ── week strip + day segment ── */
+.weekstrip{display:flex;gap:6px;overflow-x:auto;margin:12px 0 8px;scroll-snap-type:x proximity;}
+.weekstrip button{
+  flex:none;min-width:36px;height:36px;border-radius:var(--r-sm);border:none;scroll-snap-align:center;
+  background:var(--surface2);color:var(--dim);font-weight:700;font-size:13px;cursor:pointer;
+  font-variant-numeric:tabular-nums;transition:background .12s,color .12s;
 }
-.tag.a{background:rgba(255,90,60,.15);color:var(--accent);border-color:rgba(255,90,60,.3);}
-.tag.b{background:rgba(79,157,255,.15);color:var(--blue);border-color:rgba(79,157,255,.3);}
-.tag.c{background:rgba(62,207,142,.15);color:var(--accent2);border-color:rgba(62,207,142,.3);}
-.tag.d{background:rgba(255,207,86,.15);color:var(--accent3);border-color:rgba(255,207,86,.3);}
-.seg{
-  display:flex;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:3px;gap:3px;
-}
+.weekstrip button.active{background:var(--accent);color:#fff;}
+.seg{display:flex;gap:6px;}
 .seg button{
-  flex:1;background:transparent;border:none;color:var(--text-soft);font-weight:700;font-size:12.5px;
-  padding:9px 6px;border-radius:9px;cursor:pointer;transition:.15s;
+  flex:1;border:none;border-radius:var(--r-sm);background:var(--surface2);color:var(--dim);
+  font-weight:700;font-size:13px;padding:10px 4px;cursor:pointer;transition:background .12s,color .12s;
 }
 .seg button.active{background:var(--accent);color:#fff;}
-.seg button.active.blue{background:var(--blue);}
-.seg button.active.green{background:var(--accent2);color:#0f1216;}
-.exercise{border-top:1px solid var(--border);padding-top:12px;margin-top:12px;}
-.exercise:first-child{border-top:none;padding-top:0;margin-top:0;}
-.ex-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px;}
-.ex-name{font-weight:800;font-size:14.5px;}
-.ex-prog{font-size:12.5px;color:var(--text-soft);line-height:1.45;margin:4px 0 10px;white-space:pre-wrap;}
-table.sets{width:100%;border-collapse:collapse;margin-bottom:6px;}
-table.sets th{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-soft);text-align:left;padding:0 4px 6px;font-weight:700;}
-table.sets td{padding:3px 4px;}
+.seg-caption{font-size:11px;color:var(--dim);margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.progressbar{height:3px;border-radius:2px;background:var(--surface2);overflow:hidden;flex:1;max-width:90px;}
+.progressbar i{display:block;height:100%;background:var(--good);border-radius:2px;transition:width .25s;}
+
+/* ── exercise cards ── */
+.ex-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+.ex-name{font-weight:700;font-size:15px;letter-spacing:-.15px;}
+.donedot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--good);margin-left:7px;vertical-align:2px;}
+.chip{
+  flex:none;font-size:9.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+  padding:3px 8px;border-radius:6px;color:var(--dim);border:1px solid var(--line);white-space:nowrap;
+}
+.ex-prog{font-size:12px;color:var(--dim);line-height:1.5;margin:6px 0 10px;white-space:pre-wrap;}
+.ex-stats{font-size:12px;color:var(--dim);margin-top:8px;font-variant-numeric:tabular-nums;}
+
+/* ── set tables ── */
+table.sets{width:100%;border-collapse:collapse;}
+table.sets th{
+  font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--dim);
+  text-align:center;padding:0 3px 5px;font-weight:600;
+}
+table.sets th:first-child{width:20px;}
+table.sets td{padding:2.5px 3px;}
 table.sets input{
-  width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);
-  padding:8px 6px;font-size:14px;font-weight:600;text-align:center;font-family:inherit;
+  width:100%;background:var(--surface2);border:none;border-radius:9px;color:var(--ink);
+  padding:10px 4px;font-size:15px;font-weight:600;text-align:center;font-family:inherit;
+  font-variant-numeric:tabular-nums;
 }
-table.sets input:focus{outline:2px solid var(--accent);border-color:transparent;}
-.set-del{background:none;border:none;color:var(--text-soft);font-size:16px;cursor:pointer;padding:4px;}
-.row-actions{display:flex;gap:8px;margin-top:6px;}
+table.sets input::placeholder{color:#525c6b;font-weight:500;}
+table.sets input:focus{outline:2px solid var(--accent);}
+.set-num{font-size:11px;color:var(--dim);text-align:center;font-variant-numeric:tabular-nums;}
+.set-del{background:none;border:none;color:#525c6b;font-size:15px;cursor:pointer;padding:4px 2px;}
+.addset{
+  background:none;border:none;color:var(--dim);font-weight:600;font-size:12.5px;
+  cursor:pointer;padding:8px 0 0;
+}
+.addset:active{color:var(--ink);}
+
+/* ── buttons, fields ── */
 .btn{
-  border:none;border-radius:10px;font-weight:700;font-size:12.5px;padding:9px 14px;cursor:pointer;
-  background:var(--card2);color:var(--text);border:1px solid var(--border);
+  border:1px solid var(--line);border-radius:var(--r-sm);font-weight:700;font-size:13px;
+  padding:11px 14px;cursor:pointer;background:var(--surface2);color:var(--ink);
 }
-.btn.primary{background:var(--accent);color:#fff;}
-.btn.ghost{background:transparent;border:1px dashed var(--border);color:var(--text-soft);}
-.btn.block{width:100%;text-align:center;}
-.stat-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
-.stat{
-  background:var(--card2);border-radius:10px;padding:8px 10px;flex:1;min-width:76px;text-align:center;
-}
-.stat .v{font-size:15px;font-weight:800;color:var(--accent3);}
-.stat .l{font-size:9.5px;text-transform:uppercase;color:var(--text-soft);font-weight:700;letter-spacing:.3px;margin-top:1px;}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn.block{width:100%;text-align:center;display:block;}
+.textlink{background:none;border:none;color:var(--accent);font-weight:700;font-size:12.5px;cursor:pointer;padding:0;}
 .field{margin-bottom:12px;}
-.field label{display:block;font-size:11.5px;font-weight:700;color:var(--text-soft);text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px;}
-.field input, .field select{
-  width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);
-  padding:11px 12px;font-size:14.5px;font-family:inherit;font-weight:600;
+.field label{
+  display:block;font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:6px;
 }
+.field input,.field select{
+  width:100%;background:var(--surface2);border:none;border-radius:var(--r-sm);color:var(--ink);
+  padding:11px 12px;font-size:14.5px;font-family:inherit;font-weight:500;appearance:none;-webkit-appearance:none;
+}
+.field select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238c95a3' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;
+}
+.field input:focus,.field select:focus{outline:2px solid var(--accent);}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.bottom-nav{
-  position:fixed;bottom:0;left:0;right:0;background:#12151a;border-top:1px solid var(--border);
-  display:flex;z-index:200;padding-bottom:env(safe-area-inset-bottom);
-}
-.bottom-nav button{
-  flex:1;background:none;border:none;color:var(--text-soft);padding:9px 2px 8px;font-size:9.5px;
-  font-weight:700;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;letter-spacing:.2px;
-}
-.bottom-nav button .ic{font-size:19px;}
-.bottom-nav button.active{color:var(--accent);}
-.tab{display:none;}
-.tab.active{display:block;}
-.divider{height:1px;background:var(--border);margin:14px 0;}
-.list-item{
-  display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--border);
-  font-size:13px;
-}
-.list-item:first-child{border-top:none;}
-.pillrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+
+/* ── stats (calculators) ── */
+.stat-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.stat{background:var(--surface2);border-radius:var(--r-sm);padding:9px 10px;flex:1;min-width:76px;text-align:center;}
+.stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;}
+.stat .l{font-size:9px;text-transform:uppercase;color:var(--dim);font-weight:600;letter-spacing:.4px;margin-top:2px;}
+
+/* ── pills, week grid, lists ── */
+.pillrow{display:flex;gap:6px;flex-wrap:wrap;}
 .pill{
-  background:var(--card2);border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:12px;
-  font-weight:700;cursor:pointer;color:var(--text-soft);
+  background:var(--surface2);border:none;border-radius:999px;padding:8px 13px;font-size:12.5px;
+  font-weight:700;cursor:pointer;color:var(--dim);
 }
-.pill.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.pill.active{background:var(--accent);color:#fff;}
 .week-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
 .week-grid button{
-  aspect-ratio:1;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text-soft);
-  font-weight:800;font-size:13px;cursor:pointer;
+  aspect-ratio:1.3;border-radius:var(--r-sm);border:none;background:var(--surface2);color:var(--dim);
+  font-weight:700;font-size:13px;cursor:pointer;font-variant-numeric:tabular-nums;
 }
-.week-grid button.active{background:var(--accent);color:#fff;border-color:var(--accent);}
-.week-grid button.logged::after{content:'●';display:block;font-size:6px;color:var(--accent2);}
-.calc-table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:8px;}
-.calc-table th,.calc-table td{padding:6px 3px;text-align:center;border-bottom:1px solid var(--border);}
-.calc-table th{color:var(--text-soft);font-weight:700;font-size:9.5px;text-transform:uppercase;}
-.calc-table td.hi{color:var(--accent3);font-weight:800;}
-.note{
-  background:rgba(79,157,255,.08);border:1px solid rgba(79,157,255,.25);border-radius:10px;padding:10px 12px;
-  font-size:12px;color:#c7d9f5;line-height:1.5;margin-top:10px;
+.week-grid button.active{background:var(--accent);color:#fff;}
+.list-item{
+  display:flex;justify-content:space-between;align-items:center;padding:10px 0;
+  border-top:1px solid var(--line);font-size:13px;gap:8px;
 }
-.warn{
-  background:rgba(255,90,60,.08);border:1px solid rgba(255,90,60,.25);border-radius:10px;padding:10px 12px;
-  font-size:12px;color:#ffcbc0;line-height:1.5;margin-top:10px;
+.list-item:first-child{border-top:none;padding-top:0;}
+.calc-table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:10px;font-variant-numeric:tabular-nums;}
+.calc-table th,.calc-table td{padding:6px 3px;text-align:center;border-bottom:1px solid var(--line);}
+.calc-table th{color:var(--dim);font-weight:600;font-size:9px;text-transform:uppercase;letter-spacing:.3px;}
+.note{border-left:2px solid var(--accent);padding-left:10px;font-size:12.5px;color:var(--dim);line-height:1.5;}
+
+/* ── nav ── */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:200;
+  background:rgba(12,14,17,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);
 }
-.textlink{background:none;border:none;color:var(--blue);font-weight:700;font-size:12.5px;cursor:pointer;padding:0;}
+.bottom-nav button{
+  flex:1;background:none;border:none;color:#5c6673;padding:9px 2px 7px;font-size:9px;
+  font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;
+  letter-spacing:.2px;transition:color .12s;
+}
+.bottom-nav button svg{width:21px;height:21px;}
+.bottom-nav button.active{color:var(--accent);}
+
+/* ── tabs, toast, motion ── */
+.tab{display:none;}
+.tab.active{display:block;animation:rise .18s ease;}
+@keyframes rise{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:none;}}
+@media (prefers-reduced-motion: reduce){.tab.active{animation:none;}}
 .savedtoast{
-  position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:var(--accent2);color:#0f1216;
-  font-weight:800;font-size:12px;padding:8px 16px;border-radius:999px;opacity:0;transition:opacity .25s;
+  position:fixed;bottom:86px;left:50%;transform:translateX(-50%);background:var(--good);color:#0c0e11;
+  font-weight:800;font-size:12px;padding:7px 15px;border-radius:999px;opacity:0;transition:opacity .2s;
   pointer-events:none;z-index:300;
 }
 .savedtoast.show{opacity:1;}
-h1,h2,h3{color:var(--text);}
-::-webkit-scrollbar{display:none;}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+h1,h2,h3{color:var(--ink);}
 </style>
 </head>
 <body>
@@ -158,10 +199,10 @@ h1,h2,h3{color:var(--text);}
 <div class="header">
   <div class="header-row">
     <div>
-      <div class="header-title">Hypertrophy II · Full Body</div>
-      <div class="header-sub" id="headerSub">Barbell Medicine template · 10 weeks</div>
+      <div class="header-title">Hypertrophy II</div>
+      <div class="header-sub" id="headerSub">Full body · 10 weeks</div>
     </div>
-    <button class="week-pill" id="weekPill" onclick="jumpTo('program')">Wk —</button>
+    <button class="week-pill" id="weekPill" onclick="jumpTo('today')">Wk —</button>
   </div>
 </div>
 
@@ -177,12 +218,24 @@ h1,h2,h3{color:var(--text);}
 <div class="savedtoast" id="savedToast">Saved</div>
 
 <nav class="bottom-nav">
-  <button data-tab="today" onclick="jumpTo('today')"><span class="ic">🏋️</span>Today</button>
-  <button data-tab="conditioning" onclick="jumpTo('conditioning')"><span class="ic">🏃</span>Cardio</button>
-  <button data-tab="progress" onclick="jumpTo('progress')"><span class="ic">📈</span>Progress</button>
-  <button data-tab="program" onclick="jumpTo('program')"><span class="ic">📋</span>Program</button>
-  <button data-tab="calc" onclick="jumpTo('calc')"><span class="ic">🧮</span>Calc</button>
-  <button data-tab="settings" onclick="jumpTo('settings')"><span class="ic">⚙️</span>Settings</button>
+  <button data-tab="today" onclick="jumpTo('today')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="9.2" width="2.6" height="5.6" rx="1.1"/><rect x="4.6" y="7" width="3" height="10" rx="1.2"/><rect x="16.4" y="7" width="3" height="10" rx="1.2"/><rect x="20.4" y="9.2" width="2.6" height="5.6" rx="1.1"/><rect x="8.4" y="10.9" width="7.2" height="2.2" rx="1.1"/></svg>
+    Today</button>
+  <button data-tab="conditioning" onclick="jumpTo('conditioning')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 13 7 13 10 5.5 14 19 16.5 13 22 13"/></svg>
+    Cardio</button>
+  <button data-tab="progress" onclick="jumpTo('progress')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="13" width="4" height="8" rx="1.2"/><rect x="10" y="8" width="4" height="13" rx="1.2"/><rect x="17" y="3" width="4" height="18" rx="1.2"/></svg>
+    Progress</button>
+  <button data-tab="program" onclick="jumpTo('program')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="4.5" cy="6" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.1" fill="currentColor" stroke="none"/><line x1="9" y1="6" x2="20.5" y2="6"/><line x1="9" y1="12" x2="20.5" y2="12"/><line x1="9" y1="18" x2="20.5" y2="18"/></svg>
+    Program</button>
+  <button data-tab="calc" onclick="jumpTo('calc')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="4.5" y="2.5" width="15" height="19" rx="2.5"/><line x1="8.5" y1="7" x2="15.5" y2="7"/><circle cx="8.7" cy="12" r=".4" fill="currentColor"/><circle cx="12" cy="12" r=".4" fill="currentColor"/><circle cx="15.3" cy="12" r=".4" fill="currentColor"/><circle cx="8.7" cy="16.5" r=".4" fill="currentColor"/><circle cx="12" cy="16.5" r=".4" fill="currentColor"/><circle cx="15.3" cy="16.5" r=".4" fill="currentColor"/></svg>
+    Calc</button>
+  <button data-tab="settings" onclick="jumpTo('settings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="3" y1="7" x2="21" y2="7"/><circle cx="9" cy="7" r="2.4" fill="var(--bg)"/><line x1="3" y1="16" x2="21" y2="16"/><circle cx="15.5" cy="16" r="2.4" fill="var(--bg)"/></svg>
+    Settings</button>
 </nav>
 
 <script>
@@ -336,15 +389,15 @@ function goToToday(){
 }
 function todayBannerHtml(){
   const ti = todayInfo();
-  if(!ti) return `<div class="note">Set your <b>start date</b> in Settings and this screen will open to exactly what you're doing each day.</div>`;
-  if(ti.status==='notstarted') return `<div class="note">Program starts in <b>${ti.daysUntil} day${ti.daysUntil>1?'s':''}</b>. Week 1 · Day A will be your first session.</div>`;
-  if(ti.status==='finished') return `<div class="note">All 10 weeks are complete. Check the Progress tab for your e1RM trends — and nice work.</div>`;
+  if(!ti) return `<div class="today-line dim">Set a start date in Settings to open each day's session automatically.</div>`;
+  if(ti.status==='notstarted') return `<div class="today-line dim">Starts in <b>&nbsp;${ti.daysUntil} day${ti.daysUntil>1?'s':''}</b>&nbsp;— first up: Week 1 · Day A.</div>`;
+  if(ti.status==='finished') return `<div class="today-line"><span class="dot rest"></span>All 10 weeks complete — see Progress.</div>`;
   if(ti.status==='rest'){
-    const next = ti.nextDay ? ` Next lift: <b>Day ${ti.nextDay}</b> on ${DAY_NAMES[ti.nextDow]}.` : '';
-    return `<div class="note"><b>Today is a rest / conditioning day</b> (Week ${ti.week}). Good slot for one of this week's runs — see the Cardio tab.${next}</div>`;
+    const next = ti.nextDay ? `<span class="dim">· next lift ${DAY_NAMES[ti.nextDow]} (Day ${ti.nextDay})</span>` : '';
+    return `<div class="today-line"><span class="dot rest"></span><b>Rest / run day</b> ${next}</div>`;
   }
   const onIt = (STATE.currentWeek===ti.week && STATE.ui.day===ti.day);
-  return `<div class="note"><b>Today: Week ${ti.week} · Day ${ti.day}</b> — ${DAY_META[ti.day].focus}.${onIt?'':' <button class="textlink" onclick="goToToday()">Show today →</button>'}</div>`;
+  return `<div class="today-line"><span class="dot"></span><b>Today: Week ${ti.week} · Day ${ti.day}</b><span class="dim">· ${DAY_META[ti.day].focus}</span>${onIt?'':'<button class="textlink" onclick="goToToday()">Show today →</button>'}</div>`;
 }
 
 function hrZones(age){
@@ -389,11 +442,11 @@ function setsTableHtml(key){
   const log = getLog(key);
   const rows = log.sets.map((s,i)=>`
     <tr>
-      <td class="tiny muted" style="width:22px;text-align:center">${i+1}</td>
+      <td class="set-num">${i+1}</td>
       <td><input type="number" inputmode="decimal" placeholder="lb" value="${s.w??''}" data-logkey="${key}" data-idx="${i}" data-field="w"></td>
       <td><input type="number" inputmode="numeric" placeholder="reps" value="${s.r??''}" data-logkey="${key}" data-idx="${i}" data-field="r"></td>
       <td><input type="number" step="0.5" inputmode="decimal" placeholder="RPE" value="${s.p??''}" data-logkey="${key}" data-idx="${i}" data-field="p"></td>
-      <td><button class="set-del" onclick="delSet('${key}',${i})">✕</button></td>
+      <td style="width:24px"><button class="set-del" onclick="delSet('${key}',${i})">✕</button></td>
     </tr>`).join('');
   const stats = exerciseStats(key);
   return `
@@ -401,18 +454,17 @@ function setsTableHtml(key){
       <thead><tr><th></th><th>Weight</th><th>Reps</th><th>RPE</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
-    <div class="row-actions">
-      <button class="btn ghost" onclick="addSet('${key}')">+ Add set</button>
-    </div>
-    <div class="stat-row" id="stats-${key}">${statHtml(stats)}</div>
+    <button class="addset" onclick="addSet('${key}')">+ Add set</button>
+    <div class="ex-stats" id="stats-${key}">${statHtml(stats)}</div>
   `;
 }
 function statHtml(stats){
-  return `
-    <div class="stat"><div class="v">${stats.tonnage?Math.round(stats.tonnage).toLocaleString():'—'}</div><div class="l">Tonnage</div></div>
-    <div class="stat"><div class="v">${stats.e1rm?Math.round(stats.e1rm):'—'}</div><div class="l">Est. 1RM</div></div>
-    <div class="stat"><div class="v">${stats.avgInt?Math.round(stats.avgInt*100)+'%':'—'}</div><div class="l">Avg Int.</div></div>
-  `;
+  if(!stats.hasData) return '';
+  const parts = [];
+  if(stats.tonnage) parts.push(`${Math.round(stats.tonnage).toLocaleString()} lb total`);
+  if(stats.e1rm) parts.push(`e1RM ${Math.round(stats.e1rm)}`);
+  if(stats.avgInt) parts.push(`${Math.round(stats.avgInt*100)}% avg`);
+  return parts.join(' · ');
 }
 function addSet(key){
   const log = getLog(key);
@@ -428,10 +480,8 @@ function delSet(key,idx){
   rerenderExercise(key);
 }
 function rerenderExercise(key){
-  const table = document.querySelector(`table.sets[data-logkey="${key}"]`);
-  if(table && table.parentElement){
-    table.parentElement.innerHTML = setsTableHtml(key);
-  }
+  const wrap = document.querySelector(`[data-setswrap="${key}"]`);
+  if(wrap) wrap.innerHTML = setsTableHtml(key);
 }
 document.addEventListener('input', e=>{
   const el = e.target;
@@ -462,47 +512,51 @@ function renderToday(){
   const sessionKey = `${week}_SESSION_${day}_1`;
   const sessLog = getLog(sessionKey);
 
+  const loggedCount = slots.filter(s=>exerciseStats(logKey(week,s.key)).hasData).length;
   let html = `
   <div class="card">
     ${todayBannerHtml()}
-    <div class="pillrow" style="margin-top:12px;">
-      ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="pill ${n===week?'active':''}" onclick="setWeek(${n})">${n}</button>`).join('')}
+    <div class="weekstrip" id="weekstrip">
+      ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="${n===week?'active':''}" onclick="setWeek(${n})">${n}</button>`).join('')}
     </div>
     <div class="seg">
-      ${['A','B','C','D'].map(d=>`<button class="${day===d?'active':''}" onclick="setDay('${d}')">Day ${d}</button>`).join('')}
+      ${['A','B','C','D'].map(d=>`<button class="${day===d?'active':''}" onclick="setDay('${d}')">${d}</button>`).join('')}
     </div>
-    <div class="tiny muted" style="margin-top:8px;">Day ${day} · ${DAY_META[day].focus} · once per week</div>
+    <div class="seg-caption">
+      <span>Day ${day} · ${DAY_META[day].focus}</span>
+      <span style="display:flex;align-items:center;gap:7px;">${loggedCount}/${slots.length}
+        <span class="progressbar"><i style="width:${Math.round(loggedCount/slots.length*100)}%"></i></span>
+      </span>
+    </div>
   </div>
+  ${slots.map(s=>exerciseBlock(s,w,week)).join('')}
   <div class="card">
-    <h2>Exercises</h2>
-    ${slots.map(s=>exerciseBlock(s,w,week)).join('')}
-  </div>
-  <div class="card">
-    <h2>Session Summary</h2>
+    <h2>Session</h2>
     <div class="grid2">
-      <div class="field"><label>Session time (min)</label><input type="number" data-sessionmeta="${sessionKey}" data-field="time" value="${esc(sessLog.time)}"></div>
-      <div class="field"><label>Session RPE (1-10)</label><input type="number" step="0.5" data-sessionmeta="${sessionKey}" data-field="srpe" value="${esc(sessLog.srpe)}"></div>
+      <div class="field" style="margin-bottom:0;"><label>Time (min)</label><input type="number" data-sessionmeta="${sessionKey}" data-field="time" value="${esc(sessLog.time)}"></div>
+      <div class="field" style="margin-bottom:0;"><label>Session RPE</label><input type="number" step="0.5" data-sessionmeta="${sessionKey}" data-field="srpe" value="${esc(sessLog.srpe)}"></div>
     </div>
-    <div class="tiny muted">Rate overall session fatigue: 5 = easy, 8 = tough but repeatable tomorrow, 10 = maximal.</div>
+    <div class="tiny dim" style="margin-top:8px;">5 = easy · 8 = tough but repeatable · 10 = maximal</div>
   </div>
   `;
   document.getElementById('tab-today').innerHTML = html;
+  const strip = document.getElementById('weekstrip');
+  const act = strip && strip.querySelector('.active');
+  if(act) act.scrollIntoView({block:'nearest', inline:'center'});
 }
 function exerciseBlock(s, w, week){
   const key = logKey(week, s.key);
   const name = exName(s.key, w);
   const prog = w[s.key].prog;
+  const done = exerciseStats(key).hasData;
   return `
-    <div class="exercise">
-      <div class="ex-head">
-        <div>
-          <div class="ex-name">${esc(name)}</div>
-          <div class="tiny muted">${esc(s.label)}</div>
-        </div>
-        <span class="tag ${DAY_META[s.day].color}">${esc(s.sub||s.day)}</span>
+    <div class="card">
+      <div class="ex-top">
+        <div class="ex-name">${esc(name)}${done?'<span class="donedot"></span>':''}</div>
+        <span class="chip">${esc(s.sub||s.day)}</span>
       </div>
       <div class="ex-prog">${esc(prog)}</div>
-      ${setsTableHtml(key)}
+      <div data-setswrap="${key}">${setsTableHtml(key)}</div>
     </div>
   `;
 }
@@ -527,7 +581,7 @@ function renderConditioning(){
       ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="pill ${n===week?'active':''}" onclick="setWeekCond(${n})">${n}</button>`).join('')}
     </div>
     <div class="divider"></div>
-    ${lines.map(l=>`<div class="small" style="margin-bottom:6px;line-height:1.5;">${esc(l).replace(/Zone 1/g,'<b style="color:var(--accent3)">Zone 1 (easy run)</b>').replace(/Zone 2/g,'<b style="color:var(--blue)">Zone 2 (steady run)</b>')}</div>`).join('')}
+    ${lines.map(l=>`<div class="small" style="margin-bottom:6px;line-height:1.5;">${esc(l).replace(/Zone 1/g,'<b>Zone 1 (easy run)</b>').replace(/Zone 2/g,'<b>Zone 2 (steady run)</b>')}</div>`).join('')}
     <div class="stat-row">
       <div class="stat"><div class="v">${targetMin||'—'}</div><div class="l">Target min/wk</div></div>
       <div class="stat"><div class="v">${loggedMin}</div><div class="l">Logged min/wk</div></div>
@@ -622,7 +676,7 @@ function renderProgress(){
       <h3>${esc(exName(key,w1))} <span class="tiny muted">(${esc(slot.label)})</span></h3>
       <div style="display:flex;align-items:flex-end;gap:4px;height:70px;margin-top:10px;">
         ${pts.map((p,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;">
-            <div style="width:100%;background:${p?'var(--accent)':'var(--card2)'};border-radius:4px 4px 0 0;height:${p? Math.max(6,(p/max)*100):4}%;"></div>
+            <div style="width:100%;background:${p?'var(--accent)':'var(--surface2)'};border-radius:4px 4px 0 0;height:${p? Math.max(6,(p/max)*100):4}%;"></div>
             <div class="tiny muted" style="margin-top:3px;">${i+1}</div>
           </div>`).join('')}
       </div>
@@ -645,8 +699,11 @@ function renderProgram(){
   </div>
   ${['A','B','C','D'].map(d=>`
   <div class="card">
-    <h2><span class="tag ${DAY_META[d].color}">Day ${d}</span> ${DAY_META[d].focus}</h2>
-    ${SLOTS.filter(s=>s.day===d).map(s=>`<div class="exercise"><div class="ex-name">${esc(exName(s.key,w))}</div><div class="tiny muted">${esc(s.label)}</div><div class="ex-prog">${esc(w[s.key].prog)}</div></div>`).join('')}
+    <h2>Day ${d} <span class="dim" style="font-weight:500;">· ${DAY_META[d].focus}</span></h2>
+    ${SLOTS.filter(s=>s.day===d).map(s=>`<div class="list-item" style="flex-direction:column;align-items:stretch;gap:2px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;"><b>${esc(exName(s.key,w))}</b><span class="chip">${esc(s.label)}</span></div>
+      <div class="ex-prog" style="margin:2px 0 0;">${esc(w[s.key].prog)}</div>
+    </div>`).join('')}
   </div>`).join('')}
   <div class="card">
     <h2>Conditioning</h2>
