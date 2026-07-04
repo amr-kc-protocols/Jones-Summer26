@@ -72,6 +72,10 @@ main{padding:12px 12px 20px;max-width:560px;margin:0 auto;}
 .seg-caption{font-size:11px;color:var(--dim);margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
 .progressbar{height:3px;border-radius:2px;background:var(--surface2);overflow:hidden;flex:1;max-width:90px;}
 .progressbar i{display:block;height:100%;background:var(--good);border-radius:2px;transition:width .25s;}
+.progressbar.wide{max-width:none;height:5px;border-radius:3px;margin-top:2px;}
+.cd-num{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.5px;margin:2px 0 8px;}
+.cd-num .cd-unit{font-size:13px;font-weight:600;color:var(--dim);margin-left:7px;letter-spacing:0;}
+.cd-num .done{font-size:17px;color:var(--good);}
 
 /* ── exercise cards ── */
 .ex-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
@@ -566,21 +570,25 @@ function renderConditioning(){
   const targetMin = parseTargetMinutes(w.conditioning);
   const weekLogs = STATE.conditioningLogs.filter(l=>l.week===week);
   const loggedMin = weekLogs.reduce((a,l)=>a+(parseFloat(l.duration)||0),0);
+  const loggedMi = weekLogs.reduce((a,l)=>a+(parseFloat(l.dist)||0),0);
+  const remaining = Math.max(0, targetMin - loggedMin);
+  const pct = targetMin ? Math.min(100, loggedMin/targetMin*100) : 0;
 
   const lines = w.conditioning.split('\n').filter(Boolean);
 
   let html = `
   <div class="card">
     <h2>Running Conditioning — Week ${week}</h2>
-    <div class="pillrow">
-      ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="pill ${n===week?'active':''}" onclick="setWeekCond(${n})">${n}</button>`).join('')}
+    <div class="weekstrip" id="condstrip">
+      ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="${n===week?'active':''}" onclick="setWeekCond(${n})">${n}</button>`).join('')}
     </div>
+    ${targetMin ? `
+    <div class="cd-num">${remaining===0 ? '<span class="done">Weekly target met ✓</span>' : `${remaining}<span class="cd-unit">min left</span>`}</div>
+    <div class="progressbar wide"><i style="width:${pct}%"></i></div>
+    <div class="tiny dim" style="margin-top:7px;">${loggedMin} of ${targetMin} min logged${loggedMi ? ` · ${(+loggedMi.toFixed(1))} mi this week` : ''}</div>
+    ` : ''}
     <div class="divider"></div>
     ${lines.map(l=>`<div class="small" style="margin-bottom:6px;line-height:1.5;">${esc(l).replace(/Zone 1/g,'<b>Zone 1 (easy run)</b>').replace(/Zone 2/g,'<b>Zone 2 (steady run)</b>')}</div>`).join('')}
-    <div class="stat-row">
-      <div class="stat"><div class="v">${targetMin||'—'}</div><div class="l">Target min/wk</div></div>
-      <div class="stat"><div class="v">${loggedMin}</div><div class="l">Logged min/wk</div></div>
-    </div>
   </div>
 
   <div class="card">
@@ -609,10 +617,13 @@ function renderConditioning(){
       </div>
     </div>
     <div class="grid2">
-      <div class="field"><label>Duration (min)</label><input type="number" id="condDur"></div>
-      <div class="field"><label>Avg HR (optional)</label><input type="number" id="condHR"></div>
+      <div class="field"><label>Time (min)</label><input type="number" inputmode="decimal" id="condDur"></div>
+      <div class="field"><label>Distance (mi)</label><input type="number" step="0.01" inputmode="decimal" id="condDist"></div>
     </div>
-    <div class="field"><label>Notes</label><input type="text" id="condNotes" placeholder="route, pace, how it felt…"></div>
+    <div class="grid2">
+      <div class="field"><label>Avg HR (optional)</label><input type="number" id="condHR"></div>
+      <div class="field"><label>Notes</label><input type="text" id="condNotes" placeholder="how it felt…"></div>
+    </div>
     <button class="btn primary block" onclick="addCondLog()">+ Log run</button>
   </div>
 
@@ -621,7 +632,7 @@ function renderConditioning(){
     ${weekLogs.length ? weekLogs.map((l,i)=>`
       <div class="list-item">
         <div>
-          <div style="font-weight:700">${esc(l.zone)} · ${l.duration} min</div>
+          <div style="font-weight:700">${esc(l.zone)} · ${l.duration} min${l.dist?` · ${(+parseFloat(l.dist).toFixed(2))} mi`:''}${paceStr(l)?` · ${paceStr(l)} /mi`:''}</div>
           <div class="tiny muted">${esc(l.date)}${l.hr?` · ${l.hr} bpm avg`:''}${l.notes?` · ${esc(l.notes)}`:''}</div>
         </div>
         <button class="set-del" onclick="delCondLog(${STATE.conditioningLogs.indexOf(l)})">✕</button>
@@ -630,16 +641,27 @@ function renderConditioning(){
   `;
   document.getElementById('tab-conditioning').innerHTML = html;
   document.getElementById('condAge').addEventListener('input', e=>{ STATE.meta.age = e.target.value; save(); renderConditioning(); });
+  const strip = document.getElementById('condstrip');
+  const act = strip && strip.querySelector('.active');
+  if(act) act.scrollIntoView({block:'nearest', inline:'center'});
 }
 function setWeekCond(n){ STATE.currentWeek=n; save(); renderConditioning(); }
+function paceStr(l){
+  const min = parseFloat(l.duration), mi = parseFloat(l.dist);
+  if(!min || !mi || mi<=0) return '';
+  const p = min/mi;
+  const mm = Math.floor(p), ss = Math.round((p-mm)*60);
+  return `${mm}:${String(ss===60?0:ss).padStart(2,'0')}`;
+}
 function addCondLog(){
   const date = document.getElementById('condDate').value;
   const zone = document.getElementById('condZone').value;
   const duration = document.getElementById('condDur').value;
+  const dist = document.getElementById('condDist').value;
   const hr = document.getElementById('condHR').value;
   const notes = document.getElementById('condNotes').value;
-  if(!duration){ alert('Enter a duration.'); return; }
-  STATE.conditioningLogs.push({week:STATE.currentWeek, date, zone, duration, hr, notes});
+  if(!duration){ alert('Enter the run time in minutes.'); return; }
+  STATE.conditioningLogs.push({week:STATE.currentWeek, date, zone, duration, dist, hr, notes});
   save();
   renderConditioning();
 }
