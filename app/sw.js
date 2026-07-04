@@ -1,5 +1,5 @@
 /* Service worker: offline-first shell, network-first page updates */
-const CACHE = 'hyp2-v1';
+const CACHE = 'hyp2-v2';
 const ASSETS = [
   './',
   './index.html',
