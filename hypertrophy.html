@@ -565,20 +565,21 @@ function refreshHeader(){
 }
 
 /* ---------- Set table rendering ---------- */
+function hasVals(s){ return (s.w!=null&&s.w!=='')||(s.r!=null&&s.r!=='')||(s.p!=null&&s.p!==''); }
 function setsTableHtml(key){
   const log = getLog(key);
-  const last = log.sets.length - 1;
   // ghost the suggested weight into empty weight cells as placeholder text
   const km = key.match(/^(\d+)_(.+)_1$/);
   const sug = km ? suggestionFor(km[2], +km[1]) : null;
   const ph = i => sug ? String(sug.perset ? sug.weights[Math.min(i, sug.weights.length-1)] : sug.weights[0]) : 'lb';
+  const anyVals = log.sets.some(hasVals);
   const rows = log.sets.map((s,i)=>`
     <tr>
       <td class="set-num">${i+1}</td>
       <td><input type="number" inputmode="decimal" placeholder="${ph(i)}" value="${s.w??''}" data-logkey="${key}" data-idx="${i}" data-field="w"></td>
       <td><input type="number" inputmode="numeric" placeholder="reps" value="${s.r??''}" data-logkey="${key}" data-idx="${i}" data-field="r"></td>
       <td><input type="number" step="0.5" inputmode="decimal" placeholder="RPE" value="${s.p??''}" data-logkey="${key}" data-idx="${i}" data-field="p"></td>
-      <td style="width:24px">${i===last?`<button class="set-del" onclick="delSet('${key}',${i})">✕</button>`:''}</td>
+      <td style="width:24px">${(hasVals(s)||i>=3)?`<button class="set-del" onclick="delSet('${key}',${i})" aria-label="Clear set">✕</button>`:''}</td>
     </tr>`).join('');
   const stats = exerciseStats(key);
   return `
@@ -587,6 +588,7 @@ function setsTableHtml(key){
       <tbody>${rows}</tbody>
     </table>
     <button class="addset" onclick="addSet('${key}')">+ Add set</button>
+    ${anyVals?`<button class="addset" style="margin-left:16px;" onclick="clearSets('${key}')">Clear all</button>`:''}
     <div class="ex-stats" id="stats-${key}">${statHtml(stats)}</div>
   `;
 }
@@ -606,15 +608,35 @@ function addSet(key){
 }
 function delSet(key,idx){
   const log = getLog(key);
-  log.sets.splice(idx,1);
+  const s = log.sets[idx];
+  if(s && hasVals(s)){
+    // first tap clears the values; the row stays for re-entry
+    log.sets[idx] = {w:null,r:null,p:null};
+  } else if(log.sets.length > 3){
+    // empty extra row: remove it
+    log.sets.splice(idx,1);
+  }
   if(log.sets.length===0) log.sets.push({w:null,r:null,p:null});
   save();
-  rerenderExercise(key);
+  renderToday();
+}
+function clearSets(key){
+  if(!confirm('Clear all sets for this exercise?')) return;
+  STATE.logs[key].sets = [{w:null,r:null,p:null},{w:null,r:null,p:null},{w:null,r:null,p:null}];
+  save();
+  renderToday();
 }
 function rerenderExercise(key){
   const wrap = document.querySelector(`[data-setswrap="${key}"]`);
   if(wrap) wrap.innerHTML = setsTableHtml(key);
 }
+// Select existing value on focus so typing replaces it and one backspace clears it
+document.addEventListener('focusin', e=>{
+  const el = e.target;
+  if(el.matches && el.matches('input[type="number"]') && el.value !== ''){
+    requestAnimationFrame(()=>{ try{ el.select(); }catch(_){} });
+  }
+});
 document.addEventListener('input', e=>{
   const el = e.target;
   if(el.matches('table.sets input')){
@@ -625,6 +647,12 @@ document.addEventListener('input', e=>{
     save();
     const statsEl = document.getElementById('stats-'+key);
     if(statsEl) statsEl.innerHTML = statHtml(exerciseStats(key));
+    // keep the row's clear button in sync as values come and go
+    const cell = el.closest('tr').lastElementChild;
+    const showX = hasVals(log.sets[idx]) || idx >= 3;
+    const hasX = !!cell.querySelector('.set-del');
+    if(showX && !hasX) cell.innerHTML = `<button class="set-del" onclick="delSet('${key}',${idx})" aria-label="Clear set">✕</button>`;
+    if(!showX && hasX) cell.innerHTML = '';
   }
   if(el.matches('[data-sessionmeta]')){
     const key = el.dataset.sessionmeta, field = el.dataset.field;
