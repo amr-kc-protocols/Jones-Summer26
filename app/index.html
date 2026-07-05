@@ -253,10 +253,10 @@ const EXERCISE_OPTIONS = {"squat":["2-Count Paused Squat","High Bar Squat","Low 
 /* ---------- State ---------- */
 const STORAGE_KEY = 'hyp2_fullbody_state_v1';
 const DAY_META = {
-  A:{focus:'Squat focus', color:'a'},
-  B:{focus:'Bench focus', color:'b'},
-  C:{focus:'Deadlift focus', color:'c'},
-  D:{focus:'Pull & quads focus', color:'d'}
+  A:{focus:'Squat focus', short:'Squat', color:'a'},
+  B:{focus:'Bench focus', short:'Bench', color:'b'},
+  C:{focus:'Deadlift focus', short:'Deadlift', color:'c'},
+  D:{focus:'Pull & quads focus', short:'Pull', color:'d'}
 };
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MAIN_LIFTS = ['squat','hinge','press','press2','row','row2'];
@@ -265,7 +265,7 @@ let STATE = loadState();
 
 function defaultState(){
   return {
-    meta:{ startDate:'', age:'', units:'lb', overrides:{}, trainDays:[1,2,4,5] },
+    meta:{ startDate:'', age:'', units:'lb', overrides:{}, trainDays:[1,2,4,5], dayOrder:['A','C','D','B'] },
     logs:{},           // key -> {sets:[{w,r,p}], time:'', srpe:''}
     conditioningLogs:[],// [{week,date,zone,duration,hr,notes}]
     ui:{ day:'A', progWeek:null },
@@ -282,6 +282,7 @@ function loadState(){
       ui: Object.assign(defaultState().ui, parsed.ui||{})
     });
     if(!Array.isArray(st.meta.trainDays) || st.meta.trainDays.length!==4) st.meta.trainDays = [1,2,4,5];
+    if(!Array.isArray(st.meta.dayOrder) || [...st.meta.dayOrder].sort().join('')!=='ABCD') st.meta.dayOrder = ['A','C','D','B'];
     if(!'ABCD'.includes(st.ui.day)) st.ui.day = 'A';
     return st;
   }catch(e){ return defaultState(); }
@@ -373,13 +374,14 @@ function todayInfo(){
   if(week > 10) return {status:'finished'};
   const dow = now.getDay();
   const days = STATE.meta.trainDays;
+  const order = STATE.meta.dayOrder;
   const idx = days.indexOf(dow);
-  if(idx !== -1) return {status:'train', week, day:'ABCD'[idx], dow};
+  if(idx !== -1) return {status:'train', week, day:order[idx], dow};
   // rest day: find the next scheduled lifting day
   for(let i=1;i<=7;i++){
     const d=(dow+i)%7;
     const j=days.indexOf(d);
-    if(j!==-1) return {status:'rest', week, nextDay:'ABCD'[j], nextDow:d, inDays:i};
+    if(j!==-1) return {status:'rest', week, nextDay:order[j], nextDow:d, inDays:i};
   }
   return {status:'rest', week};
 }
@@ -818,9 +820,21 @@ function runCalcProtein(){
 }
 
 /* ---------- Settings Tab ---------- */
-function trainDaysMapText(){
+function dayMapHtml(){
   const days = [...STATE.meta.trainDays].sort((a,b)=>a-b);
-  return days.map((d,i)=>`${DAY_NAMES[d]} → ${'ABCD'[i]}`).join(' · ');
+  const order = STATE.meta.dayOrder;
+  if(days.length!==4) return `<div class="tiny muted">Pick exactly 4 days, then assign a session to each.</div>`;
+  return `
+    <div class="grid2" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;">
+      ${days.map((d,i)=>`
+        <div>
+          <div class="tiny dim" style="text-align:center;margin-bottom:5px;font-weight:600;">${DAY_NAMES[d]}</div>
+          <select data-daymap="${i}" style="width:100%;background:var(--surface2);border:none;border-radius:9px;color:var(--ink);padding:9px 4px;font-size:12.5px;font-weight:700;font-family:inherit;text-align:center;appearance:none;-webkit-appearance:none;">
+            ${['A','B','C','D'].map(L=>`<option value="${L}"${order[i]===L?' selected':''}>${L} · ${DAY_META[L].short}</option>`).join('')}
+          </select>
+        </div>`).join('')}
+    </div>
+    <div class="tiny muted" style="margin-top:7px;">Assigning a session to a day swaps it with wherever it was before.</div>`;
 }
 function renderSettings(){
   const days = STATE.meta.trainDays;
@@ -832,8 +846,8 @@ function renderSettings(){
       <div class="pillrow" id="trainDaysRow">
         ${DAY_NAMES.map((n,i)=>`<button class="pill ${days.includes(i)?'active':''}" onclick="toggleTrainDay(${i})">${n}</button>`).join('')}
       </div>
-      <div class="tiny muted" id="trainDaysMap">${days.length===4 ? trainDaysMapText() : 'Pick exactly 4 days — earliest in the week becomes Day A, and so on.'}</div>
     </div>
+    <div class="field"><label>Session on each day</label>${dayMapHtml()}</div>
     <div class="field"><label>Age (for heart-rate zones)</label><input type="number" id="setAge" value="${esc(STATE.meta.age)}"></div>
     <button class="btn primary block" onclick="saveSettingsGeneral()">Save</button>
     <div class="tiny muted" style="margin-top:8px;">With a start date set, the Today tab opens straight to the right week and day automatically.</div>
@@ -881,6 +895,11 @@ function renderSettings(){
   </div>
   `;
   document.getElementById('tab-settings').innerHTML = html;
+  document.querySelectorAll('[data-daymap]').forEach(sel=>{
+    sel.addEventListener('change', e=>{
+      setDayMap(+e.target.dataset.daymap, e.target.value);
+    });
+  });
   document.querySelectorAll('[data-exsel]').forEach(sel=>{
     sel.addEventListener('change', e=>{
       const key = e.target.dataset.exsel;
@@ -904,6 +923,16 @@ function renderSettings(){
     });
   });
   document.getElementById('importFile').addEventListener('change', importData);
+}
+function setDayMap(idx, letter){
+  const order = [...STATE.meta.dayOrder];
+  const prev = order[idx];
+  const other = order.indexOf(letter);
+  order[idx] = letter;
+  if(other !== -1 && other !== idx) order[other] = prev;
+  STATE.meta.dayOrder = order;
+  save();
+  renderSettings();
 }
 function toggleTrainDay(d){
   let days = [...STATE.meta.trainDays];
