@@ -91,6 +91,27 @@ main{padding:12px 12px 20px;max-width:560px;margin:0 auto;}
   padding:3px 8px;border-radius:6px;color:var(--dim);border:1px solid var(--line);white-space:nowrap;
 }
 .ex-prog{font-size:12px;color:var(--dim);line-height:1.5;margin:6px 0 10px;white-space:pre-wrap;}
+.ex-prog.clampable{cursor:pointer;}
+.ex-prog.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+details{border-top:1px solid var(--line);}
+details:first-of-type{border-top:none;}
+details summary{
+  list-style:none;display:flex;justify-content:space-between;align-items:center;
+  padding:12px 0;font-weight:700;font-size:13px;cursor:pointer;-webkit-user-select:none;user-select:none;
+}
+details summary::-webkit-details-marker{display:none;}
+details .chev{color:var(--dim);font-size:15px;transition:transform .15s;}
+details[open] .chev{transform:rotate(90deg);}
+details .d-body{padding-bottom:12px;}
+.spark{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);}
+.spark:first-of-type{border-top:none;padding-top:2px;}
+.spark-name{flex:1;min-width:0;}
+.spark-name b{font-size:13px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.spark-name span{font-size:10.5px;color:var(--dim);}
+.spark-bars{display:flex;align-items:flex-end;gap:2px;height:26px;width:96px;flex:none;}
+.spark-bars i{flex:1;border-radius:1.5px;background:var(--surface2);min-height:2px;}
+.spark-bars i.on{background:var(--accent);}
+.spark-val{flex:none;font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;min-width:38px;text-align:right;}
 .ex-stats{font-size:12px;color:var(--dim);margin-top:8px;font-variant-numeric:tabular-nums;}
 
 /* ── set tables ── */
@@ -214,8 +235,6 @@ h1,h2,h3{color:var(--ink);}
   <div class="tab active" id="tab-today"></div>
   <div class="tab" id="tab-conditioning"></div>
   <div class="tab" id="tab-progress"></div>
-  <div class="tab" id="tab-program"></div>
-  <div class="tab" id="tab-calc"></div>
   <div class="tab" id="tab-settings"></div>
 </main>
 
@@ -230,13 +249,7 @@ h1,h2,h3{color:var(--ink);}
     Cardio</button>
   <button data-tab="progress" onclick="jumpTo('progress')">
     <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="13" width="4" height="8" rx="1.2"/><rect x="10" y="8" width="4" height="13" rx="1.2"/><rect x="17" y="3" width="4" height="18" rx="1.2"/></svg>
-    Progress</button>
-  <button data-tab="program" onclick="jumpTo('program')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="4.5" cy="6" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.1" fill="currentColor" stroke="none"/><line x1="9" y1="6" x2="20.5" y2="6"/><line x1="9" y1="12" x2="20.5" y2="12"/><line x1="9" y1="18" x2="20.5" y2="18"/></svg>
-    Program</button>
-  <button data-tab="calc" onclick="jumpTo('calc')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="4.5" y="2.5" width="15" height="19" rx="2.5"/><line x1="8.5" y1="7" x2="15.5" y2="7"/><circle cx="8.7" cy="12" r=".4" fill="currentColor"/><circle cx="12" cy="12" r=".4" fill="currentColor"/><circle cx="15.3" cy="12" r=".4" fill="currentColor"/><circle cx="8.7" cy="16.5" r=".4" fill="currentColor"/><circle cx="12" cy="16.5" r=".4" fill="currentColor"/><circle cx="15.3" cy="16.5" r=".4" fill="currentColor"/></svg>
-    Calc</button>
+    Stats</button>
   <button data-tab="settings" onclick="jumpTo('settings')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="3" y1="7" x2="21" y2="7"/><circle cx="9" cy="7" r="2.4" fill="var(--bg)"/><line x1="3" y1="16" x2="21" y2="16"/><circle cx="15.5" cy="16" r="2.4" fill="var(--bg)"/></svg>
     Settings</button>
@@ -268,7 +281,7 @@ function defaultState(){
     meta:{ startDate:'', age:'', units:'lb', overrides:{}, trainDays:[1,2,4,5], dayOrder:['A','C','D','B'] },
     logs:{},           // key -> {sets:[{w,r,p}], time:'', srpe:''}
     conditioningLogs:[],// [{week,date,zone,duration,hr,notes}]
-    ui:{ day:'A', progWeek:null },
+    ui:{ day:'A' },
     currentWeek: 1
   };
 }
@@ -433,7 +446,7 @@ function jumpTo(tabName){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+tabName).classList.add('active');
   document.querySelectorAll('.bottom-nav button').forEach(b=>b.classList.toggle('active', b.dataset.tab===tabName));
-  const renderers = {today:renderToday, conditioning:renderConditioning, progress:renderProgress, program:renderProgram, calc:renderCalc, settings:renderSettings};
+  const renderers = {today:renderToday, conditioning:renderConditioning, progress:renderProgress, settings:renderSettings};
   if(renderers[tabName]) renderers[tabName]();
   window.scrollTo(0,0);
 }
@@ -446,13 +459,14 @@ function refreshHeader(){
 /* ---------- Set table rendering ---------- */
 function setsTableHtml(key){
   const log = getLog(key);
+  const last = log.sets.length - 1;
   const rows = log.sets.map((s,i)=>`
     <tr>
       <td class="set-num">${i+1}</td>
       <td><input type="number" inputmode="decimal" placeholder="lb" value="${s.w??''}" data-logkey="${key}" data-idx="${i}" data-field="w"></td>
       <td><input type="number" inputmode="numeric" placeholder="reps" value="${s.r??''}" data-logkey="${key}" data-idx="${i}" data-field="r"></td>
       <td><input type="number" step="0.5" inputmode="decimal" placeholder="RPE" value="${s.p??''}" data-logkey="${key}" data-idx="${i}" data-field="p"></td>
-      <td style="width:24px"><button class="set-del" onclick="delSet('${key}',${i})">✕</button></td>
+      <td style="width:24px">${i===last?`<button class="set-del" onclick="delSet('${key}',${i})">✕</button>`:''}</td>
     </tr>`).join('');
   const stats = exerciseStats(key);
   return `
@@ -561,7 +575,7 @@ function exerciseBlock(s, w, week){
         <div class="ex-name">${esc(name)}${done?'<span class="donedot"></span>':''}</div>
         <span class="chip">${esc(s.sub||s.day)}</span>
       </div>
-      <div class="ex-prog">${esc(prog)}</div>
+      <div class="ex-prog clamp clampable" onclick="this.classList.toggle('clamp')">${esc(prog)}</div>
       <div data-setswrap="${key}">${setsTableHtml(key)}</div>
     </div>
   `;
@@ -596,19 +610,9 @@ function renderConditioning(){
     ` : ''}
     <div class="divider"></div>
     ${lines.map(l=>`<div class="small" style="margin-bottom:6px;line-height:1.5;">${esc(l).replace(/Zone 1/g,'<b>Zone 1 (easy run)</b>').replace(/Zone 2/g,'<b>Zone 2 (steady run)</b>')}</div>`).join('')}
-  </div>
-
-  <div class="card">
-    <h2>Your Heart Rate Zones</h2>
-    <div class="field"><label>Age</label><input type="number" id="condAge" value="${esc(STATE.meta.age)}" placeholder="e.g. 32"></div>
-    ${zones ? `
-      <div class="stat-row">
-        <div class="stat"><div class="v">${zones.hrmax}</div><div class="l">Max HR (bpm)</div></div>
-        <div class="stat"><div class="v">${zones.zone1[0]}–${zones.zone1[1]}</div><div class="l">Zone 1</div></div>
-        <div class="stat"><div class="v">${zones.zone2[0]}–${zones.zone2[1]}</div><div class="l">Zone 2</div></div>
-      </div>
-      <div class="tiny muted" style="margin-top:8px;">HRmax = 208 − (0.7 × age). Zone 1 = 60–70% HRmax, conversational pace. Zone 2 = 70–80% HRmax, "short sentences only" pace.</div>
-    ` : `<div class="tiny muted">Enter your age to see bpm targets for each zone.</div>`}
+    <div class="tiny dim" style="margin-top:8px;">${zones
+      ? `Your zones: <b>Zone 1</b> ${zones.zone1[0]}–${zones.zone1[1]} bpm (conversational) · <b>Zone 2</b> ${zones.zone2[0]}–${zones.zone2[1]} bpm (short sentences) · max ${zones.hrmax}`
+      : `Add your age in Settings to see bpm targets for each zone.`}</div>
   </div>
 
   <div class="card">
@@ -647,7 +651,6 @@ function renderConditioning(){
   </div>
   `;
   document.getElementById('tab-conditioning').innerHTML = html;
-  document.getElementById('condAge').addEventListener('input', e=>{ STATE.meta.age = e.target.value; save(); renderConditioning(); });
   const strip = document.getElementById('condstrip');
   const act = strip && strip.querySelector('.active');
   if(act) act.scrollIntoView({block:'nearest', inline:'center'});
@@ -678,9 +681,10 @@ function delCondLog(i){
   renderConditioning();
 }
 
-/* ---------- Progress Tab ---------- */
+/* ---------- Stats Tab (trends + calculators) ---------- */
 function renderProgress(){
-  let html = `<div class="card"><h2>Estimated 1RM Trend</h2><div class="small muted">Best logged set each week, using the RPE% chart.</div></div>`;
+  const w1 = getWeek(1);
+  let sparks = '';
   MAIN_LIFTS.forEach(key=>{
     const slot = getSlot(key);
     const pts = [];
@@ -695,85 +699,54 @@ function renderProgress(){
       pts.push(best);
     }
     const max = Math.max(...pts.filter(x=>x!=null), 1);
-    const w1 = getWeek(1);
-    html += `<div class="card">
-      <h3>${esc(exName(key,w1))} <span class="tiny muted">(${esc(slot.label)})</span></h3>
-      <div style="display:flex;align-items:flex-end;gap:4px;height:70px;margin-top:10px;">
-        ${pts.map((p,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;">
-            <div style="width:100%;background:${p?'var(--accent)':'var(--surface2)'};border-radius:4px 4px 0 0;height:${p? Math.max(6,(p/max)*100):4}%;"></div>
-            <div class="tiny muted" style="margin-top:3px;">${i+1}</div>
-          </div>`).join('')}
-      </div>
-      <div class="tiny muted" style="margin-top:6px;">${pts.some(p=>p) ? 'Latest: ' + Math.round(pts.filter(p=>p).slice(-1)[0]) + ' est. 1RM' : 'No sets logged yet.'}</div>
+    const latest = pts.filter(p=>p).slice(-1)[0];
+    sparks += `
+    <div class="spark">
+      <div class="spark-name"><b>${esc(exName(key,w1))}</b><span>${esc(slot.label)}</span></div>
+      <div class="spark-bars">${pts.map(p=>`<i class="${p?'on':''}" style="height:${p?Math.max(12,(p/max)*100):8}%"></i>`).join('')}</div>
+      <div class="spark-val">${latest?Math.round(latest):'—'}</div>
     </div>`;
   });
+
+  let html = `
+  <div class="card">
+    <h2>Estimated 1RM <span class="dim" style="font-weight:500;">· weeks 1–10 · best set</span></h2>
+    ${sparks}
+  </div>
+  <div class="card" style="padding-top:2px;padding-bottom:2px;">
+    <details>
+      <summary>1RM calculator<span class="chev">›</span></summary>
+      <div class="d-body">
+        <div class="grid2">
+          <div class="field"><label>Weight</label><input type="number" id="calcW"></div>
+          <div class="field"><label>Reps</label><input type="number" id="calcR"></div>
+        </div>
+        <div class="field"><label>RPE</label><input type="number" step="0.5" id="calcP" value="8"></div>
+        <button class="btn primary block" onclick="runCalc1RM()">Calculate</button>
+        <div id="calc1RMOut" class="stat-row"></div>
+      </div>
+    </details>
+    <details>
+      <summary>Target weight table<span class="chev">›</span></summary>
+      <div class="d-body">
+        <div class="tiny dim" style="margin-bottom:10px;">Enter an estimated 1RM to see the weight for every rep × RPE target — handy for planning next week's loads.</div>
+        <div class="field"><label>Estimated 1RM</label><input type="number" id="calc1RMIn" placeholder="e.g. 315"></div>
+        <button class="btn primary block" onclick="runCalcTable()">Build table</button>
+        <div id="calcTableOut" style="overflow-x:auto;"></div>
+      </div>
+    </details>
+    <details>
+      <summary>Protein target<span class="chev">›</span></summary>
+      <div class="d-body">
+        <div class="tiny dim" style="margin-bottom:10px;">BBM recommends ~1.6 g/kg bodyweight per day.</div>
+        <div class="field"><label>Bodyweight (lb)</label><input type="number" id="calcBW"></div>
+        <button class="btn primary block" onclick="runCalcProtein()">Calculate</button>
+        <div id="calcProteinOut" class="stat-row"></div>
+      </div>
+    </details>
+  </div>
+  `;
   document.getElementById('tab-progress').innerHTML = html;
-}
-
-/* ---------- Program Tab (read-only browser) ---------- */
-function renderProgram(){
-  const week = STATE.ui.progWeek || STATE.currentWeek;
-  const w = getWeek(week);
-  let html = `
-  <div class="card">
-    <h2>Program Overview</h2>
-    <div class="week-grid" style="margin-top:8px;">
-      ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="${n===week?'active':''}" onclick="setProgWeek(${n})">${n}</button>`).join('')}
-    </div>
-  </div>
-  ${['A','B','C','D'].map(d=>`
-  <div class="card">
-    <h2>Day ${d} <span class="dim" style="font-weight:500;">· ${DAY_META[d].focus}</span></h2>
-    ${SLOTS.filter(s=>s.day===d).map(s=>`<div class="list-item" style="flex-direction:column;align-items:stretch;gap:2px;">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;"><b>${esc(exName(s.key,w))}</b><span class="chip">${esc(s.label)}</span></div>
-      <div class="ex-prog" style="margin:2px 0 0;">${esc(w[s.key].prog)}</div>
-    </div>`).join('')}
-  </div>`).join('')}
-  <div class="card">
-    <h2>Conditioning</h2>
-    <div class="ex-prog" style="margin:0;">${esc(w.conditioning)}</div>
-  </div>
-  `;
-  document.getElementById('tab-program').innerHTML = html;
-}
-function setProgWeek(n){ STATE.ui.progWeek = n; save(); renderProgram(); }
-
-/* ---------- Calculators Tab ---------- */
-function renderCalc(){
-  let html = `
-  <div class="card">
-    <h2>Estimated 1RM Calculator</h2>
-    <div class="small muted">Enter a weight, rep count, and RPE from any set to estimate your one-rep max.</div>
-    <div class="grid2" style="margin-top:10px;">
-      <div class="field"><label>Weight</label><input type="number" id="calcW"></div>
-      <div class="field"><label>Reps</label><input type="number" id="calcR"></div>
-    </div>
-    <div class="field"><label>RPE</label><input type="number" step="0.5" id="calcP" value="8"></div>
-    <button class="btn primary block" onclick="runCalc1RM()">Calculate</button>
-    <div id="calc1RMOut" class="stat-row"></div>
-  </div>
-  <div class="card">
-    <h2>Target Weight Table</h2>
-    <div class="small muted">Given an estimated 1RM, find the weight for any rep × RPE target — same chart Barbell Medicine uses to plan next week's loads.</div>
-    <div class="field" style="margin-top:10px;"><label>Estimated 1RM</label><input type="number" id="calc1RMIn" placeholder="e.g. 315"></div>
-    <button class="btn primary block" onclick="runCalcTable()">Build table</button>
-    <div id="calcTableOut" style="overflow-x:auto;"></div>
-  </div>
-  <div class="card">
-    <h2>Heart Rate Zones</h2>
-    <div class="field"><label>Age</label><input type="number" id="calcAge" value="${esc(STATE.meta.age)}"></div>
-    <button class="btn primary block" onclick="runCalcHR()">Calculate</button>
-    <div id="calcHROut" class="stat-row"></div>
-  </div>
-  <div class="card">
-    <h2>Daily Protein Target</h2>
-    <div class="small muted">Barbell Medicine recommends ~1.6 g/kg bodyweight/day for building & maintaining muscle.</div>
-    <div class="field" style="margin-top:10px;"><label>Bodyweight (lb)</label><input type="number" id="calcBW"></div>
-    <button class="btn primary block" onclick="runCalcProtein()">Calculate</button>
-    <div id="calcProteinOut" class="stat-row"></div>
-  </div>
-  `;
-  document.getElementById('tab-calc').innerHTML = html;
 }
 function runCalc1RM(){
   const w = parseFloat(document.getElementById('calcW').value);
@@ -798,15 +771,6 @@ function runCalcTable(){
       <thead><tr><th>RPE\\Reps</th>${[1,2,3,4,5,6,7,8,9,10].map(n=>`<th>${n}</th>`).join('')}</tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
-}
-function runCalcHR(){
-  const age = document.getElementById('calcAge').value;
-  const z = hrZones(age);
-  document.getElementById('calcHROut').innerHTML = z ? `
-    <div class="stat"><div class="v">${z.hrmax}</div><div class="l">Max HR</div></div>
-    <div class="stat"><div class="v">${z.zone1[0]}–${z.zone1[1]}</div><div class="l">Zone 1</div></div>
-    <div class="stat"><div class="v">${z.zone2[0]}–${z.zone2[1]}</div><div class="l">Zone 2</div></div>
-  ` : `<div class="small muted">Enter a valid age.</div>`;
 }
 function runCalcProtein(){
   const bw = parseFloat(document.getElementById('calcBW').value);
@@ -852,26 +816,30 @@ function renderSettings(){
     <button class="btn primary block" onclick="saveSettingsGeneral()">Save</button>
     <div class="tiny muted" style="margin-top:8px;">With a start date set, the Today tab opens straight to the right week and day automatically.</div>
   </div>
-  <div class="card">
-    <h2>Exercise Selection</h2>
-    <div class="small muted">Pick your movement for each slot — the template's own options plus barbell-focused alternates in the same movement class. Your pick applies across all 10 weeks; the set/rep/RPE scheme for the slot stays the same. "Custom write-in" takes anything.</div>
-    <div class="divider"></div>
-    ${SLOTS.map(s=>{
-      const w1 = getWeek(1);
-      const def = w1[s.key].name;
-      const opts = EXERCISE_OPTIONS[s.key] || [];
-      const list = [def, ...opts.filter(o=>o!==def)];
-      const cur = (STATE.meta.overrides[s.key]||'').trim();
-      const selVal = !cur ? def : (list.includes(cur) ? cur : '__custom__');
-      return `<div class="field">
-        <label>Day ${s.day} · ${esc(s.label)}</label>
-        <select data-exsel="${s.key}">
-          ${list.map(o=>`<option value="${esc(o)}"${selVal===o?' selected':''}>${esc(o)}${o===def?' (default)':''}</option>`).join('')}
-          <option value="__custom__"${selVal==='__custom__'?' selected':''}>Custom write-in…</option>
-        </select>
-        <input type="text" data-excustom="${s.key}" value="${selVal==='__custom__'?esc(cur):''}" placeholder="Type exercise name" style="margin-top:6px;display:${selVal==='__custom__'?'block':'none'};">
-      </div>`;
-    }).join('')}
+  <div class="card" style="padding-top:2px;padding-bottom:2px;">
+    ${['A','B','C','D'].map(d=>`
+    <details>
+      <summary>Day ${d} exercises <span class="dim" style="font-weight:500;">· ${DAY_META[d].short}</span><span class="chev" style="margin-left:auto;">›</span></summary>
+      <div class="d-body">
+        ${SLOTS.filter(s=>s.day===d).map(s=>{
+          const w1 = getWeek(1);
+          const def = w1[s.key].name;
+          const opts = EXERCISE_OPTIONS[s.key] || [];
+          const list = [def, ...opts.filter(o=>o!==def)];
+          const cur = (STATE.meta.overrides[s.key]||'').trim();
+          const selVal = !cur ? def : (list.includes(cur) ? cur : '__custom__');
+          return `<div class="field">
+            <label>${esc(s.label)}</label>
+            <select data-exsel="${s.key}">
+              ${list.map(o=>`<option value="${esc(o)}"${selVal===o?' selected':''}>${esc(o)}${o===def?' (default)':''}</option>`).join('')}
+              <option value="__custom__"${selVal==='__custom__'?' selected':''}>Custom write-in…</option>
+            </select>
+            <input type="text" data-excustom="${s.key}" value="${selVal==='__custom__'?esc(cur):''}" placeholder="Type exercise name" style="margin-top:6px;display:${selVal==='__custom__'?'block':'none'};">
+          </div>`;
+        }).join('')}
+        <div class="tiny dim">Picks apply across all 10 weeks; the slot's set/rep/RPE scheme stays the same.</div>
+      </div>
+    </details>`).join('')}
   </div>
   <div class="card">
     <h2>Data</h2>
@@ -884,14 +852,16 @@ function renderSettings(){
     <div style="height:8px;"></div>
     <button class="btn block" style="color:var(--red);border-color:var(--red);" onclick="resetAll()">Reset all data</button>
   </div>
-  <div class="card">
-    <h2>About this program</h2>
-    <div class="small muted" style="line-height:1.6;">
-      Built on Barbell Medicine's Hypertrophy II (Block I, 10 weeks). The original upper/lower split is
-      reorganized into a 4-day full-body A/B/C/D rotation — every exercise from the template appears once
-      per week, matching the original's volume. Squat and Bench default to paused variations. Running
-      conditioning targets use BBM's own heart-rate formulas. All data stays on this device.
-    </div>
+  <div class="card" style="padding-top:2px;padding-bottom:2px;">
+    <details>
+      <summary>About this program<span class="chev">›</span></summary>
+      <div class="d-body small muted" style="line-height:1.6;">
+        Built on Barbell Medicine's Hypertrophy II (Block I, 10 weeks). The original upper/lower split is
+        reorganized into a 4-day full-body A/B/C/D rotation — every exercise from the template appears once
+        per week, matching the original's volume. Squat and Bench default to paused variations. Running
+        conditioning targets use BBM's own heart-rate formulas. All data stays on this device.
+      </div>
+    </details>
   </div>
   `;
   document.getElementById('tab-settings').innerHTML = html;
