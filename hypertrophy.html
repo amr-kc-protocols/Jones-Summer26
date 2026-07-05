@@ -8,9 +8,9 @@
 <title>Hypertrophy II — Full Body</title>
 <style>
 :root{
-  --bg:#0c0e11; --surface:#13161b; --surface2:#1b2028; --line:#252b34;
-  --ink:#f2f4f7; --dim:#8c95a3; --accent:#ff5a3c; --good:#3ecf8e; --red:#ff5a5a;
-  --r:14px; --r-sm:10px;
+  --bg:#0b0d10; --surface:#111419; --surface2:#1a1e25; --line:#20252d;
+  --ink:#f2f4f7; --dim:#8c95a3; --faint:#525c6b; --accent:#ff5a3c; --good:#3ecf8e; --red:#ff5a5a;
+  --r:16px; --r-sm:10px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html{scrollbar-width:none;}
@@ -25,12 +25,12 @@ b{font-weight:700;}
 
 /* ── header ── */
 .header{
-  background:rgba(12,14,17,.86);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  padding:14px 16px;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--line);
+  background:rgba(11,13,16,.86);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  padding:15px 16px;position:sticky;top:0;z-index:100;
 }
 .header-row{display:flex;align-items:center;justify-content:space-between;gap:10px;max-width:560px;margin:0 auto;}
-.header-title{font-size:15px;font-weight:800;letter-spacing:-.1px;}
-.header-sub{font-size:11px;color:var(--dim);margin-top:1px;font-weight:500;}
+.header-title{font-size:11.5px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink);}
+.header-sub{font-size:10.5px;color:var(--faint);margin-top:2px;font-weight:500;letter-spacing:.4px;}
 .week-pill{
   background:var(--accent);color:#fff;font-weight:800;font-size:12.5px;padding:6px 13px;
   border-radius:999px;border:none;cursor:pointer;font-variant-numeric:tabular-nums;
@@ -40,8 +40,8 @@ main{padding:12px 12px 20px;max-width:560px;margin:0 auto;}
 
 /* ── cards ── */
 .card{
-  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
-  padding:14px;margin-bottom:10px;
+  background:var(--surface);border-radius:var(--r);
+  padding:16px;margin-bottom:10px;
 }
 .card h2{font-size:13px;font-weight:700;margin-bottom:10px;letter-spacing:-.1px;}
 .card h3{font-size:13px;font-weight:700;margin-bottom:4px;}
@@ -56,20 +56,24 @@ main{padding:12px 12px 20px;max-width:560px;margin:0 auto;}
 .today-line .dot.rest{background:var(--dim);}
 
 /* ── week strip + day segment ── */
-.weekstrip{display:flex;gap:6px;overflow-x:auto;margin:12px 0 8px;scroll-snap-type:x proximity;}
+.hero-row{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin:8px 0 2px;}
+.hero-day{font-size:34px;font-weight:200;letter-spacing:-.8px;line-height:1.1;}
+.hero-day em{font-style:normal;color:var(--accent);font-weight:600;}
+.hero-side{text-align:right;padding-bottom:6px;}
+.hero-side .frac{font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums;margin-bottom:5px;}
+.weekstrip{display:flex;gap:2px;overflow-x:auto;margin:10px 0 4px;scroll-snap-type:x proximity;}
 .weekstrip button{
-  flex:none;min-width:36px;height:36px;border-radius:var(--r-sm);border:none;scroll-snap-align:center;
-  background:var(--surface2);color:var(--dim);font-weight:700;font-size:13px;cursor:pointer;
-  font-variant-numeric:tabular-nums;transition:background .12s,color .12s;
+  flex:none;min-width:34px;height:34px;border:none;scroll-snap-align:center;background:none;
+  color:var(--faint);font-weight:600;font-size:13.5px;cursor:pointer;
+  font-variant-numeric:tabular-nums;transition:color .12s;border-radius:8px;
 }
-.weekstrip button.active{background:var(--accent);color:#fff;}
-.seg{display:flex;gap:6px;}
+.weekstrip button.active{color:var(--accent);font-weight:800;}
+.seg{display:flex;}
 .seg button{
-  flex:1;border:none;border-radius:var(--r-sm);background:var(--surface2);color:var(--dim);
-  font-weight:700;font-size:13px;padding:10px 4px;cursor:pointer;transition:background .12s,color .12s;
+  flex:1;border:none;background:none;color:var(--faint);border-bottom:2px solid var(--line);
+  font-weight:700;font-size:13.5px;padding:10px 4px 9px;cursor:pointer;transition:color .12s,border-color .12s;
 }
-.seg button.active{background:var(--accent);color:#fff;}
-.seg-caption{font-size:11px;color:var(--dim);margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.seg button.active{color:var(--ink);border-bottom-color:var(--accent);}
 .progressbar{height:3px;border-radius:2px;background:var(--surface2);overflow:hidden;flex:1;max-width:90px;}
 .progressbar i{display:block;height:100%;background:var(--good);border-radius:2px;transition:width .25s;}
 .progressbar.wide{max-width:none;height:5px;border-radius:3px;margin-top:2px;}
@@ -82,8 +86,8 @@ main{padding:12px 12px 20px;max-width:560px;margin:0 auto;}
 .ex-name{font-weight:700;font-size:15px;letter-spacing:-.15px;}
 .donedot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--good);margin-left:7px;vertical-align:2px;}
 .chip{
-  flex:none;font-size:9.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
-  padding:3px 8px;border-radius:6px;color:var(--dim);border:1px solid var(--line);white-space:nowrap;
+  flex:none;font-size:9.5px;font-weight:600;letter-spacing:.9px;text-transform:uppercase;
+  color:var(--faint);white-space:nowrap;
 }
 .ex-prog{font-size:12px;color:var(--dim);line-height:1.5;margin:6px 0 10px;white-space:pre-wrap;}
 .ex-prog.clampable{cursor:pointer;}
@@ -192,12 +196,32 @@ table.sets input:focus{outline:2px solid var(--accent);}
   border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);
 }
 .bottom-nav button{
-  flex:1;background:none;border:none;color:#5c6673;padding:9px 2px 7px;font-size:9px;
-  font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;
-  letter-spacing:.2px;transition:color .12s;
+  flex:1;background:none;border:none;color:var(--faint);padding:13px 2px 12px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;transition:color .12s;
 }
-.bottom-nav button svg{width:21px;height:21px;}
+.bottom-nav button svg{width:22px;height:22px;}
 .bottom-nav button.active{color:var(--accent);}
+/* ── rest timer ── */
+.timer-wrap{position:fixed;right:14px;bottom:calc(64px + env(safe-area-inset-bottom));z-index:220;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+.timer-presets{display:none;flex-direction:column;gap:6px;}
+.timer-presets.open{display:flex;}
+.timer-presets button{
+  border:none;border-radius:999px;background:var(--surface2);color:var(--ink);font-weight:700;
+  font-size:13px;padding:10px 16px;cursor:pointer;font-variant-numeric:tabular-nums;
+  box-shadow:0 4px 16px rgba(0,0,0,.4);
+}
+.timer-fab{
+  border:none;border-radius:999px;min-width:48px;height:48px;padding:0 15px;cursor:pointer;
+  background:var(--surface2);color:var(--dim);display:none;align-items:center;justify-content:center;
+  font-weight:800;font-size:14.5px;font-variant-numeric:tabular-nums;box-shadow:0 4px 16px rgba(0,0,0,.4);
+  transition:background .15s,color .15s;
+}
+body[data-tab="today"] .timer-fab{display:flex;}
+.timer-fab.run{display:flex;background:var(--accent);color:#fff;}
+.timer-fab.done{display:flex;background:var(--good);color:#0b0d10;animation:pulse .5s ease 3;}
+@keyframes pulse{50%{transform:scale(1.12);}}
+@media (prefers-reduced-motion: reduce){.timer-fab.done{animation:none;}}
+.timer-fab svg{width:21px;height:21px;}
 
 /* ── tabs, toast, motion ── */
 .tab{display:none;}
@@ -235,19 +259,30 @@ h1,h2,h3{color:var(--ink);}
 
 <div class="savedtoast" id="savedToast">Saved</div>
 
+<div class="timer-wrap" id="timerWrap">
+  <div class="timer-presets" id="timerPresets">
+    <button onclick="startTimer(240)">4:00</button>
+    <button onclick="startTimer(180)">3:00</button>
+    <button onclick="startTimer(120)">2:00</button>
+  </div>
+  <button class="timer-fab" id="timerFab" aria-label="Rest timer" onclick="timerTap()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="13" r="8.2"/><line x1="12" y1="13" x2="12" y2="8.6"/><line x1="9.5" y1="2.5" x2="14.5" y2="2.5"/></svg>
+  </button>
+</div>
+
 <nav class="bottom-nav">
-  <button data-tab="today" onclick="jumpTo('today')">
+  <button data-tab="today" aria-label="Today" onclick="jumpTo('today')">
     <svg viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="9.2" width="2.6" height="5.6" rx="1.1"/><rect x="4.6" y="7" width="3" height="10" rx="1.2"/><rect x="16.4" y="7" width="3" height="10" rx="1.2"/><rect x="20.4" y="9.2" width="2.6" height="5.6" rx="1.1"/><rect x="8.4" y="10.9" width="7.2" height="2.2" rx="1.1"/></svg>
-    Today</button>
-  <button data-tab="conditioning" onclick="jumpTo('conditioning')">
+  </button>
+  <button data-tab="conditioning" aria-label="Cardio" onclick="jumpTo('conditioning')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 13 7 13 10 5.5 14 19 16.5 13 22 13"/></svg>
-    Cardio</button>
-  <button data-tab="progress" onclick="jumpTo('progress')">
+  </button>
+  <button data-tab="progress" aria-label="Stats" onclick="jumpTo('progress')">
     <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="13" width="4" height="8" rx="1.2"/><rect x="10" y="8" width="4" height="13" rx="1.2"/><rect x="17" y="3" width="4" height="18" rx="1.2"/></svg>
-    Stats</button>
-  <button data-tab="settings" onclick="jumpTo('settings')">
+  </button>
+  <button data-tab="settings" aria-label="Settings" onclick="jumpTo('settings')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="3" y1="7" x2="21" y2="7"/><circle cx="9" cy="7" r="2.4" fill="var(--bg)"/><line x1="3" y1="16" x2="21" y2="16"/><circle cx="15.5" cy="16" r="2.4" fill="var(--bg)"/></svg>
-    Settings</button>
+  </button>
 </nav>
 
 <script>
@@ -438,6 +473,7 @@ function parseTargetMinutes(text){
 
 /* ---------- Nav ---------- */
 function jumpTo(tabName){
+  document.body.dataset.tab = tabName;
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+tabName).classList.add('active');
   document.querySelectorAll('.bottom-nav button').forEach(b=>b.classList.toggle('active', b.dataset.tab===tabName));
@@ -531,17 +567,21 @@ function renderToday(){
   let html = `
   <div class="card">
     ${todayBannerHtml()}
+    <div class="hero-row">
+      <div>
+        <div class="hero-day">Day ${day}<em>.</em></div>
+        <div class="tiny dim" style="margin-top:2px;">${DAY_META[day].focus}</div>
+      </div>
+      <div class="hero-side">
+        <div class="frac">${loggedCount}/${slots.length} logged</div>
+        <div class="progressbar" style="width:90px;"><i style="width:${Math.round(loggedCount/slots.length*100)}%"></i></div>
+      </div>
+    </div>
     <div class="weekstrip" id="weekstrip">
       ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="${n===week?'active':''}" onclick="setWeek(${n})">${n}</button>`).join('')}
     </div>
     <div class="seg">
       ${['A','B','C','D'].map(d=>`<button class="${day===d?'active':''}" onclick="setDay('${d}')">${d}</button>`).join('')}
-    </div>
-    <div class="seg-caption">
-      <span>Day ${day} · ${DAY_META[day].focus}</span>
-      <span style="display:flex;align-items:center;gap:7px;">${loggedCount}/${slots.length}
-        <span class="progressbar"><i style="width:${Math.round(loggedCount/slots.length*100)}%"></i></span>
-      </span>
     </div>
   </div>
   ${slots.map(s=>exerciseBlock(s,w,week)).join('')}
@@ -963,6 +1003,68 @@ function resetAll(){
   jumpTo('today');
 }
 
+/* ---------- Rest Timer ---------- */
+const TIMER_KEY = 'hyp2_timer_end';
+const TIMER_ICON = document.getElementById('timerFab') ? document.getElementById('timerFab').innerHTML : '';
+let timerInt = null;
+function fmtTime(sec){
+  const m = Math.floor(sec/60), s = sec%60;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+function timerTap(){
+  const end = +localStorage.getItem(TIMER_KEY) || 0;
+  if(end > Date.now()){ stopTimer(); return; }
+  document.getElementById('timerPresets').classList.toggle('open');
+}
+function startTimer(sec){
+  localStorage.setItem(TIMER_KEY, String(Date.now() + sec*1000));
+  document.getElementById('timerPresets').classList.remove('open');
+  runTimer();
+}
+function runTimer(){
+  clearInterval(timerInt);
+  const fab = document.getElementById('timerFab');
+  const tick = ()=>{
+    const end = +localStorage.getItem(TIMER_KEY) || 0;
+    const rem = Math.ceil((end - Date.now())/1000);
+    if(rem <= 0){ finishTimer(); return; }
+    fab.className = 'timer-fab run';
+    fab.textContent = fmtTime(rem);
+  };
+  tick();
+  timerInt = setInterval(tick, 250);
+}
+function finishTimer(){
+  clearInterval(timerInt);
+  localStorage.removeItem(TIMER_KEY);
+  const fab = document.getElementById('timerFab');
+  fab.className = 'timer-fab done';
+  fab.textContent = 'GO';
+  if(navigator.vibrate) navigator.vibrate([200,100,200]);
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    [0,0.18].forEach((t,i)=>{
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = i ? 1175 : 880;
+      g.gain.setValueAtTime(.18, ctx.currentTime+t);
+      g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime+t+.15);
+      o.start(ctx.currentTime+t); o.stop(ctx.currentTime+t+.16);
+    });
+  }catch(e){}
+  setTimeout(resetTimerFab, 2500);
+}
+function stopTimer(){
+  clearInterval(timerInt);
+  localStorage.removeItem(TIMER_KEY);
+  resetTimerFab();
+}
+function resetTimerFab(){
+  const fab = document.getElementById('timerFab');
+  fab.className = 'timer-fab';
+  fab.innerHTML = TIMER_ICON;
+}
+
 /* ---------- Boot ---------- */
 (function init(){
   const ti = todayInfo();
@@ -972,6 +1074,7 @@ function resetAll(){
   }
   refreshHeader();
   jumpTo('today');
+  if((+localStorage.getItem(TIMER_KEY)||0) > Date.now()) runTimer();
 })();
 
 </script>
