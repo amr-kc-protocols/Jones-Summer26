@@ -97,6 +97,9 @@ main{padding:12px 12px 20px;max-width:560px;margin:0 auto;}
 }
 .ex-prog{font-size:12px;color:var(--dim);line-height:1.5;margin:6px 0 10px;white-space:pre-wrap;}
 .ex-prog.clampable{cursor:pointer;}
+.suggest{font-size:12px;display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin:-3px 0 10px;}
+.suggest .s-w{color:var(--accent);font-weight:800;font-variant-numeric:tabular-nums;}
+.suggest .textlink{margin-left:6px;}
 .ex-prog.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 details{border-top:1px solid var(--line);}
 details:first-of-type{border-top:none;}
@@ -456,6 +459,78 @@ function todayBannerHtml(){
   return `<div class="today-line"><span class="dot"></span><b>Today: Week ${ti.week} · Day ${ti.day}</b><span class="dim">· ${DAY_META[ti.day].focus}</span>${onIt?'':'<button class="textlink" onclick="goToToday()">Show today →</button>'}</div>`;
 }
 
+/* ---------- Weight suggestions (BBM progression) ---------- */
+function parsePrescription(p){
+  if(!p) return null;
+  // double progression: "5 to 8 Reps @ RPE 6" / "8-12 Reps @ RPE 7" + "add weight the following week"
+  const dp = p.match(/(\d+)\s*(?:to|-)\s*(\d+)\s*reps?\s*@\s*RPE\s*(\d+(?:\.\d+)?)/i);
+  if(dp && /add weight the following week/i.test(p)){
+    return {type:'dp', lo:+dp[1], hi:+dp[2], rpe:+dp[3]};
+  }
+  const all = [...p.matchAll(/(\d+)\s*reps?\s*@\s*RPE\s*(\d+(?:\.\d+)?)/gi)];
+  // ascending: "8 @ 6, 8 @ 7, 8 @ 8. Do Ascending Sets."
+  if(all.length >= 2 && /ascending|asending/i.test(p)){
+    return {type:'asc', sets: all.map(a=>({reps:+a[1], rpe:+a[2]}))};
+  }
+  // top set + repeats: "12 reps @ RPE 8. Use the same weight..."
+  if(all.length >= 1 && /same weight/i.test(p)){
+    return {type:'top', reps:+all[0][1], rpe:+all[0][2]};
+  }
+  return null;
+}
+function lastPerformance(slotKey, beforeWeek){
+  for(let wk = beforeWeek-1; wk >= 1; wk--){
+    const key = `${wk}_${slotKey}_1`;
+    if(!STATE.logs[key]) continue;
+    const stats = exerciseStats(key);
+    if(!stats.hasData) continue;
+    const sets = STATE.logs[key].sets.filter(s=>s.w!=null && s.r!=null && s.w!=='' && s.r!=='');
+    if(!sets.length) continue;
+    return {week:wk, e1rm:stats.e1rm, sets};
+  }
+  return null;
+}
+function roundLoad(x){ return Math.max(5, Math.round(x/5)*5); }
+function suggestionFor(slotKey, week){
+  const parsed = parsePrescription(getWeek(week)[slotKey].prog);
+  if(!parsed) return null;
+  const prev = lastPerformance(slotKey, week);
+  if(!prev) return null;
+  if(parsed.type==='dp'){
+    const prevParsed = parsePrescription(getWeek(prev.week)[slotKey].prog);
+    if(prevParsed && prevParsed.type==='dp'){
+      // week-over-week double progression: maxed all sets -> add weight, else add reps
+      const lastW = Math.max(...prev.sets.map(s=>+s.w));
+      const maxed = prev.sets.every(s=>+s.r >= parsed.hi);
+      if(maxed) return {weights:[roundLoad(lastW+5)], note:`maxed ${parsed.hi}s in wk ${prev.week} — add weight`, perset:false};
+      return {weights:[lastW], note:`same weight — add reps (cap ${parsed.hi})`, perset:false};
+    }
+    // entering the rep-range scheme: derive from e1RM at the top of the range
+    if(!prev.e1rm) return null;
+    return {weights:[roundLoad(targetWeight(prev.e1rm, parsed.hi, parsed.rpe))], note:`${parsed.lo}–${parsed.hi} reps · from wk ${prev.week} e1RM ${Math.round(prev.e1rm)}`, perset:false};
+  }
+  if(!prev.e1rm) return null;
+  if(parsed.type==='asc'){
+    return {weights: parsed.sets.map(s=>roundLoad(targetWeight(prev.e1rm, s.reps, s.rpe))), note:`from wk ${prev.week} e1RM ${Math.round(prev.e1rm)}`, perset:true};
+  }
+  if(parsed.type==='top'){
+    return {weights:[roundLoad(targetWeight(prev.e1rm, parsed.reps, parsed.rpe))], note:`all sets · from wk ${prev.week} e1RM ${Math.round(prev.e1rm)}`, perset:false};
+  }
+  return null;
+}
+function applySuggestion(slotKey, week){
+  const sug = suggestionFor(slotKey, week);
+  if(!sug) return;
+  const log = getLog(logKey(week, slotKey));
+  log.sets.forEach((s,i)=>{
+    if(s.w==null || s.w===''){
+      s.w = sug.perset ? (sug.weights[Math.min(i, sug.weights.length-1)]) : sug.weights[0];
+    }
+  });
+  save();
+  rerenderExercise(logKey(week, slotKey));
+}
+
 function hrZones(age){
   age = parseFloat(age);
   if(!age || age<=0) return null;
@@ -611,6 +686,7 @@ function exerciseBlock(s, w, week){
   const name = exName(s.key, w);
   const prog = w[s.key].prog;
   const done = exerciseStats(key).hasData;
+  const sug = suggestionFor(s.key, week);
   return `
     <div class="card">
       <div class="ex-top">
@@ -618,6 +694,7 @@ function exerciseBlock(s, w, week){
         <span class="chip">${esc(s.sub||s.day)}</span>
       </div>
       <div class="ex-prog clamp clampable" onclick="this.classList.toggle('clamp')">${esc(prog)}</div>
+      ${sug?`<div class="suggest"><span class="s-w">${sug.weights.join(' · ')}</span><span class="dim">lb · ${esc(sug.note)}</span><button class="textlink" onclick="applySuggestion('${s.key}',${week})">Fill</button></div>`:''}
       <div data-setswrap="${key}">${setsTableHtml(key)}</div>
     </div>
   `;
