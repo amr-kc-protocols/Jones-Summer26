@@ -568,10 +568,14 @@ function refreshHeader(){
 function setsTableHtml(key){
   const log = getLog(key);
   const last = log.sets.length - 1;
+  // ghost the suggested weight into empty weight cells as placeholder text
+  const km = key.match(/^(\d+)_(.+)_1$/);
+  const sug = km ? suggestionFor(km[2], +km[1]) : null;
+  const ph = i => sug ? String(sug.perset ? sug.weights[Math.min(i, sug.weights.length-1)] : sug.weights[0]) : 'lb';
   const rows = log.sets.map((s,i)=>`
     <tr>
       <td class="set-num">${i+1}</td>
-      <td><input type="number" inputmode="decimal" placeholder="lb" value="${s.w??''}" data-logkey="${key}" data-idx="${i}" data-field="w"></td>
+      <td><input type="number" inputmode="decimal" placeholder="${ph(i)}" value="${s.w??''}" data-logkey="${key}" data-idx="${i}" data-field="w"></td>
       <td><input type="number" inputmode="numeric" placeholder="reps" value="${s.r??''}" data-logkey="${key}" data-idx="${i}" data-field="r"></td>
       <td><input type="number" step="0.5" inputmode="decimal" placeholder="RPE" value="${s.p??''}" data-logkey="${key}" data-idx="${i}" data-field="p"></td>
       <td style="width:24px">${i===last?`<button class="set-del" onclick="delSet('${key}',${i})">✕</button>`:''}</td>
