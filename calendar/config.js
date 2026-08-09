@@ -1,0 +1,34 @@
+// ── Jones Family Calendar — configuration ──────────────────
+//
+// Fill in the two values below from your Supabase project:
+//   Supabase dashboard → Project Settings → API
+//
+//   SUPABASE_URL       ← "Project URL"
+//   SUPABASE_ANON_KEY  ← "Project API keys" → anon / public
+//
+// Use the *anon public* key. Never the service_role key — that one
+// bypasses row-level security and must not go in a web page.
+//
+// Both values are safe to commit. The anon key is designed to be
+// public; what actually protects the calendar is row-level security
+// plus the PIN. See supabase/SETUP.md.
+
+export const SUPABASE_URL = 'https://qrwrxjejxjwkzqbadpjj.supabase.co';
+export const SUPABASE_ANON_KEY = 'sb_publishable_LPuWXQmt45g_46d5tZrAJg_OxYdZ50S';
+
+// The calendar keeps its tables in their own Postgres schema, so it can
+// share a Supabase project with another app without colliding. This must
+// match the schema name in supabase/schema.sql, and the schema has to be
+// added to Settings → API → Exposed schemas.
+export const SUPABASE_SCHEMA = 'calendar';
+
+// The shared household account created in SETUP.md step 4.
+export const HOUSEHOLD_EMAIL = 'family@jonescalendar.local';
+
+// Appended to the PIN you type to form the real password, so a short
+// PIN is not the whole password. Must match what you set in step 4.
+// Changing this means resetting the account password to match.
+export const PIN_SALT = '4_Cq8PkCaiuZi62ya65yN7EwSRGyPNWK';
+
+// Show US holidays on the grid, like the printed calendar does.
+export const SHOW_HOLIDAYS = true;

@@ -1,0 +1,596 @@
+<title>Family Calendar — Supabase setup</title>
+<style>
+:root {
+  --ground:#eceff2; --surface:#ffffff; --surface-2:#f5f7f9;
+  --line:#dce2e8; --line-strong:#bcc7d1;
+  --ink:#131a21; --ink-2:#4c5866; --ink-3:#798593;
+  --accent:#b4472f; --accent-ink:#ffffff; --accent-soft:#f8ebe7;
+  --warn:#8d5406; --warn-soft:#fbf1de; --warn-line:#e6cfa4;
+  --ok:#1f6f52;
+  --code-bg:#161c23; --code-ink:#dbe3ea; --code-k:#e79274; --code-s:#93c9a6; --code-c:#6d7a87;
+  --shadow:0 1px 2px rgba(19,26,33,.05), 0 8px 24px -12px rgba(19,26,33,.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:#0f141a; --surface:#171d25; --surface-2:#1d242d;
+    --line:#28313b; --line-strong:#3c4854;
+    --ink:#e7edf3; --ink-2:#a6b3c0; --ink-3:#7b8794;
+    --accent:#e0705a; --accent-ink:#1c0e0a; --accent-soft:#2b1712;
+    --warn:#e2ad63; --warn-soft:#2a2115; --warn-line:#4a3a20;
+    --ok:#5cbd95;
+    --code-bg:#11161c; --code-ink:#dbe3ea;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"] {
+  --ground:#0f141a; --surface:#171d25; --surface-2:#1d242d;
+  --line:#28313b; --line-strong:#3c4854;
+  --ink:#e7edf3; --ink-2:#a6b3c0; --ink-3:#7b8794;
+  --accent:#e0705a; --accent-ink:#1c0e0a; --accent-soft:#2b1712;
+  --warn:#e2ad63; --warn-soft:#2a2115; --warn-line:#4a3a20;
+  --ok:#5cbd95;
+  --code-bg:#11161c; --code-ink:#dbe3ea;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.7);
+}
+
+*,*::before,*::after { box-sizing:border-box; }
+body {
+  margin:0; background:var(--ground); color:var(--ink);
+  font:16px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.mono { font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace; }
+.wrap { max-width:60rem; margin:0 auto; padding:clamp(1.75rem,5vw,4rem) clamp(1rem,4vw,2.5rem) 5rem; }
+
+/* ── masthead ── */
+.mast { display:flex; flex-direction:column; gap:.9rem; padding-bottom:1.75rem;
+  border-bottom:2px solid var(--ink); margin-bottom:2.5rem; }
+.eyebrow { font-size:.7rem; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--accent); font-weight:700; }
+h1 { font-size:clamp(1.85rem,4.6vw,2.9rem); line-height:1.06; letter-spacing:-.028em;
+  margin:0; font-weight:800; text-wrap:balance; }
+.standfirst { font-size:clamp(1rem,2vw,1.12rem); color:var(--ink-2); max-width:44ch; margin:0; }
+.facts { display:flex; flex-wrap:wrap; gap:.5rem .55rem; margin-top:.3rem; }
+.fact { font-size:.74rem; letter-spacing:.03em; padding:.32rem .6rem; border-radius:2px;
+  background:var(--surface); border:1px solid var(--line); color:var(--ink-2); }
+.fact b { color:var(--ink); font-weight:700; }
+
+/* ── steps ── */
+.step { display:grid; grid-template-columns:2.9rem 1fr; gap:0 1.4rem;
+  padding:0 0 2.4rem; position:relative; }
+.step::before { content:""; position:absolute; left:1.44rem; top:2.9rem; bottom:0;
+  width:2px; background:var(--line); }
+.step:last-of-type::before { display:none; }
+.marker { width:2.9rem; height:2.9rem; border-radius:50%; display:grid; place-items:center;
+  background:var(--surface); border:2px solid var(--line-strong); color:var(--ink-2);
+  font-size:.95rem; font-weight:700; cursor:pointer; padding:0; position:relative; z-index:1;
+  transition:background .15s, border-color .15s, color .15s; }
+.marker:hover { border-color:var(--accent); color:var(--accent); }
+.marker:focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
+.step[data-done="1"] .marker { background:var(--ok); border-color:var(--ok); color:#fff; }
+.step[data-done="1"] .body { opacity:.45; }
+.body { min-width:0; padding-top:.28rem; transition:opacity .18s; }
+h2 { font-size:1.18rem; letter-spacing:-.012em; margin:0 0 .5rem; font-weight:750; text-wrap:balance; }
+h2 .opt { font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700;
+  color:var(--ink-3); border:1px solid var(--line-strong); border-radius:2px;
+  padding:.16rem .4rem; vertical-align:.14em; margin-left:.5rem; }
+.body p { margin:0 0 .85rem; color:var(--ink-2); max-width:62ch; }
+.body p:last-child { margin-bottom:0; }
+.body strong { color:var(--ink); font-weight:650; }
+
+/* ── dashboard path ── */
+.path { display:flex; flex-wrap:wrap; align-items:center; gap:.3rem; margin:0 0 .95rem;
+  padding:0; list-style:none; }
+.path li { font-size:.79rem; padding:.3rem .55rem; background:var(--surface-2);
+  border:1px solid var(--line); border-radius:3px; color:var(--ink); font-weight:600; }
+.path li.sep { background:none; border:none; color:var(--ink-3); padding:.3rem .05rem; }
+.path li.val { background:var(--accent-soft); border-color:var(--accent);
+  color:var(--accent); font-weight:700; }
+
+/* ── code ── */
+.code { position:relative; margin:0 0 .95rem; border-radius:6px; overflow:hidden;
+  background:var(--code-bg); border:1px solid var(--line); box-shadow:var(--shadow); }
+.code-bar { display:flex; align-items:center; justify-content:space-between; gap:1rem;
+  padding:.5rem .55rem .5rem .85rem; border-bottom:1px solid rgba(255,255,255,.09); }
+.code-name { font-size:.72rem; letter-spacing:.09em; text-transform:uppercase;
+  color:#8d99a6; font-weight:700; }
+.copy { font:inherit; font-size:.76rem; font-weight:700; letter-spacing:.02em;
+  padding:.36rem .72rem; border-radius:4px; cursor:pointer; color:#cdd7e0;
+  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.14);
+  transition:background .15s,color .15s; white-space:nowrap; }
+.copy:hover { background:rgba(255,255,255,.14); color:#fff; }
+.copy:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.copy[data-done="1"] { background:var(--ok); border-color:var(--ok); color:#fff; }
+.code pre { margin:0; padding:.95rem 1rem 1.1rem; overflow-x:auto; max-height:26rem;
+  overflow-y:auto; color:var(--code-ink); font-size:.79rem; line-height:1.62; }
+.code code { font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace; }
+.code .k { color:var(--code-k); }
+.code .s { color:var(--code-s); }
+.code .c { color:var(--code-c); font-style:italic; }
+
+/* inline value with its own copy */
+.val-row { display:flex; flex-wrap:wrap; align-items:stretch; gap:.4rem; margin:0 0 .95rem; }
+.val-row code { flex:1 1 18rem; min-width:0; overflow-x:auto; white-space:nowrap;
+  padding:.6rem .75rem; background:var(--surface-2); border:1px solid var(--line-strong);
+  border-radius:4px; font-size:.83rem; color:var(--ink); }
+.val-row .copy { background:var(--surface-2); border-color:var(--line-strong); color:var(--ink-2); }
+.val-row .copy:hover { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+.val-row .copy[data-done="1"] { background:var(--ok); border-color:var(--ok); color:#fff; }
+
+/* ── callouts ── */
+.note { border-left:3px solid var(--warn); background:var(--warn-soft);
+  padding:.75rem .95rem; border-radius:0 4px 4px 0; margin:0 0 .95rem; }
+.note p { margin:0; color:var(--ink); font-size:.91rem; max-width:60ch; }
+.note .lbl { display:block; font-size:.68rem; letter-spacing:.11em; text-transform:uppercase;
+  font-weight:800; color:var(--warn); margin-bottom:.2rem; }
+
+/* ── reference ── */
+.ref { margin-top:1rem; padding-top:2.5rem; border-top:2px solid var(--ink); }
+.ref h2 { font-size:1.5rem; margin-bottom:.4rem; }
+.ref > p { color:var(--ink-2); max-width:62ch; margin:0 0 1.5rem; }
+.tbl-scroll { overflow-x:auto; margin:0 0 1.6rem; border:1px solid var(--line);
+  border-radius:6px; background:var(--surface); }
+table { border-collapse:collapse; width:100%; min-width:34rem; }
+caption { text-align:left; font-size:.72rem; letter-spacing:.11em; text-transform:uppercase;
+  font-weight:800; color:var(--accent); padding:.8rem .95rem .1rem; }
+th, td { text-align:left; padding:.62rem .95rem; border-bottom:1px solid var(--line);
+  font-size:.87rem; vertical-align:top; }
+th { font-size:.7rem; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3);
+  font-weight:700; background:var(--surface-2); }
+tbody tr:last-child td { border-bottom:none; }
+td:first-child { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:.82rem; color:var(--accent); font-weight:600; white-space:nowrap; }
+td em { color:var(--ink-3); font-style:normal; font-size:.82rem; }
+
+footer { margin-top:2.5rem; padding-top:1.5rem; border-top:1px solid var(--line);
+  color:var(--ink-3); font-size:.84rem; max-width:62ch; }
+footer strong { color:var(--ink-2); }
+
+@media (max-width:34rem) {
+  .step { grid-template-columns:1fr; gap:.7rem; }
+  .step::before { display:none; }
+  .marker { width:2.4rem; height:2.4rem; font-size:.85rem; }
+}
+@media (prefers-reduced-motion:reduce) {
+  * { transition:none !important; animation:none !important; }
+}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <div class="eyebrow">Jones Family Calendar</div>
+  <h1>Supabase setup, start to finish</h1>
+  <p class="standfirst">Seven steps in the order you run them. Tap a number to
+     tick it off as you go.</p>
+  <div class="facts">
+    <span class="fact"><b>~10 min</b></span>
+    <span class="fact">Needs <b>any</b> Supabase project</span>
+    <span class="fact">Installs to the <b>calendar</b> schema</span>
+    <span class="fact">Re-running the SQL is <b>safe</b></span>
+  </div>
+</header>
+
+<main id="steps">
+
+  <section class="step">
+    <button class="marker mono" aria-pressed="false" aria-label="Mark step 1 done">1</button>
+    <div class="body">
+      <h2>Open the SQL editor</h2>
+      <p>In whichever project you're using — it doesn't need one to itself.
+         Everything below is namespaced under <code class="mono">calendar.</code>,
+         so it won't touch tables another app keeps in <code class="mono">public</code>.</p>
+      <ul class="path">
+        <li>Supabase dashboard</li><li class="sep">→</li>
+        <li>SQL Editor</li><li class="sep">→</li>
+        <li class="val">New query</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="step">
+    <button class="marker mono" aria-pressed="false" aria-label="Mark step 2 done">2</button>
+    <div class="body">
+      <h2>Run the schema</h2>
+      <p>Paste the whole thing and hit <strong>Run</strong>. Expect
+         <em>Success. No rows returned</em>, possibly with a few
+         <code class="mono">NOTICE … skipping</code> lines — those are normal and
+         mean it found nothing to clean up.</p>
+      <div class="code">
+        <div class="code-bar">
+          <span class="code-name">schema.sql — creates 4 tables, policies, seeds your family</span>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre><code><span class="c">-- ============================================================</span>
+<span class="c">--  Jones Family Calendar — Supabase schema</span>
+<span class="c">--</span>
+<span class="c">--  Installs into its own `calendar` schema, so it can share a</span>
+<span class="c">--  Supabase project with something else without colliding.</span>
+<span class="c">--</span>
+<span class="c">--  Safe to re-run: every statement is idempotent.</span>
+<span class="c">--  Paste into Supabase → SQL Editor → Run.</span>
+<span class="c">-- ============================================================</span>
+
+<span class="k">create</span> <span class="k">extension</span> <span class="k">if</span> <span class="k">not</span> <span class="k">exists</span> pgcrypto;
+
+<span class="k">create</span> <span class="k">schema</span> <span class="k">if</span> <span class="k">not</span> <span class="k">exists</span> calendar;
+
+<span class="c">-- ── who is allowed in ─────────────────────────────────────</span>
+<span class="c">-- Auth is shared across a whole Supabase project, so &quot;is logged in&quot;</span>
+<span class="c">-- is NOT a sufficient test when the project also hosts another app:</span>
+<span class="c">-- any user of that app would pass it. Every policy below instead</span>
+<span class="c">-- requires this exact account.</span>
+<span class="c">--</span>
+<span class="c">-- To point the calendar at a different account later, change the</span>
+<span class="c">-- address here and re-run the file. Nothing else needs editing.</span>
+<span class="k">create</span> <span class="k">or</span> <span class="k">replace</span> <span class="k">function</span> calendar.is_household()
+<span class="k">returns</span> <span class="k">boolean</span>
+<span class="k">language</span> sql
+<span class="k">stable</span>
+<span class="k">set</span> search_path = <span class="s">&#x27;&#x27;</span>
+<span class="k">as</span> $$
+  <span class="k">select</span> <span class="k">coalesce</span>(auth.jwt() -&gt;&gt; <span class="s">&#x27;email&#x27;</span>, <span class="s">&#x27;&#x27;</span>) = <span class="s">&#x27;family@jonescalendar.local&#x27;</span>;
+$$;
+
+<span class="c">-- ── people ────────────────────────────────────────────────</span>
+<span class="c">-- One row per family member. Drives the colour coding and the</span>
+<span class="c">-- &quot;who is this for?&quot; picker. Add/rename people here, no code change.</span>
+<span class="k">create</span> <span class="k">table</span> <span class="k">if</span> <span class="k">not</span> <span class="k">exists</span> calendar.people (
+  id          <span class="k">uuid</span> <span class="k">primary</span> <span class="k">key</span> <span class="k">default</span> <span class="k">gen_random_uuid</span>(),
+  name        <span class="k">text</span> <span class="k">not</span> <span class="k">null</span>,
+  color       <span class="k">text</span> <span class="k">not</span> <span class="k">null</span> <span class="k">default</span> <span class="s">&#x27;#4f9cf9&#x27;</span>,
+  sort_order  <span class="k">int</span>  <span class="k">not</span> <span class="k">null</span> <span class="k">default</span> 0,
+  created_at  <span class="k">timestamptz</span> <span class="k">not</span> <span class="k">null</span> <span class="k">default</span> <span class="k">now</span>()
+);
+
+<span class="c">-- ── events ────────────────────────────────────────────────</span>
+<span class="c">-- person_ids empty = whole-family event.</span>
+<span class="c">-- Several people per event is normal here (&quot;first day of school,</span>
+<span class="c">-- Sam and Lars&quot;), hence an array rather than one column.</span>
+<span class="c">-- rrule null = one-off event.</span>
+<span class="k">create</span> <span class="k">table</span> <span class="k">if</span> <span class="k">not</span> <span class="k">exists</span> calendar.events (
+  id               <span class="k">uuid</span> <span class="k">primary</span> <span class="k">key</span> <span class="k">default</span> <span class="k">gen_random_uuid</span>(),
+  title            <span class="k">text</span> <span class="k">not</span> <span class="k">null</span>,
+  notes            <span class="k">text</span>,
+  location         <span class="k">text</span>,
+  starts_at        <span class="k">timestamptz</span> <span class="k">not</span> <span class="k">null</span>,
+  ends_at          <span class="k">timestamptz</span>,
+  all_day          <span class="k">boolean</span> <span class="k">not</span> <span class="k">null</span> <span class="k">default</span> <span class="k">false</span>,
+  person_ids       <span class="k">uuid</span>[] <span class="k">not</span> <span class="k">null</span> <span class="k">default</span> <span class="s">&#x27;{}&#x27;</span>,
+  color            <span class="k">text</span>,                       <span class="c">-- optional override of person colour</span>
+  rrule            <span class="k">text</span>,                       <span class="c">-- FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,WE</span>
+  recurrence_until <span class="k">date</span>,                       <span class="c">-- null = forever</span>
+  created_by       <span class="k">text</span>,                       <span class="c">-- which of you entered it</span>
+  created_at       <span class="k">timestamptz</span> <span class="k">not</span> <span class="k">null</span> <span class="k">default</span> <span class="k">now</span>(),
+  updated_at       <span class="k">timestamptz</span> <span class="k">not</span> <span class="k">null</span> <span class="k">default</span> <span class="k">now</span>()
+);
+
+<span class="k">create</span> <span class="k">index</span> <span class="k">if</span> <span class="k">not</span> <span class="k">exists</span> events_starts_at_idx  <span class="k">on</span> calendar.events (starts_at);
+<span class="k">create</span> <span class="k">index</span> <span class="k">if</span> <span class="k">not</span> <span class="k">exists</span> events_person_ids_idx <span class="k">on</span> calendar.events <span class="k">using</span> <span class="k">gin</span> (person_ids);
+<span class="k">create</span> <span class="k">index</span> <span class="k">if</span> <span class="k">not</span> <span class="k">exists</span> events_recurring_idx  <span class="k">on</span> calendar.events (rrule) <span class="k">where</span> rrule is <span class="k">not</span> <span class="k">null</span>;
+
+<span class="c">-- ── recurrence exceptions ─────────────────────────────────</span>
+<span class="c">-- Lets you cancel or edit a single occurrence of a repeating</span>
+<span class="c">-- event without touching the rest of the series.</span>
+<span class="c">--   action &#x27;skip&#x27;     → that date is hidden</span>
+<span class="c">--   action &#x27;override&#x27; → overrides jsonb replaces those fields</span>
+<span class="k">create</span> <span class="k">table</span> <span class="k">if</span> <span class="k">not</span> <span class="k">exists</span> calendar.event_exceptions (
+  id              <span class="k">uuid</span> <span class="k">primary</span> <span class="k">key</span> <span class="k">default</span> <span class="k">gen_random_uuid</span>(),
+  event_id        <span class="k">uuid</span> <span class="k">not</span> <span class="k">null</span> <span class="k">references</span> calendar.events(id) <span class="k">on</span> delete cascade,
+  occurrence_date <span class="k">date</span> <span class="k">not</span> <span class="k">null</span>,
+  action          <span class="k">text</span> <span class="k">not</span> <span class="k">null</span> <span class="k">check</span> (action <span class="k">in</span> (<span class="s">&#x27;skip&#x27;</span>, <span class="s">&#x27;override&#x27;</span>)),
+  overrides       <span class="k">jsonb</span>,
+  created_at      <span class="k">timestamptz</span> <span class="k">not</span> <span class="k">null</span> <span class="k">default</span> <span class="k">now</span>(),
+  <span class="k">unique</span> (event_id, occurrence_date)
+);
+
+<span class="k">create</span> <span class="k">index</span> <span class="k">if</span> <span class="k">not</span> <span class="k">exists</span> event_exceptions_event_idx <span class="k">on</span> calendar.event_exceptions (event_id);
+
+<span class="c">-- ── household settings ────────────────────────────────────</span>
+<span class="c">-- Single row. Keeps both phones agreeing on timezone / week start.</span>
+<span class="k">create</span> <span class="k">table</span> <span class="k">if</span> <span class="k">not</span> <span class="k">exists</span> calendar.household_settings (
+  id             <span class="k">int</span> <span class="k">primary</span> <span class="k">key</span> <span class="k">default</span> 1 <span class="k">check</span> (id = 1),
+  timezone       <span class="k">text</span>,                          <span class="c">-- app fills from device on first run</span>
+  week_starts_on <span class="k">int</span> <span class="k">not</span> <span class="k">null</span> <span class="k">default</span> 0,        <span class="c">-- 0 = Sunday, 1 = Monday</span>
+  updated_at     <span class="k">timestamptz</span> <span class="k">not</span> <span class="k">null</span> <span class="k">default</span> <span class="k">now</span>()
+);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.household_settings (id) <span class="k">values</span> (1)
+<span class="k">on</span> <span class="k">conflict</span> (id) <span class="k">do</span> <span class="k">nothing</span>;
+
+<span class="c">-- ── updated_at trigger ────────────────────────────────────</span>
+<span class="k">create</span> <span class="k">or</span> <span class="k">replace</span> <span class="k">function</span> calendar.touch_updated_at()
+<span class="k">returns</span> <span class="k">trigger</span>
+<span class="k">language</span> plpgsql
+<span class="k">as</span> $$
+<span class="k">begin</span>
+  new.updated_at = <span class="k">now</span>();
+  return new;
+<span class="k">end</span>;
+$$;
+
+<span class="k">drop</span> <span class="k">trigger</span> <span class="k">if</span> <span class="k">exists</span> events_touch_updated_at <span class="k">on</span> calendar.events;
+<span class="k">create</span> <span class="k">trigger</span> events_touch_updated_at
+  <span class="k">before</span> <span class="k">update</span> <span class="k">on</span> calendar.events
+  <span class="k">for</span> <span class="k">each</span> <span class="k">row</span> <span class="k">execute</span> <span class="k">function</span> calendar.touch_updated_at();
+
+<span class="k">drop</span> <span class="k">trigger</span> <span class="k">if</span> <span class="k">exists</span> settings_touch_updated_at <span class="k">on</span> calendar.household_settings;
+<span class="k">create</span> <span class="k">trigger</span> settings_touch_updated_at
+  <span class="k">before</span> <span class="k">update</span> <span class="k">on</span> calendar.household_settings
+  <span class="k">for</span> <span class="k">each</span> <span class="k">row</span> <span class="k">execute</span> <span class="k">function</span> calendar.touch_updated_at();
+
+<span class="c">-- ── grants ────────────────────────────────────────────────</span>
+<span class="c">-- Only `authenticated` gets anything; `anon` is deliberately left</span>
+<span class="c">-- with no access at all, since the app signs in before it reads.</span>
+<span class="c">-- Row-level security below is what actually filters the rows.</span>
+<span class="k">grant</span> <span class="k">usage</span> <span class="k">on</span> <span class="k">schema</span> calendar to authenticated;
+<span class="k">grant</span> <span class="k">select</span>, <span class="k">insert</span>, <span class="k">update</span>, delete <span class="k">on</span> all tables <span class="k">in</span> <span class="k">schema</span> calendar to authenticated;
+<span class="k">alter</span> <span class="k">default</span> <span class="k">privileges</span> <span class="k">in</span> <span class="k">schema</span> calendar
+  <span class="k">grant</span> <span class="k">select</span>, <span class="k">insert</span>, <span class="k">update</span>, delete <span class="k">on</span> tables to authenticated;
+
+<span class="c">-- ── row level security ────────────────────────────────────</span>
+<span class="k">do</span> $$
+<span class="k">declare</span> t <span class="k">text</span>;
+<span class="k">begin</span>
+  <span class="k">foreach</span> t <span class="k">in</span> <span class="k">array</span> <span class="k">array</span>[<span class="s">&#x27;people&#x27;</span>, <span class="s">&#x27;events&#x27;</span>, <span class="s">&#x27;event_exceptions&#x27;</span>, <span class="s">&#x27;household_settings&#x27;</span>]
+  <span class="k">loop</span>
+    <span class="k">execute</span> <span class="k">format</span>(<span class="s">&#x27;alter table calendar.%I enable row level security&#x27;</span>, t);
+    <span class="k">execute</span> <span class="k">format</span>(<span class="s">&#x27;drop policy if exists household_all on calendar.%I&#x27;</span>, t);
+    <span class="k">execute</span> <span class="k">format</span>(
+      <span class="s">&#x27;create policy household_all on calendar.%I for all to authenticated &#x27;</span>
+      <span class="s">&#x27;using (calendar.is_household()) with check (calendar.is_household())&#x27;</span>,
+      t
+    );
+  <span class="k">end</span> <span class="k">loop</span>;
+<span class="k">end</span> $$;
+
+<span class="c">-- ── realtime ──────────────────────────────────────────────</span>
+<span class="c">-- So an edit on one phone appears on the other without a refresh.</span>
+<span class="k">do</span> $$
+<span class="k">declare</span> t <span class="k">text</span>;
+<span class="k">begin</span>
+  <span class="k">foreach</span> t <span class="k">in</span> <span class="k">array</span> <span class="k">array</span>[<span class="s">&#x27;people&#x27;</span>, <span class="s">&#x27;events&#x27;</span>, <span class="s">&#x27;event_exceptions&#x27;</span>, <span class="s">&#x27;household_settings&#x27;</span>]
+  <span class="k">loop</span>
+    <span class="k">if</span> <span class="k">not</span> <span class="k">exists</span> (
+      <span class="k">select</span> 1 <span class="k">from</span> pg_publication_tables
+      <span class="k">where</span> pubname = <span class="s">&#x27;supabase_realtime&#x27;</span>
+        <span class="k">and</span> schemaname = <span class="s">&#x27;calendar&#x27;</span>
+        <span class="k">and</span> tablename = t
+    ) then
+      <span class="k">execute</span> <span class="k">format</span>(<span class="s">&#x27;alter publication supabase_realtime add table calendar.%I&#x27;</span>, t);
+    <span class="k">end</span> <span class="k">if</span>;
+  <span class="k">end</span> <span class="k">loop</span>;
+<span class="k">end</span> $$;
+
+<span class="c">-- ── seed people ───────────────────────────────────────────</span>
+<span class="c">-- Only fills an empty table, so re-running never duplicates.</span>
+<span class="c">-- People can also be added, renamed and recoloured in the app.</span>
+<span class="k">insert</span> <span class="k">into</span> calendar.people (name, color, sort_order)
+<span class="k">select</span> * <span class="k">from</span> (<span class="k">values</span>
+  (<span class="s">&#x27;Hunter&#x27;</span>,  <span class="s">&#x27;#2563eb&#x27;</span>, 1),
+  (<span class="s">&#x27;Marloes&#x27;</span>, <span class="s">&#x27;#db2777&#x27;</span>, 2),
+  (<span class="s">&#x27;Lars&#x27;</span>,    <span class="s">&#x27;#16a34a&#x27;</span>, 3),
+  (<span class="s">&#x27;Sam&#x27;</span>,     <span class="s">&#x27;#ea580c&#x27;</span>, 4),
+  (<span class="s">&#x27;Silas&#x27;</span>,   <span class="s">&#x27;#7c3aed&#x27;</span>, 5)
+) <span class="k">as</span> seed(name, color, sort_order)
+<span class="k">where</span> <span class="k">not</span> <span class="k">exists</span> (<span class="k">select</span> 1 <span class="k">from</span> calendar.people);</code></pre>
+      </div>
+      <div class="note">
+        <p><span class="lbl">Before you run it</span>
+           The address <code class="mono">family@jonescalendar.local</code> is baked into
+           the security policies near the top. If you want a different one, change it
+           there <em>and</em> use the same address in step 5.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="step">
+    <button class="marker mono" aria-pressed="false" aria-label="Mark step 3 done">3</button>
+    <div class="body">
+      <h2>Expose the schema to the API</h2>
+      <p>Add <code class="mono">calendar</code> alongside <code class="mono">public</code>,
+         then save.</p>
+      <ul class="path">
+        <li>Project Settings</li><li class="sep">→</li>
+        <li>API</li><li class="sep">→</li>
+        <li class="val">Exposed schemas</li>
+      </ul>
+      <div class="note">
+        <p><span class="lbl">Easiest step to miss</span>
+           Skip this and the tables exist but the API can't see them — the app will
+           report that every table is missing. If something's broken later, check
+           here first.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="step">
+    <button class="marker mono" aria-pressed="false" aria-label="Mark step 4 done">4</button>
+    <div class="body">
+      <h2>Turn off public sign-ups <span class="opt">Skip if shared</span></h2>
+      <p>So the household account is the only one that can ever exist.</p>
+      <ul class="path">
+        <li>Authentication</li><li class="sep">→</li>
+        <li>Sign In / Providers</li><li class="sep">→</li>
+        <li>Email</li><li class="sep">→</li>
+        <li class="val">Allow new users to sign up — off</li>
+      </ul>
+      <p>If another app in this project needs open sign-up, leave it on. The calendar
+         is safe either way: its policies require one specific account, not merely a
+         logged-in one.</p>
+    </div>
+  </section>
+
+  <section class="step">
+    <button class="marker mono" aria-pressed="false" aria-label="Mark step 5 done">5</button>
+    <div class="body">
+      <h2>Create the household account</h2>
+      <p>Pick a PIN first — 4 to 6 digits, something you and Marloes will both
+         remember. Then:</p>
+      <ul class="path">
+        <li>Authentication</li><li class="sep">→</li>
+        <li>Users</li><li class="sep">→</li>
+        <li>Add user</li><li class="sep">→</li>
+        <li class="val">Create new user</li>
+      </ul>
+      <p><strong>Email</strong> — exactly this, and turn <strong>Auto Confirm User</strong> on:</p>
+      <div class="val-row">
+        <code class="mono">family@jonescalendar.local</code>
+        <button class="copy" type="button" data-copy="family@jonescalendar.local">Copy</button>
+      </div>
+      <p><strong>Password</strong> — your PIN followed immediately by the salt, no space
+         or separator. Copy the salt and type your PIN in front of it:</p>
+      <div class="val-row">
+        <code class="mono">4_Cq8PkCaiuZi62ya65yN7EwSRGyPNWK</code>
+        <button class="copy" type="button" data-copy="4_Cq8PkCaiuZi62ya65yN7EwSRGyPNWK">Copy salt</button>
+      </div>
+      <p>So a PIN of <code class="mono">4821</code> means the password is
+         <code class="mono">48214_Cq8PkCaiuZi62ya65yN7EwSRGyPNWK</code>. The app appends
+         the salt for you, so on your phones you only ever type the four digits.</p>
+      <p>That address is never used for anything — nothing is sent to it, it doesn't
+         need to be real. To change the PIN later, reset this account's password to the
+         new PIN plus the same salt. No code change.</p>
+    </div>
+  </section>
+
+  <section class="step">
+    <button class="marker mono" aria-pressed="false" aria-label="Mark step 6 done">6</button>
+    <div class="body">
+      <h2>Check it took</h2>
+      <p>Back in the SQL editor. Two queries, two expected answers.</p>
+      <div class="code">
+        <div class="code-bar">
+          <span class="code-name">verify</span>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre><code><span class="c">-- Should list: event_exceptions, events, household_settings, people</span>
+<span class="k">select</span> table_name <span class="k">from</span> information_schema.tables
+<span class="k">where</span> table_schema = <span class="s">&#x27;calendar&#x27;</span> order by 1;
+
+<span class="c">-- Should return 5 (Hunter, Marloes, Lars, Sam, Silas)</span>
+<span class="k">select</span> <span class="k">count</span>(*) <span class="k">from</span> calendar.people;</code></pre>
+      </div>
+      <p>Four table names and a count of five means the schema, the seed and the
+         grants all landed.</p>
+    </div>
+  </section>
+
+  <section class="step">
+    <button class="marker mono" aria-pressed="false" aria-label="Mark step 7 done">7</button>
+    <div class="body">
+      <h2>Paste the keys into the app</h2>
+      <ul class="path">
+        <li>Project Settings</li><li class="sep">→</li>
+        <li class="val">API</li>
+      </ul>
+      <p>Copy two values into <code class="mono">calendar/config.js</code>:
+         <strong>Project URL</strong> into <code class="mono">SUPABASE_URL</code>, and
+         the <strong>anon / public</strong> key into
+         <code class="mono">SUPABASE_ANON_KEY</code>.</p>
+      <div class="note">
+        <p><span class="lbl">Not the other one</span>
+           Take the <code class="mono">anon public</code> key, never
+           <code class="mono">service_role</code>. Service role bypasses row-level
+           security completely and must never appear in a web page.</p>
+      </div>
+      <p>Both are safe to commit — the anon key is designed to be public, and the
+         policies from step 2 are what actually protect your data. Then merge to
+         <code class="mono">main</code>, open the page on each phone, and
+         <strong>Share → Add to Home Screen</strong>.</p>
+    </div>
+  </section>
+
+</main>
+
+<section class="ref">
+  <h2>What the SQL created</h2>
+  <p>Four tables in the <code class="mono">calendar</code> schema. You shouldn't need to
+     touch these by hand — the app manages all of it — but here's what's in there.</p>
+
+  <div class="tbl-scroll">
+    <table>
+      <caption>Tables</caption>
+      <thead><tr><th>Table</th><th>Holds</th><th>Rows to expect</th></tr></thead>
+      <tbody>
+        <tr><td>people</td><td>One row per family member: name, colour, display order.
+            Drives the colour coding and the “who is this for?” picker.</td>
+            <td>5, seeded</td></tr>
+        <tr><td>events</td><td>Every appointment, activity and all-day marker,
+            including the repeat rule.</td><td>Grows as you use it</td></tr>
+        <tr><td>event_exceptions</td><td>One cancelled or moved occurrence of a
+            repeating event, so skipping one karate class leaves the rest alone.</td>
+            <td>Only when you skip or edit a single date</td></tr>
+        <tr><td>household_settings</td><td>Timezone and which day the week starts on,
+            shared by both phones.</td><td>Exactly 1</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tbl-scroll">
+    <table>
+      <caption>events — the columns that matter</caption>
+      <thead><tr><th>Column</th><th>What it's for</th></tr></thead>
+      <tbody>
+        <tr><td>title</td><td>What shows on the calendar.</td></tr>
+        <tr><td>starts_at<br><em>ends_at</em></td><td>When. For an all-day event these sit at
+            midnight, and <code class="mono">ends_at</code> being a later day makes it span.</td></tr>
+        <tr><td>all_day</td><td>Marks the “no school” / “first day of school” style entries
+            that have no clock time.</td></tr>
+        <tr><td>person_ids</td><td>An array, because one entry often covers several people —
+            “first day of school, Sam and Lars”. Empty means the whole family.</td></tr>
+        <tr><td>rrule</td><td>The repeat, e.g.
+            <code class="mono">FREQ=WEEKLY;INTERVAL=1;BYDAY=TU,TH</code>.
+            Empty for a one-off.</td></tr>
+        <tr><td>recurrence_until</td><td>Last day a repeat applies. Empty means forever.</td></tr>
+        <tr><td>created_by</td><td>Which of you entered it.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <p><strong>What's protecting this.</strong> Three layers: the anon key alone reads
+  nothing, because <code class="mono">anon</code> has no grant on the schema at all; any
+  other signed-in user of the same project sees zero rows and is refused on write; and
+  reaching the household account needs the PIN. The honest limit is that a 4–6 digit PIN
+  is short, and what stops someone guessing it is Supabase's rate-limiting — a fair trade
+  for a family calendar, but don't put account numbers or passwords in an event's notes.</p>
+</footer>
+
+</div>
+
+<script>
+document.querySelectorAll('.marker').forEach((m, i) => {
+  const step = m.closest('.step');
+  const key = 'jfc-setup-' + i;
+  try { if (localStorage.getItem(key) === '1') {
+    step.dataset.done = '1'; m.textContent = '✓'; m.setAttribute('aria-pressed', 'true');
+  } } catch (e) {}
+  m.addEventListener('click', () => {
+    const done = step.dataset.done === '1';
+    step.dataset.done = done ? '0' : '1';
+    m.textContent = done ? String(i + 1) : '✓';
+    m.setAttribute('aria-pressed', String(!done));
+    try { localStorage.setItem(key, done ? '0' : '1'); } catch (e) {}
+  });
+});
+
+document.querySelectorAll('.copy').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const text = btn.dataset.copy
+      || btn.closest('.code').querySelector('code').textContent;
+    const label = btn.textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (e2) {}
+      ta.remove();
+    }
+    btn.textContent = 'Copied'; btn.dataset.done = '1';
+    setTimeout(() => { btn.textContent = label; btn.dataset.done = '0'; }, 1600);
+  });
+});
+</script>
