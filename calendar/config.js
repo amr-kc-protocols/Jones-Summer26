@@ -16,6 +16,12 @@
 export const SUPABASE_URL = 'PASTE_YOUR_PROJECT_URL_HERE';
 export const SUPABASE_ANON_KEY = 'PASTE_YOUR_ANON_PUBLIC_KEY_HERE';
 
+// The calendar keeps its tables in their own Postgres schema, so it can
+// share a Supabase project with another app without colliding. This must
+// match the schema name in supabase/schema.sql, and the schema has to be
+// added to Settings → API → Exposed schemas.
+export const SUPABASE_SCHEMA = 'calendar';
+
 // The shared household account created in SETUP.md step 4.
 export const HOUSEHOLD_EMAIL = 'family@jonescalendar.local';
 

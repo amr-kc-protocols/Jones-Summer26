@@ -6,8 +6,8 @@ see the same events.
 
 ## Getting it running
 
-1. Follow [`supabase/SETUP.md`](./supabase/SETUP.md) — create the project, run
-   `supabase/schema.sql`, turn off public sign-ups, create the household
+1. Follow [`supabase/SETUP.md`](./supabase/SETUP.md) — run `supabase/schema.sql`
+   in any Supabase project, expose the `calendar` schema, create the household
    account with your PIN.
 2. Paste the project URL and anon key into [`config.js`](./config.js).
 3. Merge to `main`. GitHub Pages serves it at `/calendar/`.
@@ -70,8 +70,13 @@ it last synced, and turns red if it can't reach Supabase.
 
 One shared login for the household, unlocked with a PIN. The PIN is the
 password to that account (plus a fixed salt in `config.js`), so the public
-anon key on its own gives no access to your data. Row-level security requires
-an authenticated session on every table.
+anon key on its own gives no access to your data.
+
+The calendar lives in its own `calendar` Postgres schema and does not need a
+Supabase project to itself. Because auth is shared across a whole project,
+the row-level security policies require one specific account rather than
+merely "logged in" — otherwise a user of any other app in the same project
+would qualify. Anon holds no grant on the schema at all.
 
 The honest limit: a 4–6 digit PIN is short, and what stands between it and a
 determined guesser is Supabase's auth rate-limiting. That's a reasonable trade

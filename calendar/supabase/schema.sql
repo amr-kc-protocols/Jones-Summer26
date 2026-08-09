@@ -1,15 +1,39 @@
 -- ============================================================
 --  Jones Family Calendar — Supabase schema
+--
+--  Installs into its own `calendar` schema, so it can share a
+--  Supabase project with something else without colliding.
+--
 --  Safe to re-run: every statement is idempotent.
 --  Paste into Supabase → SQL Editor → Run.
 -- ============================================================
 
 create extension if not exists pgcrypto;
 
+create schema if not exists calendar;
+
+-- ── who is allowed in ─────────────────────────────────────
+-- Auth is shared across a whole Supabase project, so "is logged in"
+-- is NOT a sufficient test when the project also hosts another app:
+-- any user of that app would pass it. Every policy below instead
+-- requires this exact account.
+--
+-- To point the calendar at a different account later, change the
+-- address here and re-run the file. Nothing else needs editing.
+create or replace function calendar.is_household()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(auth.jwt() ->> 'email', '') = 'family@jonescalendar.local';
+$$;
+
 -- ── people ────────────────────────────────────────────────
 -- One row per family member. Drives the colour coding and the
 -- "who is this for?" picker. Add/rename people here, no code change.
-create table if not exists public.people (
+create table if not exists calendar.people (
   id          uuid primary key default gen_random_uuid(),
   name        text not null,
   color       text not null default '#4f9cf9',
@@ -21,8 +45,8 @@ create table if not exists public.people (
 -- person_ids empty = whole-family event.
 -- Several people per event is normal here ("first day of school,
 -- Sam and Lars"), hence an array rather than one column.
--- rrule null      = one-off event.
-create table if not exists public.events (
+-- rrule null = one-off event.
+create table if not exists calendar.events (
   id               uuid primary key default gen_random_uuid(),
   title            text not null,
   notes            text,
@@ -39,33 +63,18 @@ create table if not exists public.events (
   updated_at       timestamptz not null default now()
 );
 
--- Migration for anyone who ran the first version of this file, which
--- had a single person_id column. No-op on a fresh database.
-do $$
-begin
-  if exists (
-    select 1 from information_schema.columns
-    where table_schema = 'public' and table_name = 'events' and column_name = 'person_id'
-  ) then
-    alter table public.events add column if not exists person_ids uuid[] not null default '{}';
-    update public.events set person_ids = array[person_id]
-      where person_id is not null and person_ids = '{}';
-    alter table public.events drop column person_id;
-  end if;
-end $$;
-
-create index if not exists events_starts_at_idx  on public.events (starts_at);
-create index if not exists events_person_ids_idx on public.events using gin (person_ids);
-create index if not exists events_recurring_idx  on public.events (rrule) where rrule is not null;
+create index if not exists events_starts_at_idx  on calendar.events (starts_at);
+create index if not exists events_person_ids_idx on calendar.events using gin (person_ids);
+create index if not exists events_recurring_idx  on calendar.events (rrule) where rrule is not null;
 
 -- ── recurrence exceptions ─────────────────────────────────
 -- Lets you cancel or edit a single occurrence of a repeating
 -- event without touching the rest of the series.
 --   action 'skip'     → that date is hidden
 --   action 'override' → overrides jsonb replaces those fields
-create table if not exists public.event_exceptions (
+create table if not exists calendar.event_exceptions (
   id              uuid primary key default gen_random_uuid(),
-  event_id        uuid not null references public.events(id) on delete cascade,
+  event_id        uuid not null references calendar.events(id) on delete cascade,
   occurrence_date date not null,
   action          text not null check (action in ('skip', 'override')),
   overrides       jsonb,
@@ -73,22 +82,22 @@ create table if not exists public.event_exceptions (
   unique (event_id, occurrence_date)
 );
 
-create index if not exists event_exceptions_event_idx on public.event_exceptions (event_id);
+create index if not exists event_exceptions_event_idx on calendar.event_exceptions (event_id);
 
 -- ── household settings ────────────────────────────────────
 -- Single row. Keeps both phones agreeing on timezone / week start.
-create table if not exists public.household_settings (
+create table if not exists calendar.household_settings (
   id             int primary key default 1 check (id = 1),
   timezone       text,                          -- app fills from device on first run
   week_starts_on int not null default 0,        -- 0 = Sunday, 1 = Monday
   updated_at     timestamptz not null default now()
 );
 
-insert into public.household_settings (id) values (1)
+insert into calendar.household_settings (id) values (1)
 on conflict (id) do nothing;
 
 -- ── updated_at trigger ────────────────────────────────────
-create or replace function public.touch_updated_at()
+create or replace function calendar.touch_updated_at()
 returns trigger
 language plpgsql
 as $$
@@ -98,29 +107,36 @@ begin
 end;
 $$;
 
-drop trigger if exists events_touch_updated_at on public.events;
+drop trigger if exists events_touch_updated_at on calendar.events;
 create trigger events_touch_updated_at
-  before update on public.events
-  for each row execute function public.touch_updated_at();
+  before update on calendar.events
+  for each row execute function calendar.touch_updated_at();
 
-drop trigger if exists settings_touch_updated_at on public.household_settings;
+drop trigger if exists settings_touch_updated_at on calendar.household_settings;
 create trigger settings_touch_updated_at
-  before update on public.household_settings
-  for each row execute function public.touch_updated_at();
+  before update on calendar.household_settings
+  for each row execute function calendar.touch_updated_at();
+
+-- ── grants ────────────────────────────────────────────────
+-- Only `authenticated` gets anything; `anon` is deliberately left
+-- with no access at all, since the app signs in before it reads.
+-- Row-level security below is what actually filters the rows.
+grant usage on schema calendar to authenticated;
+grant select, insert, update, delete on all tables in schema calendar to authenticated;
+alter default privileges in schema calendar
+  grant select, insert, update, delete on tables to authenticated;
 
 -- ── row level security ────────────────────────────────────
--- The site is public, so the anon key is public too. These policies
--- grant nothing to anon: you must be signed in as the household
--- account (see SETUP.md) before any row is readable or writable.
 do $$
 declare t text;
 begin
   foreach t in array array['people', 'events', 'event_exceptions', 'household_settings']
   loop
-    execute format('alter table public.%I enable row level security', t);
-    execute format('drop policy if exists household_all on public.%I', t);
+    execute format('alter table calendar.%I enable row level security', t);
+    execute format('drop policy if exists household_all on calendar.%I', t);
     execute format(
-      'create policy household_all on public.%I for all to authenticated using (true) with check (true)',
+      'create policy household_all on calendar.%I for all to authenticated '
+      'using (calendar.is_household()) with check (calendar.is_household())',
       t
     );
   end loop;
@@ -136,10 +152,10 @@ begin
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime'
-        and schemaname = 'public'
+        and schemaname = 'calendar'
         and tablename = t
     ) then
-      execute format('alter publication supabase_realtime add table public.%I', t);
+      execute format('alter publication supabase_realtime add table calendar.%I', t);
     end if;
   end loop;
 end $$;
@@ -147,7 +163,7 @@ end $$;
 -- ── seed people ───────────────────────────────────────────
 -- Only fills an empty table, so re-running never duplicates.
 -- People can also be added, renamed and recoloured in the app.
-insert into public.people (name, color, sort_order)
+insert into calendar.people (name, color, sort_order)
 select * from (values
   ('Hunter',  '#2563eb', 1),
   ('Marloes', '#db2777', 2),
@@ -155,4 +171,4 @@ select * from (values
   ('Sam',     '#ea580c', 4),
   ('Silas',   '#7c3aed', 5)
 ) as seed(name, color, sort_order)
-where not exists (select 1 from public.people);
+where not exists (select 1 from calendar.people);

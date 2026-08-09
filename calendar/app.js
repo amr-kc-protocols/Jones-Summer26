@@ -5,7 +5,8 @@
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm';
 import {
-  SUPABASE_URL, SUPABASE_ANON_KEY, HOUSEHOLD_EMAIL, PIN_SALT, SHOW_HOLIDAYS
+  SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SCHEMA,
+  HOUSEHOLD_EMAIL, PIN_SALT, SHOW_HOLIDAYS
 } from './config.js';
 import {
   DAY_MS, startOfDay, addDays, addMonths, daysBetween, ymd, fromYmd, hm, sameDay, startOfWeek,
@@ -30,7 +31,10 @@ if (!SUPABASE_URL || SUPABASE_URL.startsWith('PASTE') ||
 }
 
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true, storageKey: 'jfc-auth' }
+  // A distinct storageKey keeps this session separate from any other app
+  // sharing the same Supabase project.
+  auth: { persistSession: true, autoRefreshToken: true, storageKey: 'jfc-auth' },
+  db: { schema: SUPABASE_SCHEMA }
 });
 
 const holidayOn = d => SHOW_HOLIDAYS ? (holidays(d.getFullYear()).get(ymd(d)) || null) : null;
@@ -671,7 +675,7 @@ function scheduleRefresh() {
 
 function subscribeRealtime() {
   sb.channel('jfc-live')
-    .on('postgres_changes', { event: '*', schema: 'public' }, scheduleRefresh)
+    .on('postgres_changes', { event: '*', schema: SUPABASE_SCHEMA }, scheduleRefresh)
     .subscribe();
 }
 
