@@ -58,6 +58,24 @@ days.
 US holidays are drawn in automatically, the same ones the paper calendar
 prints.
 
+## The look
+
+Taken from the house rather than invented: Delft blue and white, a parchment
+ground instead of grey, crimson and old gold off the picture frames, and the
+folk-art palette from the beetle paintings for the per-person colours. The
+lock screen is a Delft tile with the four corner flourishes. A woven striped
+tape — the mats on the framed prints — runs under the header and along the top
+of each sheet, and the day list has a scalloped edge like the scalloped frames.
+Serif for anything you read, sans for the small print.
+
+At night it shifts to a deep Delft navy rather than a neutral charcoal. Person
+colours are stored as single hex values and have to work on both grounds, so
+they're lifted slightly in dark mode to keep cobalt and crimson from going
+muddy.
+
+All of it is in the one `<style>` block in `index.html`; no web fonts, so it
+still renders with no signal.
+
 ## Syncing and offline
 
 Changes appear on the other phone within a second or so over Supabase

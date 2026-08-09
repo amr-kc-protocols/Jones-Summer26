@@ -573,7 +573,8 @@ function renderPeopleEditor() {
 }
 
 $('#addPerson').onclick = () => {
-  const palette = ['#2563eb', '#db2777', '#16a34a', '#ea580c', '#7c3aed', '#0891b2', '#ca8a04'];
+  // Folk-art palette: Delft cobalt, crimson, deep green, ochre, plum, teal, rose.
+  const palette = ['#27478f', '#a3242c', '#3f7350', '#c98a2b', '#7b4b8a', '#3a8a94', '#cf6f7f'];
   draftPeople.push({ id: null, name: '', color: palette[draftPeople.length % palette.length] });
   renderPeopleEditor();
 };

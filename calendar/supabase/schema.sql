@@ -35,7 +35,7 @@ $$;
 create table if not exists calendar.people (
   id          uuid primary key default gen_random_uuid(),
   name        text not null,
-  color       text not null default '#4f9cf9',
+  color       text not null default '#27478f',
   sort_order  int  not null default 0,
   created_at  timestamptz not null default now()
 );
@@ -164,10 +164,10 @@ end $$;
 -- People can also be added, renamed and recoloured in the app.
 insert into calendar.people (name, color, sort_order)
 select * from (values
-  ('Hunter',  '#2563eb', 1),
-  ('Marloes', '#db2777', 2),
-  ('Lars',    '#16a34a', 3),
-  ('Sam',     '#ea580c', 4),
-  ('Silas',   '#7c3aed', 5)
+  ('Hunter',  '#27478f', 1),   -- Delft cobalt
+  ('Marloes', '#a3242c', 2),   -- crimson
+  ('Lars',    '#3f7350', 3),   -- deep green
+  ('Sam',     '#c98a2b', 4),   -- ochre
+  ('Silas',   '#7b4b8a', 5)    -- plum
 ) as seed(name, color, sort_order)
 where not exists (select 1 from calendar.people);
