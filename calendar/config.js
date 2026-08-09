@@ -14,7 +14,7 @@
 // plus the PIN. See supabase/SETUP.md.
 
 export const SUPABASE_URL = 'PASTE_YOUR_PROJECT_URL_HERE';
-export const SUPABASE_ANON_KEY = 'PASTE_YOUR_ANON_PUBLIC_KEY_HERE';
+export const SUPABASE_ANON_KEY = 'sb_publishable_LPuWXQmt45g_46d5tZrAJg_OxYdZ50S';
 
 // The calendar keeps its tables in their own Postgres schema, so it can
 // share a Supabase project with another app without colliding. This must

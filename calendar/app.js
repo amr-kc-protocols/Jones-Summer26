@@ -3,7 +3,11 @@
    Month / Week / Agenda views over a shared Supabase table.
    ══════════════════════════════════════════════════════════ */
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm';
+// Tracks the 2.x line rather than an exact pin: the sb_publishable_ key
+// format postdates older 2.x releases, and a stale pin would 401 on every
+// request. The service worker caches whatever it first resolved, so a
+// given phone stays on one version until the cache is replaced.
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 import {
   SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SCHEMA,
   HOUSEHOLD_EMAIL, PIN_SALT, SHOW_HOLIDAYS
@@ -14,6 +18,8 @@ import {
   fmtTime, holidays, parseRRule, occurrenceDays, makeOccurrence
 } from './lib.js';
 
+
+window.__jfcBooted = true;
 
 const $ = s => document.querySelector(s);
 const el = (tag, cls, txt) => {
