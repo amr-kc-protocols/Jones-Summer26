@@ -76,6 +76,13 @@ muddy.
 All of it is in the one `<style>` block in `index.html`; no web fonts, so it
 still renders with no signal.
 
+The app icon is the same tile — cobalt on tin glaze, corner flourishes, and a
+calendar painted with a light hand. It exists in three cuts, because each
+platform crops it differently: `icon.svg` square, `icon-rounded.svg` pulled in
+for the iOS squircle, and `icon-maskable.svg` pulled in further so nothing
+important leaves the centre 80% that Android may crop to. The PNGs beside them
+are rendered from those files; edit the SVG, not the PNG.
+
 ## Syncing and offline
 
 Changes appear on the other phone within a second or so over Supabase
