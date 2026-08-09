@@ -55,8 +55,18 @@ one cancelled karate class doesn't wipe out the term.
 "no school", first day of school, back-to-school night. They can span several
 days.
 
-US holidays are drawn in automatically, the same ones the paper calendar
-prints.
+**Holidays** are drawn in automatically: the US ones a paper calendar prints,
+plus the Dutch ones this house keeps — Koningsdag, Bevrijdingsdag, Sint-Maarten,
+Sinterklaas, Tweede Kerstdag, and the days reckoned from Easter (Goede Vrijdag,
+Tweede Paasdag, Hemelvaart, Pinksteren).
+
+The two sets overlap more than you'd think, so where both fall on one date the
+names join: Nov 11 reads *Veterans Day · Sint-Maarten*, and in 2026 Memorial Day
+lands on Tweede Pinksterdag. The agenda shows the full joined name; the month
+grid only has room for one label, so it keeps the shorter US one.
+
+Either set can be switched off with `HOLIDAY_SETS` in `config.js` — `['us']` or
+`['nl']` — and `SHOW_HOLIDAYS` still turns the lot off.
 
 ## The look
 

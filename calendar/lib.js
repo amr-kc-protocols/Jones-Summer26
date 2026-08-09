@@ -29,7 +29,13 @@ export function fmtTime(d) {
   return m ? `${h}:${pad2(m)} ${ap}` : `${h} ${ap}`;
 }
 
-/* ── US holidays, matching what the paper calendar prints ── */
+/* ── holidays ──────────────────────────────────────────────
+   Two sets: the US ones the paper calendar prints, and the Dutch ones
+   this household also keeps. Both are on by default; see HOLIDAY_SETS
+   in config.js.
+
+   Where the two land on the same day the entries merge — Nov 11 is
+   Veterans Day *and* Sint-Maarten — so nothing is silently dropped. */
 export function nthDow(y, m, dow, n) {
   if (n > 0) {
     const first = new Date(y, m, 1);
@@ -39,35 +45,87 @@ export function nthDow(y, m, dow, n) {
   return new Date(y, m + 1, -((last.getDay() - dow + 7) % 7));
 }
 
+/* Easter Sunday, Gregorian (Meeus/Jones/Butcher). Six of the Dutch
+   holidays are counted from it, and it sets Good Friday too. */
+export function easter(year) {
+  const a = year % 19;
+  const b = Math.floor(year / 100), c = year % 100;
+  const d = Math.floor(b / 4), e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4), k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const n = h + l - 7 * m + 114;
+  return new Date(year, Math.floor(n / 31) - 1, (n % 31) + 1);
+}
+
 /* Each entry carries a full name and a short one; the month grid cell is
    only ~50px wide, so it uses `short` while agenda and week use `name`. */
 const holidayCache = new Map();
-export function holidays(year) {
-  if (holidayCache.has(year)) return holidayCache.get(year);
+export function holidays(year, sets = ['us', 'nl']) {
+  const key = `${year}|${sets.join(',')}`;
+  if (holidayCache.has(key)) return holidayCache.get(key);
   const map = new Map();
-  const put = (d, name, short) => map.set(ymd(d), { name, short: short || name });
+
+  /* Two holidays can share a date. The first one in wins the short label
+     — the grid has room for one — and the full names join, so the agenda
+     still shows both. US is added first, so it leads. */
+  const put = (d, name, short) => {
+    const k = ymd(d);
+    const prev = map.get(k);
+    if (prev) {
+      if (!prev.name.split(' · ').includes(name)) prev.name += ` · ${name}`;
+      return;
+    }
+    map.set(k, { name, short: short || name });
+  };
   const fixed = (m, d, name, short) => put(new Date(year, m, d), name, short);
 
-  fixed(0, 1, "New Year's Day", "New Year's");
-  put(nthDow(year, 0, 1, 3), 'MLK Day', 'MLK Day');
-  fixed(1, 14, "Valentine's Day", "Valentine's");
-  put(nthDow(year, 1, 1, 3), "Presidents' Day", "Presidents'");
-  fixed(2, 17, "St. Patrick's Day", "St. Pat's");
-  put(nthDow(year, 4, 0, 2), "Mother's Day", "Mother's");
-  put(nthDow(year, 4, 1, -1), 'Memorial Day', 'Memorial');
-  fixed(5, 19, 'Juneteenth', 'Juneteenth');
-  put(nthDow(year, 5, 0, 3), "Father's Day", "Father's");
-  fixed(6, 4, 'Independence Day', 'July 4');
-  put(nthDow(year, 8, 1, 1), 'Labor Day', 'Labor Day');
-  put(nthDow(year, 9, 1, 2), 'Columbus Day', 'Columbus');
-  fixed(9, 31, 'Halloween', 'Halloween');
-  fixed(10, 11, 'Veterans Day', 'Veterans');
-  put(nthDow(year, 10, 4, 4), 'Thanksgiving', 'Thanksgiv.');
-  fixed(11, 24, 'Christmas Eve', 'Xmas Eve');
-  fixed(11, 25, 'Christmas', 'Christmas');
-  fixed(11, 31, "New Year's Eve", "NYE");
+  const pasen = easter(year);
+  const fromEaster = (n, name, short) => put(addDays(pasen, n), name, short);
 
-  holidayCache.set(year, map);
+  if (sets.includes('us')) {
+    fixed(0, 1, "New Year's Day", "New Year's");
+    put(nthDow(year, 0, 1, 3), 'MLK Day', 'MLK Day');
+    fixed(1, 14, "Valentine's Day", "Valentine's");
+    put(nthDow(year, 1, 1, 3), "Presidents' Day", "Presidents'");
+    fixed(2, 17, "St. Patrick's Day", "St. Pat's");
+    put(nthDow(year, 4, 0, 2), "Mother's Day", "Mother's");
+    put(nthDow(year, 4, 1, -1), 'Memorial Day', 'Memorial');
+    fixed(5, 19, 'Juneteenth', 'Juneteenth');
+    put(nthDow(year, 5, 0, 3), "Father's Day", "Father's");
+    fixed(6, 4, 'Independence Day', 'July 4');
+    put(nthDow(year, 8, 1, 1), 'Labor Day', 'Labor Day');
+    put(nthDow(year, 9, 1, 2), 'Columbus Day', 'Columbus');
+    fixed(9, 31, 'Halloween', 'Halloween');
+    fixed(10, 11, 'Veterans Day', 'Veterans');
+    put(nthDow(year, 10, 4, 4), 'Thanksgiving', 'Thanksgiv.');
+    fixed(11, 24, 'Christmas Eve', 'Xmas Eve');
+    fixed(11, 25, 'Christmas', 'Christmas');
+    fixed(11, 31, "New Year's Eve", "NYE");
+    fromEaster(0, 'Easter', 'Easter');
+  }
+
+  if (sets.includes('nl')) {
+    fromEaster(-2, 'Goede Vrijdag', 'G. Vrijdag');
+    fromEaster(0, 'Eerste Paasdag', 'Paasdag');
+    fromEaster(1, 'Tweede Paasdag', '2e Paasdag');
+    /* Koningsdag is the 27th, but never on a Sunday — it moves back a day. */
+    const apr27 = new Date(year, 3, 27);
+    put(apr27.getDay() === 0 ? addDays(apr27, -1) : apr27, 'Koningsdag', 'Koningsdag');
+    fixed(4, 5, 'Bevrijdingsdag', 'Bevrijding');
+    fromEaster(39, 'Hemelvaartsdag', 'Hemelvaart');
+    fromEaster(49, 'Eerste Pinksterdag', 'Pinksteren');
+    fromEaster(50, 'Tweede Pinksterdag', '2e Pinkst.');
+    fixed(10, 11, 'Sint-Maarten', 'St-Maarten');
+    fixed(11, 5, 'Sinterklaas', 'Sinterklaas');
+    fixed(11, 25, 'Eerste Kerstdag', 'Kerstdag');
+    fixed(11, 26, 'Tweede Kerstdag', '2e Kerstdag');
+  }
+
+  holidayCache.set(key, map);
   return map;
 }
 

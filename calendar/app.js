@@ -10,7 +10,7 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 import {
   SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SCHEMA,
-  HOUSEHOLD_EMAIL, PIN_SALT, SHOW_HOLIDAYS
+  HOUSEHOLD_EMAIL, PIN_SALT, SHOW_HOLIDAYS, HOLIDAY_SETS
 } from './config.js';
 import {
   DAY_MS, startOfDay, addDays, addMonths, daysBetween, ymd, fromYmd, hm, sameDay, startOfWeek,
@@ -43,7 +43,8 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   db: { schema: SUPABASE_SCHEMA }
 });
 
-const holidayOn = d => SHOW_HOLIDAYS ? (holidays(d.getFullYear()).get(ymd(d)) || null) : null;
+const holidayOn = d =>
+  SHOW_HOLIDAYS ? (holidays(d.getFullYear(), HOLIDAY_SETS).get(ymd(d)) || null) : null;
 
 /* ══ state ══════════════════════════════════════════════ */
 const state = {

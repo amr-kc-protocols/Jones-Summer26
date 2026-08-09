@@ -30,5 +30,17 @@ export const HOUSEHOLD_EMAIL = 'family@jonescalendar.local';
 // Changing this means resetting the account password to match.
 export const PIN_SALT = '4_Cq8PkCaiuZi62ya65yN7EwSRGyPNWK';
 
-// Show US holidays on the grid, like the printed calendar does.
+// Show holidays on the grid, like the printed calendar does.
 export const SHOW_HOLIDAYS = true;
+
+// Which sets of holidays to show. 'us' is the list a US paper calendar
+// prints; 'nl' adds the Dutch ones — Koningsdag, Sinterklaas, Tweede
+// Kerstdag, and the Easter-reckoned days (Goede Vrijdag, Tweede Paasdag,
+// Hemelvaart, Pinksteren).
+//
+// Where both sets land on one date the names join, so Nov 11 reads
+// "Veterans Day · Sint-Maarten" in the agenda while the month grid — which
+// only has room for one label — keeps the shorter US one.
+//
+// Drop either entry to turn that set off: ['us'] or ['nl'].
+export const HOLIDAY_SETS = ['us', 'nl'];

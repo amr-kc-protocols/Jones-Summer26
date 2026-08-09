@@ -3,7 +3,7 @@
 
 import {
   ymd, fromYmd, addDays, startOfWeek, daysBetween, fmtTime,
-  holidays, parseRRule, occurrenceDays, makeOccurrence
+  holidays, easter, parseRRule, occurrenceDays, makeOccurrence
 } from './lib.js';
 
 let pass = 0, fail = 0;
@@ -65,12 +65,57 @@ check('Labor Day 2026', holName('2026-09-07'), 'Labor Day');
 check('Columbus Day 2026', holName('2026-10-12'), 'Columbus Day');
 check('Halloween 2026', holName('2026-10-31'), 'Halloween');
 check('Thanksgiving 2026', holName('2026-11-26'), 'Thanksgiving');
-check('Memorial Day 2026 (last Mon)', holName('2026-05-25'), 'Memorial Day');
+check('Memorial Day 2026 (last Mon)', holName('2026-05-25').split(' · ')[0], 'Memorial Day');
 check('MLK Day 2026', holName('2026-01-19'), 'MLK Day');
 check("Mother's Day 2026", holName('2026-05-10'), "Mother's Day");
 check('no holiday on a plain day', h26.get('2026-08-13'), undefined);
 check('every holiday has a short label that fits a grid cell',
   [...h26.values()].every(v => v.short && v.short.length <= 11), true);
+
+/* ── Easter, against published dates ─────────────────── */
+check('Easter 2024', ymd(easter(2024)), '2024-03-31');
+check('Easter 2025', ymd(easter(2025)), '2025-04-20');
+check('Easter 2026', ymd(easter(2026)), '2026-04-05');
+check('Easter 2027', ymd(easter(2027)), '2027-03-28');
+check('Easter 2038 (late)', ymd(easter(2038)), '2038-04-25');
+
+/* ── Dutch holidays ──────────────────────────────────── */
+check('Goede Vrijdag 2026', holName('2026-04-03'), 'Goede Vrijdag');
+check('Tweede Paasdag 2026', holName('2026-04-06'), 'Tweede Paasdag');
+check('Hemelvaartsdag 2026 (Easter +39)', holName('2026-05-14'), 'Hemelvaartsdag');
+check('Eerste Pinksterdag 2026 (Easter +49)', holName('2026-05-24'), 'Eerste Pinksterdag');
+/* 2026 puts Tweede Pinksterdag on Memorial Day — a moving US holiday and a
+   moving Dutch one landing together, which is exactly what merging is for. */
+check('Tweede Pinksterdag 2026 merges with Memorial Day',
+  holName('2026-05-25'), 'Memorial Day · Tweede Pinksterdag');
+check('Bevrijdingsdag 2026', holName('2026-05-05'), 'Bevrijdingsdag');
+check('Sinterklaas 2026', holName('2026-12-05'), 'Sinterklaas');
+check('Tweede Kerstdag 2026', holName('2026-12-26'), 'Tweede Kerstdag');
+
+/* Koningsdag is April 27 unless that is a Sunday, when it moves back. */
+check('Koningsdag 2026 (Mon, stays put)', holName('2026-04-27'), 'Koningsdag');
+check('Koningsdag 2025 (27th is a Sunday, moves to 26th)',
+  holidays(2025).get('2025-04-26')?.name, 'Koningsdag');
+check('Koningsdag 2025 leaves the 27th empty',
+  holidays(2025).get('2025-04-27'), undefined);
+
+/* Shared dates merge rather than overwrite. */
+check('Nov 11 carries both names', holName('2026-11-11'), 'Veterans Day · Sint-Maarten');
+check('Nov 11 keeps the US short label for the grid', h26.get('2026-11-11').short, 'Veterans');
+check('Christmas carries both names', holName('2026-12-25'), 'Christmas · Eerste Kerstdag');
+check('Easter Sunday carries both names', holName('2026-04-05'), 'Easter · Eerste Paasdag');
+
+/* Either set can be turned off in config. */
+const usOnly = holidays(2026, ['us']), nlOnly = holidays(2026, ['nl']);
+check('us-only set drops Sinterklaas', usOnly.get('2026-12-05'), undefined);
+check('us-only set keeps Thanksgiving', usOnly.get('2026-11-26')?.name, 'Thanksgiving');
+check('nl-only set drops Thanksgiving', nlOnly.get('2026-11-26'), undefined);
+check('nl-only set keeps Koningsdag', nlOnly.get('2026-04-27')?.name, 'Koningsdag');
+check('nl-only Nov 11 is Sint-Maarten alone', nlOnly.get('2026-11-11')?.name, 'Sint-Maarten');
+check('nl-only May 25 is Tweede Pinksterdag alone',
+  nlOnly.get('2026-05-25')?.name, 'Tweede Pinksterdag');
+check('both sets are cached separately',
+  holidays(2026, ['us']).size === usOnly.size && usOnly.size < h26.size, true);
 
 /* ── rrule parsing ───────────────────────────────────── */
 check('parse weekly byday', parseRRule('FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,WE'),
