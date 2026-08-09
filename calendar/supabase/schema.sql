@@ -36,6 +36,7 @@ create table if not exists calendar.people (
   id          uuid primary key default gen_random_uuid(),
   name        text not null,
   color       text not null default '#27478f',
+  birthday    text,                          -- 'MM-DD', or 'YYYY-MM-DD' to get an age
   sort_order  int  not null default 0,
   created_at  timestamptz not null default now()
 );
@@ -89,6 +90,7 @@ create table if not exists calendar.household_settings (
   id             int primary key default 1 check (id = 1),
   timezone       text,                          -- app fills from device on first run
   week_starts_on int not null default 0,        -- 0 = Sunday, 1 = Monday
+  anniversary    text,                          -- same format as people.birthday
   updated_at     timestamptz not null default now()
 );
 
@@ -159,6 +161,28 @@ begin
   end loop;
 end $$;
 
+-- ── migrations for an install that predates a column ──────
+-- The create-table statements above only fire on an empty database, so
+-- anything added later needs an explicit alter as well. Both are no-ops
+-- on a fresh install.
+alter table calendar.people
+  add column if not exists birthday text;
+alter table calendar.household_settings
+  add column if not exists anniversary text;
+
+-- Format guard: 'MM-DD', or 'YYYY-MM-DD' when the year is known.
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'people_birthday_format') then
+    alter table calendar.people add constraint people_birthday_format
+      check (birthday is null or birthday ~ '^(\d{4}-)?\d{2}-\d{2}$');
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'settings_anniversary_format') then
+    alter table calendar.household_settings add constraint settings_anniversary_format
+      check (anniversary is null or anniversary ~ '^(\d{4}-)?\d{2}-\d{2}$');
+  end if;
+end $$;
+
 -- ── seed people ───────────────────────────────────────────
 -- Only fills an empty table, so re-running never duplicates.
 -- People can also be added, renamed and recoloured in the app.
@@ -171,3 +195,24 @@ select * from (values
   ('Silas',   '#7b4b8a', 5)    -- plum
 ) as seed(name, color, sort_order)
 where not exists (select 1 from calendar.people);
+
+-- ── seed birthdays and the anniversary ────────────────────
+-- Only fills a blank one, so re-running never overwrites a date you
+-- have since corrected in the app. Add a year in front of any of these
+-- ('1985-03-03') and the calendar starts showing an age.
+update calendar.people p
+   set birthday = seed.b
+  from (values
+    ('Hunter',  '03-03'),
+    ('Marloes', '08-14'),
+    ('Sam',     '04-27'),   -- Koningsdag, as it happens
+    ('Lars',    '09-29'),
+    ('Silas',   '01-05')
+  ) as seed(n, b)
+ where p.name = seed.n
+   and p.birthday is null;
+
+update calendar.household_settings
+   set anniversary = '08-07'
+ where id = 1
+   and anniversary is null;

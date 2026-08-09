@@ -129,6 +129,67 @@ export function holidays(year, sets = ['us', 'nl']) {
   return map;
 }
 
+/* ── birthdays and the anniversary ─────────────────────────
+   These aren't stored as events. A birthday belongs to a person and an
+   anniversary to the household, so they're generated from those records
+   the way holidays are generated from the year. Nothing to keep in sync,
+   nothing to accidentally delete, and renaming a person renames theirs.
+
+   Stored as MM-DD, or YYYY-MM-DD when the year is known — the year is
+   optional because an age is nice to have, not the point. */
+export const isLeapYear = y => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+
+export function parseAnnual(s) {
+  const m = /^(?:(\d{4})-)?(\d{2})-(\d{2})$/.exec((s || '').trim());
+  if (!m) return null;
+  const year = m[1] ? Number(m[1]) : null;
+  const month = Number(m[2]), day = Number(m[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  /* Reject a day the month never has — 02-30, 04-31. */
+  if (day > [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1]) return null;
+  return { year, month, day };
+}
+
+/* Feb 29 falls back to Mar 1 in a common year, so a leap-day birthday is
+   still marked every year rather than three times out of four. */
+export function annualDate(a, year) {
+  if (a.month === 2 && a.day === 29 && !isLeapYear(year)) return new Date(year, 2, 1);
+  return new Date(year, a.month - 1, a.day);
+}
+
+/* Occurrence-shaped, so the day map, the filters and the row renderer all
+   treat these exactly like any other all-day event. */
+export function celebrations(people, anniversary, from, to) {
+  const out = [];
+  const years = [...new Set([from.getFullYear(), to.getFullYear()])];
+
+  const add = (a, kind, title, personIds, color, agePart) => {
+    for (const year of years) {
+      const day = annualDate(a, year);
+      if (day < from || day > to) continue;
+      const age = a.year != null ? year - a.year : null;
+      out.push({
+        celebration: kind, ev: null, eventId: `${kind}:${title}:${year}`,
+        dateKey: ymd(day), day,
+        title: age != null && age >= 0 ? `${title} ${agePart(age)}` : title,
+        notes: null, location: null,
+        allDay: true, start: day, end: day,
+        personIds, color, repeating: false, isOverride: false
+      });
+    }
+  };
+
+  for (const p of people) {
+    const a = parseAnnual(p.birthday);
+    if (a && p.name) add(a, 'birthday', `${p.name}'s birthday`, [p.id], p.color, n => `(${n})`);
+  }
+  const a = parseAnnual(anniversary);
+  if (a) add(a, 'anniversary', 'Anniversary', [], 'var(--gold)',
+             n => `(${n} year${n === 1 ? '' : 's'})`);
+
+  return out;
+}
+
 /* ── recurrence ────────────────────────────────────────── */
 export function parseRRule(s) {
   if (!s) return null;

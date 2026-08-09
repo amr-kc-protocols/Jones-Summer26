@@ -68,6 +68,20 @@ grid only has room for one label, so it keeps the shorter US one.
 Either set can be switched off with `HOLIDAY_SETS` in `config.js` — `['us']` or
 `['nl']` — and `SHOW_HOLIDAYS` still turns the lot off.
 
+**Birthdays and the anniversary** are set in ⚙ Settings — a birthday on each
+person, the anniversary on the household. The year is optional; add it and the
+calendar shows an age, leave it off and it just marks the day.
+
+They aren't stored as events. They're generated from those records the same way
+holidays are generated from the year, which means there's nothing to keep in
+sync, nothing to delete by accident, and renaming a person renames theirs.
+Tapping one opens Settings, since that's where it's actually changed. A Feb 29
+birthday is marked on Mar 1 in common years rather than skipped.
+
+> Adding these needs two new columns, so **re-run `supabase/schema.sql`** once
+> after deploying — SQL Editor → New query → paste → Run. It's idempotent, and
+> it seeds the family's dates without overwriting anything already set.
+
 ## The look
 
 Taken from the house rather than invented: Delft blue and white, a parchment

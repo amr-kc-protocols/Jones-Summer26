@@ -3,7 +3,8 @@
 
 import {
   ymd, fromYmd, addDays, startOfWeek, daysBetween, fmtTime,
-  holidays, easter, parseRRule, occurrenceDays, makeOccurrence
+  holidays, easter, parseAnnual, annualDate, celebrations,
+  parseRRule, occurrenceDays, makeOccurrence
 } from './lib.js';
 
 let pass = 0, fail = 0;
@@ -116,6 +117,63 @@ check('nl-only May 25 is Tweede Pinksterdag alone',
   nlOnly.get('2026-05-25')?.name, 'Tweede Pinksterdag');
 check('both sets are cached separately',
   holidays(2026, ['us']).size === usOnly.size && usOnly.size < h26.size, true);
+
+/* ── birthdays and the anniversary ───────────────────── */
+check('parse MM-DD', parseAnnual('08-14'), { year: null, month: 8, day: 14 });
+check('parse YYYY-MM-DD', parseAnnual('1985-08-14'), { year: 1985, month: 8, day: 14 });
+check('parse tolerates surrounding space', parseAnnual('  03-03 '), { year: null, month: 3, day: 3 });
+check('parse rejects empty', parseAnnual(''), null);
+check('parse rejects null', parseAnnual(null), null);
+check('parse rejects a bad month', parseAnnual('13-01'), null);
+check('parse rejects Feb 30', parseAnnual('02-30'), null);
+check('parse rejects Apr 31', parseAnnual('04-31'), null);
+check('parse allows Feb 29', parseAnnual('02-29'), { year: null, month: 2, day: 29 });
+check('parse rejects a 2-digit year', parseAnnual('85-08-14'), null);
+
+check('Feb 29 in a leap year stays put',
+  ymd(annualDate(parseAnnual('02-29'), 2028)), '2028-02-29');
+check('Feb 29 falls back to Mar 1 otherwise',
+  ymd(annualDate(parseAnnual('02-29'), 2026)), '2026-03-01');
+check('2100 is not a leap year',
+  ymd(annualDate(parseAnnual('02-29'), 2100)), '2100-03-01');
+
+const fam = [
+  { id: 'p1', name: 'Marloes', color: '#a3242c', birthday: '08-14' },
+  { id: 'p2', name: 'Sam', color: '#c98a2b', birthday: '1930-04-27' },
+  { id: 'p3', name: 'Nobody', color: '#000', birthday: null }
+];
+const celebs = (from, to, anniv = '08-07') =>
+  celebrations(fam, anniv, fromYmd(from), fromYmd(to));
+
+const aug = celebs('2026-08-01', '2026-08-31');
+check('birthday lands on its date', aug.find(c => c.dateKey === '2026-08-14')?.title,
+  "Marloes's birthday");
+check('anniversary lands on its date', aug.find(c => c.dateKey === '2026-08-07')?.title,
+  'Anniversary');
+check('birthday carries the person', aug.find(c => c.dateKey === '2026-08-14')?.personIds, ['p1']);
+check('birthday carries their colour', aug.find(c => c.dateKey === '2026-08-14')?.color, '#a3242c');
+check('anniversary belongs to nobody in particular',
+  aug.find(c => c.dateKey === '2026-08-07')?.personIds, []);
+check('celebrations are all-day', aug.every(c => c.allDay), true);
+check('a person with no birthday produces nothing',
+  celebs('2026-01-01', '2026-12-31').some(c => c.title.includes('Nobody')), false);
+
+check('a known birth year shows an age',
+  celebs('2026-04-01', '2026-04-30').find(c => c.dateKey === '2026-04-27')?.title,
+  "Sam's birthday (96)");
+check('anniversary with a year counts years',
+  celebs('2026-08-01', '2026-08-31', '2014-08-07').find(c => c.dateKey === '2026-08-07')?.title,
+  'Anniversary (12 years)');
+check('one year reads singular',
+  celebs('2015-08-01', '2015-08-31', '2014-08-07').find(c => c.dateKey === '2015-08-07')?.title,
+  'Anniversary (1 year)');
+
+check('nothing outside the window', celebs('2026-09-01', '2026-09-30').length, 0);
+check('a window spanning new year covers both years',
+  celebs('2025-12-15', '2026-01-15', '01-02').map(c => c.dateKey).sort(),
+  ['2026-01-02']);
+check('a range covering two Augusts yields two birthdays',
+  celebs('2025-01-01', '2026-12-31').filter(c => c.title.startsWith("Marloes")).length, 2);
 
 /* ── rrule parsing ───────────────────────────────────── */
 check('parse weekly byday', parseRRule('FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,WE'),

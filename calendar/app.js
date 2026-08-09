@@ -13,9 +13,9 @@ import {
   HOUSEHOLD_EMAIL, PIN_SALT, SHOW_HOLIDAYS, HOLIDAY_SETS
 } from './config.js';
 import {
-  DAY_MS, startOfDay, addDays, addMonths, daysBetween, ymd, fromYmd, hm, sameDay, startOfWeek,
+  DAY_MS, startOfDay, addDays, addMonths, daysBetween, ymd, fromYmd, hm, pad2, sameDay, startOfWeek,
   MONTHS, MON_SHORT, DOW_SHORT, DOW_MIN, DAYCODE,
-  fmtTime, holidays, parseRRule, occurrenceDays, makeOccurrence
+  fmtTime, holidays, celebrations, parseAnnual, parseRRule, occurrenceDays, makeOccurrence
 } from './lib.js';
 
 
@@ -56,6 +56,7 @@ const state = {
   selected: startOfDay(new Date()),
   filter: new Set(),            // empty = everyone
   weekStart: 0,
+  anniversary: '',            // MM-DD or YYYY-MM-DD, household-wide
   deviceOwner: localStorage.getItem('jfc-owner') || ''
 };
 
@@ -94,6 +95,11 @@ function buildDayMap(from, to) {
       }
     }
   }
+  /* Generated rather than stored — see celebrations() in lib.js. */
+  for (const o of celebrations(state.people, state.anniversary, from, to)) {
+    if (visible(o)) push(o.dateKey, o);
+  }
+
   for (const list of map.values()) {
     list.sort((a, b) => (a.allDay !== b.allDay) ? (a.allDay ? -1 : 1) : a.start - b.start);
   }
@@ -246,30 +252,44 @@ function dayGroup(d, map, showEmpty) {
 }
 
 function eventRow(o) {
-  const row = el('div', 'ev');
+  const row = el('div', 'ev' + (o.celebration ? ' is-celebration' : ''));
   const bar = el('div', 'ev-bar');
   bar.style.background = colorOf(o);
 
   const time = el('div', 'ev-time', o.allDay ? 'All day' : fmtTime(o.start));
   const body = el('div', 'ev-body');
-  body.append(el('div', 'ev-title', o.title));
+
+  const title = el('div', 'ev-title');
+  if (o.celebration) {
+    // The floret off the app icon, tinted to whoever it belongs to.
+    const f = el('i', 'floret');
+    f.style.background = colorOf(o);
+    title.append(f);
+  }
+  title.append(document.createTextNode(o.title));
+  body.append(title);
 
   const meta = el('div', 'ev-meta');
-  for (const id of o.personIds) {
-    const p = personById(id);
-    if (!p) continue;
-    const w = el('span', 'who');
-    const dot = el('i'); dot.style.background = p.color;
-    w.append(dot, document.createTextNode(p.name));
-    meta.append(w);
+  // A birthday already says whose it is in the title.
+  if (o.celebration !== 'birthday') {
+    for (const id of o.personIds) {
+      const p = personById(id);
+      if (!p) continue;
+      const w = el('span', 'who');
+      const dot = el('i'); dot.style.background = p.color;
+      w.append(dot, document.createTextNode(p.name));
+      meta.append(w);
+    }
+    if (!o.personIds.length) meta.append(el('span', 'who', 'Everyone'));
   }
-  if (!o.personIds.length) meta.append(el('span', 'who', 'Everyone'));
   if (o.location) meta.append(el('span', null, o.location));
   if (o.repeating) meta.append(el('span', 'rep', o.isOverride ? '↻ changed' : '↻ repeats'));
   if (meta.childNodes.length) body.append(meta);
 
   row.append(bar, time, body);
-  row.onclick = () => openEditor(o, o.day);
+  // Birthdays and the anniversary aren't events, so there's nothing to edit
+  // here — send the tap where they're actually changed.
+  row.onclick = () => o.celebration ? openSettings() : openEditor(o, o.day);
   return row;
 }
 
@@ -543,6 +563,7 @@ async function run(query) {
 }
 
 /* ══ settings ═══════════════════════════════════════════ */
+let draftAnniversary = '';
 let draftPeople = [];
 
 function openSettings() {
@@ -554,7 +575,46 @@ function openSettings() {
   sel.value = state.deviceOwner && state.people.some(p => p.name === state.deviceOwner)
     ? state.people.find(p => p.name === state.deviceOwner).id : '';
   $('#weekStart').value = String(state.weekStart);
+  draftAnniversary = state.anniversary;
+  $('#anniversaryPick').replaceChildren(
+    annualPicker(state.anniversary, v => { draftAnniversary = v; }));
   showSheet($('#setSheet'));
+}
+
+/* Month + day + optional year, as three controls rather than a date input:
+   a date input demands a year, and a birthday is perfectly usable without
+   one. Returns a row that writes MM-DD or YYYY-MM-DD back through onChange. */
+function annualPicker(value, onChange) {
+  const cur = parseAnnual(value) || { year: null, month: 0, day: 0 };
+  const wrap = el('div', 'annual');
+
+  // Short month names: three of these sit side by side inside an already
+  // indented row, and full names truncate on a narrow phone.
+  const month = el('select');
+  month.append(new Option('Mon', ''));
+  MON_SHORT.forEach((m, i) => month.append(new Option(m, String(i + 1))));
+  month.value = cur.month ? String(cur.month) : '';
+
+  const day = el('select');
+  day.append(new Option('Day', ''));
+  for (let d = 1; d <= 31; d++) day.append(new Option(String(d), String(d)));
+  day.value = cur.day ? String(cur.day) : '';
+
+  const year = el('input');
+  year.type = 'text'; year.inputMode = 'numeric'; year.maxLength = 4;
+  year.placeholder = 'Year'; year.value = cur.year || '';
+
+  const emit = () => {
+    const m = Number(month.value), d = Number(day.value);
+    if (!m || !d) return onChange(null);
+    const y = /^\d{4}$/.test(year.value.trim()) ? year.value.trim() + '-' : '';
+    onChange(`${y}${pad2(m)}-${pad2(d)}`);
+  };
+  month.onchange = day.onchange = emit;
+  year.oninput = emit;
+
+  wrap.append(month, day, year);
+  return wrap;
 }
 
 function renderPeopleEditor() {
@@ -562,13 +622,21 @@ function renderPeopleEditor() {
   box.replaceChildren();
   draftPeople.forEach((p, i) => {
     const row = el('div', 'person-row');
+
+    const main = el('div', 'person-main');
     const color = el('input'); color.type = 'color'; color.value = p.color;
     color.oninput = () => { p.color = color.value; };
     const name = el('input'); name.type = 'text'; name.value = p.name;
     name.oninput = () => { p.name = name.value; };
     const del = el('button', 'del', '×');
     del.onclick = () => { draftPeople.splice(i, 1); renderPeopleEditor(); };
-    row.append(color, name, del);
+    main.append(color, name, del);
+
+    const bday = el('div', 'person-bday');
+    bday.append(el('span', 'bday-label', 'Born'));
+    bday.append(annualPicker(p.birthday, v => { p.birthday = v; }));
+
+    row.append(main, bday);
     box.append(row);
   });
 }
@@ -584,7 +652,8 @@ $('#setSave').onclick = async () => {
   try {
     const keep = draftPeople.filter(p => p.name.trim());
     for (const [i, p] of keep.entries()) {
-      const row = { name: p.name.trim(), color: p.color, sort_order: i + 1 };
+      const row = { name: p.name.trim(), color: p.color, sort_order: i + 1,
+                    birthday: p.birthday || null };
       if (p.id) await run(sb.from('people').update(row).eq('id', p.id));
       else await run(sb.from('people').insert(row));
     }
@@ -593,9 +662,11 @@ $('#setSave').onclick = async () => {
       if (!keptIds.has(p.id)) await run(sb.from('people').delete().eq('id', p.id));
     }
     state.weekStart = Number($('#weekStart').value);
+    state.anniversary = draftAnniversary || '';
     localStorage.setItem('jfc-weekstart', String(state.weekStart));
     await run(sb.from('household_settings').update({
       week_starts_on: state.weekStart,
+      anniversary: state.anniversary || null,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
     }).eq('id', 1));
 
@@ -661,6 +732,7 @@ async function refresh() {
     state.events = events.data || [];
     state.exceptions = new Map((excs.data || [])
       .map(e => [`${e.event_id}|${e.occurrence_date}`, e]));
+    if (settings.data) state.anniversary = settings.data.anniversary || '';
     if (settings.data && settings.data.week_starts_on != null) {
       state.weekStart = settings.data.week_starts_on;
       localStorage.setItem('jfc-weekstart', String(state.weekStart));
