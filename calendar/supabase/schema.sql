@@ -18,7 +18,9 @@ create table if not exists public.people (
 );
 
 -- ── events ────────────────────────────────────────────────
--- person_id null  = household / "Both" event.
+-- person_ids empty = whole-family event.
+-- Several people per event is normal here ("first day of school,
+-- Sam and Lars"), hence an array rather than one column.
 -- rrule null      = one-off event.
 create table if not exists public.events (
   id               uuid primary key default gen_random_uuid(),
@@ -28,16 +30,32 @@ create table if not exists public.events (
   starts_at        timestamptz not null,
   ends_at          timestamptz,
   all_day          boolean not null default false,
-  person_id        uuid references public.people(id) on delete set null,
+  person_ids       uuid[] not null default '{}',
   color            text,                       -- optional override of person colour
-  rrule            text,                       -- iCal RRULE, e.g. FREQ=WEEKLY;BYDAY=MO,WE
+  rrule            text,                       -- FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,WE
   recurrence_until date,                       -- null = forever
-  created_by       text,                       -- device-chosen name, for "who added this"
+  created_by       text,                       -- which of you entered it
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );
 
+-- Migration for anyone who ran the first version of this file, which
+-- had a single person_id column. No-op on a fresh database.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'events' and column_name = 'person_id'
+  ) then
+    alter table public.events add column if not exists person_ids uuid[] not null default '{}';
+    update public.events set person_ids = array[person_id]
+      where person_id is not null and person_ids = '{}';
+    alter table public.events drop column person_id;
+  end if;
+end $$;
+
 create index if not exists events_starts_at_idx  on public.events (starts_at);
+create index if not exists events_person_ids_idx on public.events using gin (person_ids);
 create index if not exists events_recurring_idx  on public.events (rrule) where rrule is not null;
 
 -- ── recurrence exceptions ─────────────────────────────────
@@ -127,10 +145,14 @@ begin
 end $$;
 
 -- ── seed people ───────────────────────────────────────────
--- Only seeds an empty table, so re-running never duplicates.
+-- Only fills an empty table, so re-running never duplicates.
+-- People can also be added, renamed and recoloured in the app.
 insert into public.people (name, color, sort_order)
 select * from (values
-  ('Hunter',  '#3b82f6', 1),
-  ('Marloes', '#ec4899', 2)
+  ('Hunter',  '#2563eb', 1),
+  ('Marloes', '#db2777', 2),
+  ('Lars',    '#16a34a', 3),
+  ('Sam',     '#ea580c', 4),
+  ('Silas',   '#7c3aed', 5)
 ) as seed(name, color, sort_order)
 where not exists (select 1 from public.people);

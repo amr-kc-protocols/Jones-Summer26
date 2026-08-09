@@ -1,0 +1,82 @@
+# Jones Family Calendar
+
+A shared family calendar for phones — a Skylight-style replacement for the
+paper wall calendar. Installable as a PWA, backed by Supabase so both phones
+see the same events.
+
+## Getting it running
+
+1. Follow [`supabase/SETUP.md`](./supabase/SETUP.md) — create the project, run
+   `supabase/schema.sql`, turn off public sign-ups, create the household
+   account with your PIN.
+2. Paste the project URL and anon key into [`config.js`](./config.js).
+3. Merge to `main`. GitHub Pages serves it at `/calendar/`.
+4. On each phone: open the page → **Share** → **Add to Home Screen**.
+
+Until step 2 is done the page shows a short "not configured yet" notice
+instead of the calendar.
+
+## How it works
+
+| File | What it does |
+|---|---|
+| `index.html` | Markup and all styling |
+| `app.js` | Views, editor, auth, sync |
+| `lib.js` | Dates, holidays, recurrence — pure functions, no DOM |
+| `config.js` | Your Supabase keys and the PIN salt |
+| `test.mjs` | Tests for `lib.js` |
+| `sw.js` | Offline shell |
+
+Run the tests with:
+
+```sh
+node calendar/test.mjs
+```
+
+## Using it
+
+**Three views.** *Month* is a Sunday-first grid with a coloured dot per event,
+and the selected day's schedule listed underneath — tap any date to see it.
+*Week* lists all seven days in full. *Agenda* is a rolling list of what's
+coming up.
+
+**Colour is per person.** Everyone gets a colour, set in ⚙ Settings. An event
+can belong to several people at once ("first day of school — Sam and Lars"),
+or to nobody, which makes it a whole-family event. The chips along the top
+filter the calendar down to one person; whole-family events always stay
+visible.
+
+**Repeating events** cover daily, weekly, fortnightly, weekdays, chosen days
+of the week, monthly and yearly, with an optional end date. Editing or
+deleting one asks whether you mean that single day or the whole series, so
+one cancelled karate class doesn't wipe out the term.
+
+**All-day events** are for the things written across the top of a square —
+"no school", first day of school, back-to-school night. They can span several
+days.
+
+US holidays are drawn in automatically, the same ones the paper calendar
+prints.
+
+## Syncing and offline
+
+Changes appear on the other phone within a second or so over Supabase
+realtime, and the calendar also refreshes whenever you bring it back to the
+foreground. The last sync is cached, so opening it with no signal shows the
+most recent state — read-only until you're back online. The header shows when
+it last synced, and turns red if it can't reach Supabase.
+
+## Security
+
+One shared login for the household, unlocked with a PIN. The PIN is the
+password to that account (plus a fixed salt in `config.js`), so the public
+anon key on its own gives no access to your data. Row-level security requires
+an authenticated session on every table.
+
+The honest limit: a 4–6 digit PIN is short, and what stands between it and a
+determined guesser is Supabase's auth rate-limiting. That's a reasonable trade
+for a family calendar — but don't put anything genuinely sensitive in the
+notes field.
+
+To change the PIN, reset the account's password in the Supabase dashboard to
+the new PIN plus the same salt. No code change needed.
