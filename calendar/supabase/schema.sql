@@ -24,7 +24,6 @@ create or replace function calendar.is_household()
 returns boolean
 language sql
 stable
-security definer
 set search_path = ''
 as $$
   select coalesce(auth.jwt() ->> 'email', '') = 'family@jonescalendar.local';
