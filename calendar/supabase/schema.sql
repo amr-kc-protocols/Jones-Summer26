@@ -84,6 +84,42 @@ create table if not exists calendar.event_exceptions (
 
 create index if not exists event_exceptions_event_idx on calendar.event_exceptions (event_id);
 
+-- ── proposals ─────────────────────────────────────────────
+-- "Can we go on a date Friday?" — an ask that carries one or more
+-- suggested times, waits for the other phone to answer, and becomes a
+-- real event only once someone accepts.
+--
+-- Both phones share one login, so who-asked-whom is the device owner
+-- name from Settings, not an auth user.
+--
+-- options is [{ "start": ISO, "end": ISO|null, "all_day": bool }, …]
+-- kept in order; chosen_index points at the one that was accepted.
+--
+-- A decline can carry a counter-offer, which is stored as a *new* row
+-- pointing back through counter_of, so the exchange stays readable
+-- rather than one row being rewritten each time.
+create table if not exists calendar.proposals (
+  id           uuid primary key default gen_random_uuid(),
+  title        text not null,
+  notes        text,
+  location     text,
+  asked_by     text not null,                  -- device owner name
+  person_ids   uuid[] not null default '{}',   -- who it's for; empty = the two of you
+  options      jsonb not null,
+  status       text not null default 'pending'
+               check (status in ('pending', 'accepted', 'declined', 'superseded')),
+  answered_by  text,
+  answered_at  timestamptz,
+  reply_note   text,
+  chosen_index int,
+  event_id     uuid references calendar.events(id) on delete set null,
+  counter_of   uuid references calendar.proposals(id) on delete set null,
+  seen_by_asker boolean not null default false, -- so an answer can stop nagging
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists proposals_status_idx on calendar.proposals (status, created_at desc);
+
 -- ── household settings ────────────────────────────────────
 -- Single row. Keeps both phones agreeing on timezone / week start.
 create table if not exists calendar.household_settings (
@@ -131,7 +167,7 @@ alter default privileges in schema calendar
 do $$
 declare t text;
 begin
-  foreach t in array array['people', 'events', 'event_exceptions', 'household_settings']
+  foreach t in array array['people', 'events', 'event_exceptions', 'household_settings', 'proposals']
   loop
     execute format('alter table calendar.%I enable row level security', t);
     execute format('drop policy if exists household_all on calendar.%I', t);
@@ -148,7 +184,7 @@ end $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['people', 'events', 'event_exceptions', 'household_settings']
+  foreach t in array array['people', 'events', 'event_exceptions', 'household_settings', 'proposals']
   loop
     if not exists (
       select 1 from pg_publication_tables

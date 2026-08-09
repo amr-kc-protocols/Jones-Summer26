@@ -15,7 +15,8 @@ import {
 import {
   DAY_MS, startOfDay, addDays, addMonths, daysBetween, ymd, fromYmd, hm, pad2, sameDay, startOfWeek,
   MONTHS, MON_SHORT, DOW_SHORT, DOW_MIN, DAYCODE,
-  fmtTime, holidays, celebrations, parseAnnual, parseRRule, occurrenceDays, makeOccurrence
+  fmtTime, holidays, celebrations, parseAnnual, parseRRule, occurrenceDays, makeOccurrence,
+  proposalOptions, fmtOption, inbox, proposalMarkers, eventFromProposal
 } from './lib.js';
 
 
@@ -50,6 +51,7 @@ const holidayOn = d =>
 const state = {
   people: [],
   events: [],
+  proposals: [],
   exceptions: new Map(),        // `${event_id}|${YYYY-MM-DD}` → exception row
   view: 'month',
   cursor: startOfDay(new Date()),
@@ -61,6 +63,7 @@ const state = {
 };
 
 const personById = id => state.people.find(p => p.id === id) || null;
+const personByName = n => state.people.find(p => p.name === n) || null;
 const colorOf = o => o.color
   || (o.personIds.length ? (personById(o.personIds[0])?.color || 'var(--faint)') : 'var(--dim)');
 
@@ -95,6 +98,13 @@ function buildDayMap(from, to) {
       }
     }
   }
+  /* Unanswered asks show as tentative, so a proposed time is visible
+     without pretending it is booked. */
+  for (const o of proposalMarkers(state.proposals, from, to)) {
+    o.color = personByName(o.askedBy)?.color || 'var(--faint)';
+    if (visible(o)) push(o.dateKey, o);
+  }
+
   /* Generated rather than stored — see celebrations() in lib.js. */
   for (const o of celebrations(state.people, state.anniversary, from, to)) {
     if (visible(o)) push(o.dateKey, o);
@@ -114,6 +124,7 @@ function render() {
   document.querySelectorAll('.views button')
     .forEach(b => b.classList.toggle('on', b.dataset.view === state.view));
   renderFilters();
+  renderInbox();
   view.replaceChildren();
   if (state.view === 'month') renderMonth();
   else if (state.view === 'week') renderWeek();
@@ -181,7 +192,8 @@ function renderMonth() {
     if (list.length) {
       const dots = el('div', 'dots-row');
       for (const o of list.slice(0, 6)) {
-        const i2 = el('i'); i2.style.background = colorOf(o); dots.append(i2);
+        const i2 = el('i', o.proposed ? 'proposed' : null);
+        i2.style.background = colorOf(o); dots.append(i2);
       }
       cell.append(dots);
       if (list.length > 6) cell.append(el('div', 'more', `+${list.length - 6}`));
@@ -197,9 +209,12 @@ function renderMonth() {
     ? `Today · ${DOW_SHORT[state.selected.getDay()]} ${MON_SHORT[state.selected.getMonth()]} ${state.selected.getDate()}`
     : `${DOW_SHORT[state.selected.getDay()]} ${MON_SHORT[state.selected.getMonth()]} ${state.selected.getDate()}`;
   head.append(el('span', null, label));
+  const ask = el('button', 'add', 'Ask');
+  ask.onclick = () => openAsk(state.selected, null);
   const add = el('button', 'add', '+ Add');
   add.onclick = () => openEditor(null, state.selected);
-  head.append(add);
+  const acts = el('div', 'day-acts'); acts.append(ask, add);
+  head.append(acts);
   panel.append(head);
 
   const sel = map.get(ymd(state.selected)) || [];
@@ -252,7 +267,9 @@ function dayGroup(d, map, showEmpty) {
 }
 
 function eventRow(o) {
-  const row = el('div', 'ev' + (o.celebration ? ' is-celebration' : ''));
+  const row = el('div', 'ev'
+    + (o.celebration ? ' is-celebration' : '')
+    + (o.proposed ? ' is-proposed' : ''));
   const bar = el('div', 'ev-bar');
   bar.style.background = colorOf(o);
 
@@ -282,6 +299,12 @@ function eventRow(o) {
     }
     if (!o.personIds.length) meta.append(el('span', 'who', 'Everyone'));
   }
+  if (o.proposed) {
+    meta.append(el('span', 'rep',
+      o.askedBy === state.deviceOwner
+        ? 'waiting for an answer'
+        : `${o.askedBy || 'Someone'} asked · tap to answer`));
+  }
   if (o.location) meta.append(el('span', null, o.location));
   if (o.repeating) meta.append(el('span', 'rep', o.isOverride ? '↻ changed' : '↻ repeats'));
   if (meta.childNodes.length) body.append(meta);
@@ -289,7 +312,13 @@ function eventRow(o) {
   row.append(bar, time, body);
   // Birthdays and the anniversary aren't events, so there's nothing to edit
   // here — send the tap where they're actually changed.
-  row.onclick = () => o.celebration ? openSettings() : openEditor(o, o.day);
+  row.onclick = () => {
+    if (o.proposed) {
+      // Only the other phone can answer; the asker just sees it pending.
+      if (o.askedBy !== state.deviceOwner) openAnswer(o.proposal);
+    } else if (o.celebration) openSettings();
+    else openEditor(o, o.day);
+  };
   return row;
 }
 
@@ -720,11 +749,12 @@ async function refresh() {
   if (refreshing) return;
   refreshing = true;
   try {
-    const [people, events, excs, settings] = await Promise.all([
+    const [people, events, excs, settings, proposals] = await Promise.all([
       sb.from('people').select('*').order('sort_order'),
       sb.from('events').select('*'),
       sb.from('event_exceptions').select('*'),
-      sb.from('household_settings').select('*').eq('id', 1).maybeSingle()
+      sb.from('household_settings').select('*').eq('id', 1).maybeSingle(),
+      sb.from('proposals').select('*').order('created_at', { ascending: false })
     ]);
     for (const r of [people, events, excs]) if (r.error) throw r.error;
 
@@ -732,6 +762,10 @@ async function refresh() {
     state.events = events.data || [];
     state.exceptions = new Map((excs.data || [])
       .map(e => [`${e.event_id}|${e.occurrence_date}`, e]));
+    // Not in the throw list above: an install that hasn't run the latest
+    // schema.sql has no proposals table, and the rest of the calendar
+    // should still work. The feature just stays out of sight.
+    state.proposals = proposals.error ? [] : (proposals.data || []);
     if (settings.data) state.anniversary = settings.data.anniversary || '';
     if (settings.data && settings.data.week_starts_on != null) {
       state.weekStart = settings.data.week_starts_on;
@@ -890,3 +924,223 @@ window.addEventListener('online', refresh);
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
+
+/* ══ proposals ══════════════════════════════════════════
+   Ask → answer → event. Nothing lands on the calendar until someone
+   says yes; until then an ask shows as a tentative marker. */
+
+let askDraft = null;      // { options: [{date, time}], counterOf, personIds }
+let answering = null;     // the proposal open in the answer sheet
+
+function renderInbox() {
+  const box = $('#inbox');
+  const { toAnswer, answered } = inbox(state.proposals, state.deviceOwner);
+  box.replaceChildren();
+  box.hidden = !(toAnswer.length + answered.length);
+
+  for (const p of toAnswer) {
+    const n = proposalOptions(p).length;
+    box.append(inboxCard(
+      `${p.asked_by || 'Someone'} asked: ${p.title}`,
+      n === 1 ? 'One time offered' : `${n} times offered`,
+      'Answer', false, () => openAnswer(p)));
+  }
+  for (const p of answered) {
+    const yes = p.status === 'accepted';
+    const when = yes ? fmtOption(proposalOptions(p)[p.chosen_index] || {}) : null;
+    box.append(inboxCard(
+      `${p.answered_by || 'They'} said ${yes ? 'yes' : 'no'} to ${p.title}`,
+      yes ? when : (p.reply_note || 'No time given'),
+      'OK', true, async () => {
+        await run(sb.from('proposals').update({ seen_by_asker: true }).eq('id', p.id));
+        await refresh();
+      }));
+  }
+}
+
+function inboxCard(title, sub, action, isAnswered, onClick) {
+  const c = el('button', 'inbox-card' + (isAnswered ? ' answered' : ''));
+  const body = el('div', 'ic-body');
+  body.append(el('div', 'ic-title', title));
+  body.append(el('div', 'ic-sub', sub));
+  c.append(body, el('span', 'ic-go', action));
+  c.onclick = onClick;
+  return c;
+}
+
+/* ── composing an ask ── */
+function openAsk(forDate, counterOf) {
+  const d = forDate || state.selected || startOfDay(new Date());
+  askDraft = {
+    counterOf: counterOf || null,
+    personIds: new Set(counterOf ? (counterOf.person_ids || []) : []),
+    options: [{ date: ymd(d), time: '19:00' }]
+  };
+  $('#askHeading').textContent = counterOf ? 'Suggest another time' : 'Ask';
+  $('#askTitle').value = counterOf ? counterOf.title : '';
+  $('#askLoc').value = counterOf ? (counterOf.location || '') : '';
+  $('#askNotes').value = '';
+  renderAskWho();
+  renderAskOptions();
+  showSheet($('#askSheet'));
+}
+
+function renderAskWho() {
+  const box = $('#askWho');
+  box.replaceChildren();
+  for (const p of state.people) {
+    const b = el('button');
+    const i = el('i'); i.style.background = p.color;
+    b.append(i, document.createTextNode(p.name));
+    if (askDraft.personIds.has(p.id)) { b.classList.add('on'); b.style.color = p.color; }
+    b.onclick = () => {
+      askDraft.personIds.has(p.id) ? askDraft.personIds.delete(p.id) : askDraft.personIds.add(p.id);
+      renderAskWho();
+    };
+    box.append(b);
+  }
+}
+
+function renderAskOptions() {
+  const box = $('#askOptions');
+  box.replaceChildren();
+  askDraft.options.forEach((o, i) => {
+    const row = el('div', 'opt-row');
+    const date = el('input'); date.type = 'date'; date.value = o.date;
+    date.onchange = () => { o.date = date.value; };
+    const time = el('input'); time.type = 'time'; time.value = o.time;
+    time.onchange = () => { o.time = time.value; };
+    row.append(date, time);
+    if (askDraft.options.length > 1) {
+      const drop = el('button', 'drop', '×');
+      drop.onclick = () => { askDraft.options.splice(i, 1); renderAskOptions(); };
+      row.append(drop);
+    }
+    box.append(row);
+  });
+  $('#askAddOption').hidden = askDraft.options.length >= 4;
+}
+
+$('#askAddOption').onclick = () => {
+  const last = askDraft.options[askDraft.options.length - 1];
+  askDraft.options.push({ date: last ? last.date : ymd(startOfDay(new Date())),
+                          time: last ? last.time : '19:00' });
+  renderAskOptions();
+};
+$('#askCancel').onclick = hideSheets;
+
+$('#askSend').onclick = async () => {
+  const btn = $('#askSend');
+  const title = ($('#askTitle').value || '').trim();
+  if (!title) { alert('What are you asking about?'); return; }
+
+  const options = askDraft.options
+    .filter(o => o.date)
+    .map(o => {
+      const [h, m] = (o.time || '19:00').split(':').map(Number);
+      const d = fromYmd(o.date);
+      const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m);
+      return { start: start.toISOString(),
+               end: new Date(start.getTime() + 2 * 3600000).toISOString(),
+               all_day: false };
+    });
+  if (!options.length) { alert('Offer at least one time.'); return; }
+
+  btn.disabled = true;
+  try {
+    await run(sb.from('proposals').insert({
+      title,
+      notes: $('#askNotes').value.trim() || null,
+      location: $('#askLoc').value.trim() || null,
+      asked_by: state.deviceOwner || 'Someone',
+      person_ids: [...askDraft.personIds],
+      options,
+      counter_of: askDraft.counterOf ? askDraft.counterOf.id : null
+    }));
+    // A counter answers the ask it replaces, so it stops asking to be answered.
+    if (askDraft.counterOf) {
+      await run(sb.from('proposals').update({
+        status: 'superseded', answered_by: state.deviceOwner || null,
+        answered_at: new Date().toISOString()
+      }).eq('id', askDraft.counterOf.id));
+    }
+    hideSheets();
+    await refresh();
+  } catch (e) {
+    alert('Could not send that: ' + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+/* ── answering one ── */
+function openAnswer(p) {
+  answering = p;
+  $('#ansHeading').textContent = `${p.asked_by || 'Someone'} asked`;
+
+  const sum = el('div', 'ask-summary');
+  sum.append(el('div', 'as-title', p.title));
+  const bits = [];
+  if (p.location) bits.push(p.location);
+  const who = (p.person_ids || []).map(id => personById(id)?.name).filter(Boolean);
+  bits.push(who.length ? who.join(', ') : 'just the two of you');
+  sum.append(el('div', 'as-meta', bits.join(' · ')));
+  if (p.notes) sum.append(el('div', 'as-note', p.notes));
+  $('#ansSummary').replaceChildren(sum);
+
+  const box = $('#ansOptions');
+  box.replaceChildren();
+  proposalOptions(p).forEach((o, i) => {
+    const b = el('button', 'opt-pick');
+    b.append(document.createTextNode(fmtOption(o)), el('span', 'yes', 'Yes'));
+    b.onclick = () => accept(p, i);
+    box.append(b);
+  });
+  $('#ansNote').value = '';
+  showSheet($('#ansSheet'));
+}
+
+async function accept(p, index) {
+  const form = eventFromProposal(p, index, state.deviceOwner);
+  if (!form) return;
+  try {
+    const ins = await run(sb.from('events').insert(form).select().single());
+    await run(sb.from('proposals').update({
+      status: 'accepted',
+      answered_by: state.deviceOwner || null,
+      answered_at: new Date().toISOString(),
+      reply_note: $('#ansNote').value.trim() || null,
+      chosen_index: index,
+      event_id: ins?.id || null
+    }).eq('id', p.id));
+    state.selected = startOfDay(new Date(form.starts_at));
+    state.cursor = state.selected;
+    hideSheets();
+    await refresh();
+  } catch (e) {
+    alert('Could not accept that: ' + e.message);
+  }
+}
+
+$('#ansDecline').onclick = async () => {
+  if (!answering) return;
+  try {
+    await run(sb.from('proposals').update({
+      status: 'declined',
+      answered_by: state.deviceOwner || null,
+      answered_at: new Date().toISOString(),
+      reply_note: $('#ansNote').value.trim() || null
+    }).eq('id', answering.id));
+    hideSheets();
+    await refresh();
+  } catch (e) {
+    alert('Could not send that: ' + e.message);
+  }
+};
+
+$('#ansCounter').onclick = () => {
+  const p = answering;
+  hideSheets();
+  openAsk(state.selected, p);
+};
+$('#ansClose').onclick = hideSheets;

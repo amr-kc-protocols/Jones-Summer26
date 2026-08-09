@@ -226,6 +226,7 @@ main{padding-bottom:calc(96px + var(--safe-b));}
   letter-spacing:1.1px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;
 }
 .day-head .add{font-family:var(--sans);font-size:12.5px;font-weight:700;color:var(--accent);text-transform:none;letter-spacing:0;}
+.day-acts{display:flex;gap:14px;align-items:center;flex:0 0 auto;}
 
 /* ══ event rows ══ */
 .ev{
@@ -326,6 +327,60 @@ main{padding-bottom:calc(96px + var(--safe-b));}
   color:var(--danger);font-weight:700;font-size:15px;border:1px solid var(--line);margin-top:4px;}
 .hint{font-size:12px;color:var(--faint);margin-top:-8px;margin-bottom:14px;line-height:1.4;}
 
+/* ══ proposals ══
+   An ask that hasn't been answered is deliberately tentative: hollow
+   markers in the grid, a dashed bar in the day list. Nothing about it
+   should read as settled until someone says yes. */
+#inbox{display:flex;flex-direction:column;gap:6px;padding:0 12px 10px;}
+.inbox-card{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  padding:9px 12px;border-radius:var(--r-sm);
+  background:var(--surface2);border:1px solid var(--accent);
+}
+.inbox-card.answered{border-color:var(--good);}
+.inbox-card .ic-body{flex:1;min-width:0;}
+.inbox-card .ic-title{font-family:var(--serif);font-size:14.5px;line-height:1.25;}
+.inbox-card .ic-sub{font-size:11.5px;color:var(--dim);margin-top:1px;}
+.inbox-card .ic-go{font-size:12px;font-weight:700;color:var(--accent);flex:0 0 auto;}
+.inbox-card.answered .ic-go{color:var(--good);}
+.inbox-card:active{background:var(--surface);}
+
+/* hollow dot in the month grid */
+.dots-row i.proposed{background:transparent!important;box-shadow:inset 0 0 0 1.5px var(--faint);}
+/* dashed bar in the day list */
+.ev.is-proposed .ev-bar{background:transparent!important;border-left:3px dashed var(--faint);width:0;}
+.ev.is-proposed .ev-title{color:var(--dim);}
+.ev.is-proposed .ev-time{font-style:italic;}
+
+/* one offered time, in the ask composer and the answer sheet */
+.opt-row{display:flex;gap:7px;align-items:center;margin-bottom:8px;}
+.opt-row input[type=date]{flex:1.4;min-width:0;}
+.opt-row input[type=time]{flex:1;min-width:0;}
+.opt-row input{
+  background:var(--surface2);border:1px solid var(--line);border-radius:var(--r-sm);
+  padding:10px 11px;font-size:15px;
+}
+.opt-row .drop{color:var(--danger);font-size:19px;width:30px;flex:0 0 auto;text-align:center;}
+.opt-pick{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
+  padding:13px 14px;border-radius:var(--r-sm);margin-bottom:8px;text-align:left;
+  background:var(--surface2);border:1px solid var(--line);
+  font-family:var(--serif);font-size:15.5px;
+}
+.opt-pick .yes{font-family:var(--sans);font-size:12px;font-weight:700;color:var(--accent);flex:0 0 auto;}
+.opt-pick:active{background:var(--surface);border-color:var(--accent);}
+.ask-summary{
+  padding:12px 14px;border-radius:var(--r-sm);background:var(--surface2);
+  border:1px solid var(--line);margin-bottom:16px;
+}
+.ask-summary .as-title{font-family:var(--serif);font-size:17px;}
+.ask-summary .as-meta{font-size:12.5px;color:var(--dim);margin-top:3px;}
+.ask-summary .as-note{font-size:13.5px;color:var(--dim);margin-top:7px;font-style:italic;}
+.btn-soft{
+  width:100%;padding:13px;border-radius:var(--r-sm);background:var(--surface2);
+  border:1px solid var(--line);color:var(--accent);font-weight:700;font-size:15px;margin-bottom:10px;
+}
+
 /* birthdays and the anniversary — the floret off the app icon, masked so it
    takes whichever colour the row is painted with */
 .floret{
@@ -418,6 +473,7 @@ main{padding-bottom:calc(96px + var(--safe-b));}
       <button data-view="agenda">Agenda</button>
     </div>
     <div class="filters" id="filters"></div>
+    <div id="inbox" hidden></div>
   </header>
   <main id="view"></main>
   <button id="fab" aria-label="Add event">+</button>
@@ -539,6 +595,69 @@ main{padding-bottom:calc(96px + var(--safe-b));}
       </select>
     </div>
     <button class="btn-danger" id="signOut">Lock calendar</button>
+  </div>
+</div>
+
+<!-- ══ ask: propose a time ══ -->
+<div class="sheet" id="askSheet">
+  <div class="sheet-head">
+    <button class="ghost" id="askCancel">Cancel</button>
+    <h2 id="askHeading">Ask</h2>
+    <button id="askSend">Send</button>
+  </div>
+  <div class="sheet-body">
+    <div class="field">
+      <label>What are you asking about</label>
+      <input type="text" id="askTitle" placeholder="Date night, coffee, a walk…"
+             autocomplete="off" enterkeyhint="done">
+    </div>
+
+    <div class="field">
+      <label>Who it's for</label>
+      <div class="who-pick" id="askWho"></div>
+      <div class="hint" style="margin-top:7px">Leave all unpicked if it's just the two of you.</div>
+    </div>
+
+    <div class="field">
+      <label id="askTimesLabel">Times you could do</label>
+      <div id="askOptions"></div>
+      <button class="add-line" id="askAddOption">+ Offer another time</button>
+      <div class="hint" style="margin-top:10px">
+        Offer a few and they pick one. The calendar stays empty until then.
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Where</label>
+      <input type="text" id="askLoc" placeholder="Optional" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label>Anything to add</label>
+      <textarea id="askNotes" placeholder="Optional"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ══ answer an ask ══ -->
+<div class="sheet" id="ansSheet">
+  <div class="sheet-head">
+    <button class="ghost" id="ansClose">Close</button>
+    <h2 id="ansHeading">Asked</h2>
+    <span style="width:44px"></span>
+  </div>
+  <div class="sheet-body">
+    <div id="ansSummary"></div>
+    <div class="field" id="ansPickField">
+      <label id="ansPickLabel">Pick a time to say yes</label>
+      <div id="ansOptions"></div>
+    </div>
+    <div class="field">
+      <label>Add a note</label>
+      <input type="text" id="ansNote" placeholder="Optional" autocomplete="off">
+    </div>
+    <button class="btn-soft" id="ansCounter">Can't do these — suggest another time</button>
+    <button class="btn-danger" id="ansDecline">Say no</button>
   </div>
 </div>
 

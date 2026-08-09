@@ -82,6 +82,26 @@ birthday is marked on Mar 1 in common years rather than skipped.
 > after deploying — SQL Editor → New query → paste → Run. It's idempotent, and
 > it seeds the family's dates without overwriting anything already set.
 
+## Asking
+
+**Ask** — next to *+ Add* under the month grid — proposes something instead of
+booking it. Give it a title, offer up to four times, and it goes to the other
+phone as a question. Nothing lands on the calendar yet: a pending ask shows as
+a **hollow** dot in the grid and a dashed, greyed row in the day list, so you
+can see a proposed time without it pretending to be booked.
+
+The other phone gets a card under the header. Tapping a time says yes, and only
+then is a real event written — with the title, place, and whoever it was for.
+
+Saying no can carry a counter-offer: *"Can't do these — suggest another time"*
+prefills the same ask pointing the other way, and the original is marked
+superseded rather than rewritten, so the exchange stays readable. Whoever asked
+gets a card back telling them what was said, which clears when they tap it.
+
+Both phones share one login, so **who is asking whom comes from *This phone
+belongs to*** in ⚙ Settings. If that's unset the phone can't tell the two of you
+apart and will show every pending ask — set it on both phones and it behaves.
+
 ## The look
 
 Taken from the house rather than invented: Delft blue and white, a parchment

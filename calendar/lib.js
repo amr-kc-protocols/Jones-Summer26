@@ -190,6 +190,93 @@ export function celebrations(people, anniversary, from, to) {
   return out;
 }
 
+/* ── proposals ─────────────────────────────────────────────
+   An ask carries one or more suggested times and turns into a real
+   event only when it's accepted. Both phones share a login, so "who is
+   this for" is decided by the device owner name set in Settings. */
+
+export function proposalOptions(p) {
+  const raw = Array.isArray(p.options) ? p.options
+            : (typeof p.options === 'string' ? JSON.parse(p.options || '[]') : []);
+  return raw.map(o => ({
+    start: new Date(o.start),
+    end: o.end ? new Date(o.end) : null,
+    allDay: !!o.all_day
+  })).filter(o => !isNaN(o.start));
+}
+
+export function fmtOption(o) {
+  const d = `${DOW_SHORT[o.start.getDay()]} ${MON_SHORT[o.start.getMonth()]} ${o.start.getDate()}`;
+  if (o.allDay) return `${d} · all day`;
+  return o.end ? `${d} · ${fmtTime(o.start)}–${fmtTime(o.end)}` : `${d} · ${fmtTime(o.start)}`;
+}
+
+/* Who is looking at this. An unset device owner can't be told apart, so
+   it sees everything rather than nothing — the app nudges you to set it. */
+export function proposalRole(p, me) {
+  if (!me) return 'unknown';
+  return p.asked_by === me ? 'asker' : 'answerer';
+}
+
+/* What each phone should be told about, split by what it can do. */
+export function inbox(proposals, me) {
+  const toAnswer = [], answered = [];
+  for (const p of proposals) {
+    const role = proposalRole(p, me);
+    if (p.status === 'pending') {
+      if (role !== 'asker') toAnswer.push(p);
+    } else if ((p.status === 'accepted' || p.status === 'declined')
+               && role === 'asker' && !p.seen_by_asker) {
+      answered.push(p);
+    }
+  }
+  const byNewest = (a, b) => new Date(b.created_at) - new Date(a.created_at);
+  return { toAnswer: toAnswer.sort(byNewest), answered: answered.sort(byNewest) };
+}
+
+/* Pending times, shaped like occurrences so the grid and the day list can
+   show them as tentative alongside real events. */
+export function proposalMarkers(proposals, from, to) {
+  const out = [];
+  for (const p of proposals) {
+    if (p.status !== 'pending') continue;
+    proposalOptions(p).forEach((o, i) => {
+      const day = startOfDay(o.start);
+      if (day < from || day > to) return;
+      out.push({
+        proposed: true, proposal: p, optionIndex: i,
+        ev: null, eventId: `proposal:${p.id}:${i}`,
+        dateKey: ymd(day), day,
+        title: p.title, notes: p.notes, location: p.location,
+        askedBy: p.asked_by,
+        allDay: o.allDay, start: o.start, end: o.end,
+        personIds: p.person_ids || [], color: null,
+        repeating: false, isOverride: false
+      });
+    });
+  }
+  return out;
+}
+
+/* The event row an accepted option becomes. Kept here so it matches what
+   the editor writes, and so it can be tested without a database. */
+export function eventFromProposal(p, index, by) {
+  const o = proposalOptions(p)[index];
+  if (!o) return null;
+  return {
+    title: p.title,
+    notes: p.notes || null,
+    location: p.location || null,
+    starts_at: o.start.toISOString(),
+    ends_at: o.end ? o.end.toISOString() : null,
+    all_day: o.allDay,
+    person_ids: p.person_ids || [],
+    rrule: null,
+    recurrence_until: null,
+    created_by: by || p.asked_by || null
+  };
+}
+
 /* ── recurrence ────────────────────────────────────────── */
 export function parseRRule(s) {
   if (!s) return null;

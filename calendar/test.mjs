@@ -4,6 +4,7 @@
 import {
   ymd, fromYmd, addDays, startOfWeek, daysBetween, fmtTime,
   holidays, easter, parseAnnual, annualDate, celebrations,
+  proposalOptions, fmtOption, proposalRole, inbox, proposalMarkers, eventFromProposal,
   parseRRule, occurrenceDays, makeOccurrence
 } from './lib.js';
 
@@ -174,6 +175,81 @@ check('a window spanning new year covers both years',
   ['2026-01-02']);
 check('a range covering two Augusts yields two birthdays',
   celebs('2025-01-01', '2026-12-31').filter(c => c.title.startsWith("Marloes")).length, 2);
+
+/* ── proposals ───────────────────────────────────────── */
+const iso = s => fromYmdHm(s).toISOString();
+const prop = (o = {}) => ({
+  id: o.id || 'q1',
+  title: o.title || 'Date night',
+  notes: o.notes || null, location: o.location || null,
+  asked_by: o.asked_by || 'Marloes',
+  person_ids: o.person_ids || [],
+  options: o.options || [
+    { start: iso('2026-08-14 19:00'), end: iso('2026-08-14 21:00'), all_day: false },
+    { start: iso('2026-08-15 18:00'), end: iso('2026-08-15 20:00'), all_day: false }
+  ],
+  status: o.status || 'pending',
+  answered_by: o.answered_by || null, chosen_index: o.chosen_index ?? null,
+  reply_note: o.reply_note || null, seen_by_asker: !!o.seen_by_asker,
+  created_at: o.created_at || '2026-08-01T12:00:00.000Z'
+});
+
+check('options parse out of jsonb', proposalOptions(prop()).length, 2);
+check('options parse out of a json string',
+  proposalOptions({ options: JSON.stringify(prop().options) }).length, 2);
+check('a malformed option is dropped',
+  proposalOptions({ options: [{ start: 'not a date' }, { start: iso('2026-08-14 19:00') }] }).length, 1);
+check('empty options are fine', proposalOptions({ options: [] }).length, 0);
+
+check('option reads as a day and a time range',
+  fmtOption(proposalOptions(prop())[0]), 'Fri Aug 14 · 7 pm–9 pm');
+check('an all-day option says so',
+  fmtOption(proposalOptions({ options: [{ start: iso('2026-08-14 00:00'), all_day: true }] })[0]),
+  'Fri Aug 14 · all day');
+
+check('the asker is the asker', proposalRole(prop(), 'Marloes'), 'asker');
+check('the other phone answers', proposalRole(prop(), 'Hunter'), 'answerer');
+check('an unset device owner is unknown', proposalRole(prop(), ''), 'unknown');
+
+/* Inbox: what each phone is shown. */
+const pending = prop();
+const acceptedUnseen = prop({ id: 'q2', status: 'accepted', answered_by: 'Hunter', chosen_index: 0 });
+const acceptedSeen = prop({ id: 'q3', status: 'accepted', answered_by: 'Hunter', seen_by_asker: true });
+const all = [pending, acceptedUnseen, acceptedSeen];
+
+check('the answerer is asked to answer', inbox(all, 'Hunter').toAnswer.map(p => p.id), ['q1']);
+check('the answerer is not told about their own replies', inbox(all, 'Hunter').answered, []);
+check('the asker is not asked to answer their own ask', inbox(all, 'Marloes').toAnswer, []);
+check('the asker hears back once', inbox(all, 'Marloes').answered.map(p => p.id), ['q2']);
+check('an unset owner sees pending rather than nothing',
+  inbox(all, '').toAnswer.map(p => p.id), ['q1']);
+check('a superseded ask asks nobody',
+  inbox([prop({ status: 'superseded' })], 'Hunter').toAnswer, []);
+
+/* Markers: pending times show tentatively, answered ones do not. */
+const marks = (list, from, to) => proposalMarkers(list, fromYmd(from), fromYmd(to));
+check('each pending option gets a marker',
+  marks([pending], '2026-08-01', '2026-08-31').map(m => m.dateKey), ['2026-08-14', '2026-08-15']);
+check('markers are flagged as proposed',
+  marks([pending], '2026-08-01', '2026-08-31').every(m => m.proposed === true), true);
+check('an accepted ask leaves no markers', marks([acceptedUnseen], '2026-08-01', '2026-08-31'), []);
+check('a declined ask leaves no markers',
+  marks([prop({ status: 'declined' })], '2026-08-01', '2026-08-31'), []);
+check('markers outside the window are skipped',
+  marks([pending], '2026-09-01', '2026-09-30'), []);
+check('a marker carries who asked',
+  marks([pending], '2026-08-01', '2026-08-31')[0].askedBy, 'Marloes');
+
+/* Accepting builds the event. */
+const built = eventFromProposal(prop({ location: 'Ça Va', person_ids: ['p1'] }), 1, 'Hunter');
+check('accepted event takes the chosen time', built.starts_at, iso('2026-08-15 18:00'));
+check('accepted event takes the chosen end', built.ends_at, iso('2026-08-15 20:00'));
+check('accepted event keeps the title', built.title, 'Date night');
+check('accepted event keeps the place', built.location, 'Ça Va');
+check('accepted event keeps who it is for', built.person_ids, ['p1']);
+check('accepted event does not repeat', built.rrule, null);
+check('accepted event records who said yes', built.created_by, 'Hunter');
+check('an out-of-range option builds nothing', eventFromProposal(prop(), 9, 'Hunter'), null);
 
 /* ── rrule parsing ───────────────────────────────────── */
 check('parse weekly byday', parseRRule('FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,WE'),
