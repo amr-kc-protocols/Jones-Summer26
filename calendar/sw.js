@@ -3,7 +3,13 @@
    icons and the pinned Supabase bundle are cache-first. Supabase API
    traffic is never cached. */
 
-const CACHE = 'jfc-v1';
+/* Bump this whenever a cache-first asset changes in place. The icons are
+   served cache-first, so without a new name a phone that already has them
+   would go on showing the old ones forever. Activate drops every other
+   cache, which also re-fetches the pinned Supabase bundle on the next
+   online load — cheap, and only awkward if the very first open after a
+   deploy happens with no signal. */
+const CACHE = 'jfc-v2';
 
 const SHELL = [
   './',
