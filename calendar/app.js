@@ -18,6 +18,7 @@ import {
   fmtTime, holidays, celebrations, parseAnnual, parseRRule, occurrenceDays, makeOccurrence,
   proposalOptions, fmtOption, inbox, proposalMarkers, eventFromProposal
 } from './lib.js';
+import { PAPER_SEED, SEED_TAG, SEED_ZONE, seedRows } from './paper-seed.js';
 
 
 window.__jfcBooted = true;
@@ -595,6 +596,10 @@ async function run(query) {
 let draftAnniversary = '';
 let draftPeople = [];
 
+/* Restored each time the sheet opens, so last import's result doesn't
+   sit there looking like this import's. Matches the markup. */
+const IMPORT_HINT = $('#importHint').textContent;
+
 function openSettings() {
   draftPeople = state.people.map(p => ({ ...p }));
   renderPeopleEditor();
@@ -607,6 +612,7 @@ function openSettings() {
   draftAnniversary = state.anniversary;
   $('#anniversaryPick').replaceChildren(
     annualPicker(state.anniversary, v => { draftAnniversary = v; }));
+  $('#importHint').textContent = IMPORT_HINT;
   showSheet($('#setSheet'));
 }
 
@@ -707,6 +713,54 @@ $('#setSave').onclick = async () => {
     await refresh();
   } catch (e) {
     alert('Could not save settings: ' + e.message);
+  }
+};
+
+/* Loads the paper pages without going near the SQL editor. Does what
+   seed-from-paper.sql does, in the same order and with the same tag:
+   clear what a previous import wrote, then insert. Both are scoped to
+   `created_by = 'paper calendar'`, so an event you typed yourself is
+   never in range of the delete. */
+$('#importPaper').onclick = async () => {
+  const btn = $('#importPaper');
+  const hint = $('#importHint');
+
+  /* The names in the seed are the ones schema.sql creates. Rename
+     someone in the app first and their events still import, just
+     attached to nobody — worth saying before, not after. */
+  const wanted = [...new Set(PAPER_SEED.flatMap(e => e.who))];
+  const missing = wanted.filter(n => !state.people.some(p => p.name === n));
+
+  const already = state.events.filter(e => e.created_by === SEED_TAG).length;
+  const warn = [
+    `Import ${PAPER_SEED.length} entries from the paper calendar?`,
+    already ? `\nThe ${already} already imported will be replaced. Events you added yourself are not touched.` : '',
+    missing.length ? `\nNo one is called ${missing.join(' or ')} any more, so those entries will arrive unassigned.` : ''
+  ].join('');
+  if (!confirm(warn)) return;
+
+  btn.disabled = true;
+  hint.textContent = 'Importing…';
+  try {
+    const rows = seedRows(state.people, SEED_ZONE);
+    await run(sb.from('events').delete().eq('created_by', SEED_TAG));
+    await run(sb.from('events').insert(rows));
+    await refresh();
+
+    /* Counted back out of the calendar rather than trusting the insert,
+       which is what the SQL's closing `select count(*)` is for. refresh()
+       reports its own failures to the sync line instead of throwing, so
+       a mismatch here means the rows are in and the screen is stale — not
+       that the import fell short. */
+    const n = state.events.filter(e => e.created_by === SEED_TAG).length;
+    hint.textContent = n === rows.length
+      ? `Imported ${n} ${n === 1 ? 'entry' : 'entries'}.`
+      : `Imported ${rows.length}. The calendar is still showing ${n} — check the sync line.`;
+  } catch (e) {
+    hint.textContent = IMPORT_HINT;
+    alert('Could not import: ' + e.message);
+  } finally {
+    btn.disabled = false;
   }
 };
 

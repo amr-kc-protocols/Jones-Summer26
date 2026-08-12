@@ -15,6 +15,8 @@ const SHELL = [
   './',
   './index.html',
   './app.js',
+  './lib.js',
+  './paper-seed.js',
   './config.js',
   './manifest.webmanifest',
   './icons/icon-192.png',

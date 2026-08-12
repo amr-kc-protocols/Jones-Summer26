@@ -7,6 +7,11 @@
 --  Safe to re-run: the delete on the next line clears only rows
 --  this file created. Anything you add in the app is untouched.
 --
+--  The app can do this without the SQL editor: Settings -> Import
+--  the August & September pages. Same 23 entries, same tag, same
+--  delete-then-insert, so the two never double up. The entries live
+--  in ../paper-seed.js as well - edit one, edit the other.
+--
 --  TIMEZONE: every time below says America/Chicago. If that is
 --  wrong, replace all of them before running.
 -- ============================================================
