@@ -7,6 +7,7 @@ import {
   proposalOptions, fmtOption, proposalRole, inbox, proposalMarkers, eventFromProposal,
   parseRRule, occurrenceDays, makeOccurrence
 } from './lib.js';
+import { PAPER_SEED, seedRows, zonedTimeToUtc } from './paper-seed.js';
 
 let pass = 0, fail = 0;
 const results = [];
@@ -361,6 +362,59 @@ check('until is inclusive of its own day',
   check('override replaces the title', o.title, 'Karate — makeup class');
   check('override replaces the time', fmtTime(o.start), '7 pm');
   check('override marks the occurrence', o.isOverride, true);
+}
+
+/* ── the paper calendar seed ─────────────────────────── */
+{
+  check('the seed is the 23 entries off the pages', PAPER_SEED.length, 23);
+
+  const rows = seedRows([
+    { id: 'p-hunter',  name: 'Hunter',  sort_order: 1 },
+    { id: 'p-marloes', name: 'Marloes', sort_order: 2 },
+    { id: 'p-lars',    name: 'Lars',    sort_order: 3 },
+    { id: 'p-sam',     name: 'Sam',     sort_order: 4 },
+    { id: 'p-silas',   name: 'Silas',   sort_order: 5 }
+  ]);
+  const byTitle = t => rows.find(r => r.title === t);
+
+  // 9am Chicago in August is CDT, UTC-5, so 14:00Z. This is the check that
+  // fails if the seed ever starts reading the importing device's clock.
+  check('a timed entry lands at its Chicago hour',
+    byTitle('Silas kindergarten').starts_at, '2026-08-03T14:00:00.000Z');
+  check('an end time comes across too',
+    byTitle('Silas kindergarten').ends_at, '2026-08-03T15:00:00.000Z');
+  check('a timed entry is not all-day', byTitle('Silas kindergarten').all_day, false);
+
+  // Midnight Chicago, not midnight UTC — an all-day entry stored at 00:00Z
+  // would show up on the 4th for anyone west of Greenwich.
+  check('an all-day entry starts at Chicago midnight',
+    byTitle('Claire').starts_at, '2026-08-05T05:00:00.000Z');
+  check('an all-day entry is flagged', byTitle('Claire').all_day, true);
+  check('an all-day entry has no end', byTitle('Claire').ends_at, null);
+
+  // Written 'Sam', 'Lars' in the seed; stored in sort_order, like the SQL's
+  // array_agg — the app colours an event after whoever is first.
+  check('people are stored in sort order',
+    byTitle('First day of school').person_ids, ['p-lars', 'p-sam']);
+  check('a family entry belongs to nobody', byTitle('No school').person_ids, []);
+
+  check('what was unclear is carried over, not resolved',
+    byTitle('BRE Shark Park').notes, 'Unclear. Possibly Snak Park.');
+  check('every row is tagged for re-import',
+    rows.every(r => r.created_by === 'paper calendar'), true);
+
+  // Renaming someone in the app before importing: the entry still lands.
+  const orphaned = seedRows([{ id: 'p-silas', name: 'Silas', sort_order: 5 }]);
+  check('an entry whose person is gone still imports',
+    orphaned.find(r => r.title === 'Sam race').person_ids, []);
+  check('and the rest keep their people',
+    orphaned.find(r => r.title === 'K-playdate').person_ids, ['p-silas']);
+
+  // Both months are CDT; DST is what the second pass in zonedTimeToUtc is for.
+  check('winter reads CST', zonedTimeToUtc('2026-01-15', '09:00', 'America/Chicago')
+    .toISOString(), '2026-01-15T15:00:00.000Z');
+  check('summer reads CDT', zonedTimeToUtc('2026-07-15', '09:00', 'America/Chicago')
+    .toISOString(), '2026-07-15T14:00:00.000Z');
 }
 
 /* ── report ──────────────────────────────────────────── */
