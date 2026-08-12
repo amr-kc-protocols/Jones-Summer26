@@ -161,7 +161,7 @@ footer strong { color:var(--ink-2); }
 <header class="mast">
   <div class="eyebrow">Jones Family Calendar</div>
   <h1>Supabase setup, start to finish</h1>
-  <p class="standfirst">Seven steps in the order you run them. Tap a number to
+  <p class="standfirst">Eight steps in the order you run them. Tap a number to
      tick it off as you go.</p>
   <div class="facts">
     <span class="fact"><b>~10 min</b></span>
@@ -477,6 +477,311 @@ $$;
 
   <section class="step">
     <button class="marker mono" aria-pressed="false" aria-label="Mark step 7 done">7</button>
+    <div class="body">
+      <h2>Load the paper calendar <span class="opt">Optional</span></h2>
+      <p>Everything written on the August and September 2026 pages — 23 entries.
+         Skip it if you'd rather start empty.</p>
+      <div class="note">
+        <p><span class="lbl">Check the timezone first</span>
+           Every time says <code class="mono">America/Chicago</code>, guessed from the
+           US holidays printed on your pages. If that is wrong, replace all of them
+           before running — otherwise every event lands hours out.</p>
+      </div>
+      <div class="code">
+        <div class="code-bar">
+          <span class="code-name">seed-from-paper.sql — 23 entries, safe to re-run</span>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre><code><span class="c">-- ============================================================</span>
+<span class="c">--  Jones Family Calendar - entries from the paper calendar</span>
+<span class="c">--  (August and September 2026 pages).</span>
+<span class="c">--</span>
+<span class="c">--  Run AFTER schema.sql.</span>
+<span class="c">--</span>
+<span class="c">--  Safe to re-run: the delete on the next line clears only rows</span>
+<span class="c">--  this file created. Anything you add in the app is untouched.</span>
+<span class="c">--</span>
+<span class="c">--  TIMEZONE: every time below says America/Chicago. If that is</span>
+<span class="c">--  wrong, replace all of them before running.</span>
+<span class="c">-- ============================================================</span>
+
+delete <span class="k">from</span> calendar.events <span class="k">where</span> created_by = <span class="s">&#x27;paper calendar&#x27;</span>;
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;Silas kindergarten&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-03 09:00&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-03 10:00&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">false</span>,
+   (<span class="k">select</span> <span class="k">coalesce</span>(array_agg(id order by sort_order), <span class="s">&#x27;{}&#x27;</span>)
+     <span class="k">from</span> calendar.people <span class="k">where</span> name <span class="k">in</span> (<span class="s">&#x27;Silas&#x27;</span>)),
+   <span class="k">null</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;Claire&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-05 00:00&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">true</span>,
+   <span class="s">&#x27;{}&#x27;</span>::<span class="k">uuid</span>[],
+   <span class="s">&#x27;Name only on the paper page, no time given.&#x27;</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;Hunter - KC&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-06 00:00&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">true</span>,
+   (<span class="k">select</span> <span class="k">coalesce</span>(array_agg(id order by sort_order), <span class="s">&#x27;{}&#x27;</span>)
+     <span class="k">from</span> calendar.people <span class="k">where</span> name <span class="k">in</span> (<span class="s">&#x27;Hunter&#x27;</span>)),
+   <span class="s">&#x27;Read as hunt-kc. Handwriting unclear.&#x27;</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;7.30am entry - could not read&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-07 07:30&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">false</span>,
+   <span class="s">&#x27;{}&#x27;</span>::<span class="k">uuid</span>[],
+   <span class="s">&#x27;Illegible on the paper page. Check and rename.&#x27;</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;K-playdate&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-07 10:00&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">false</span>,
+   (<span class="k">select</span> <span class="k">coalesce</span>(array_agg(id order by sort_order), <span class="s">&#x27;{}&#x27;</span>)
+     <span class="k">from</span> calendar.people <span class="k">where</span> name <span class="k">in</span> (<span class="s">&#x27;Silas&#x27;</span>)),
+   <span class="k">null</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;Race packet pickup&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-08 16:00&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-08 17:00&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">false</span>,
+   (<span class="k">select</span> <span class="k">coalesce</span>(array_agg(id order by sort_order), <span class="s">&#x27;{}&#x27;</span>)
+     <span class="k">from</span> calendar.people <span class="k">where</span> name <span class="k">in</span> (<span class="s">&#x27;Hunter&#x27;</span>)),
+   <span class="k">null</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;Sam race&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-09 06:45&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">false</span>,
+   (<span class="k">select</span> <span class="k">coalesce</span>(array_agg(id order by sort_order), <span class="s">&#x27;{}&#x27;</span>)
+     <span class="k">from</span> calendar.people <span class="k">where</span> name <span class="k">in</span> (<span class="s">&#x27;Sam&#x27;</span>)),
+   <span class="k">null</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;KOMA&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-10 18:10&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">false</span>,
+   (<span class="k">select</span> <span class="k">coalesce</span>(array_agg(id order by sort_order), <span class="s">&#x27;{}&#x27;</span>)
+     <span class="k">from</span> calendar.people <span class="k">where</span> name <span class="k">in</span> (<span class="s">&#x27;Lars&#x27;</span>)),
+   <span class="s">&#x27;Written once. Set it to repeat weekly if it does.&#x27;</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;First day of school&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-13 00:00&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">true</span>,
+   (<span class="k">select</span> <span class="k">coalesce</span>(array_agg(id order by sort_order), <span class="s">&#x27;{}&#x27;</span>)
+     <span class="k">from</span> calendar.people <span class="k">where</span> name <span class="k">in</span> (<span class="s">&#x27;Sam&#x27;</span>, <span class="s">&#x27;Lars&#x27;</span>)),
+   <span class="k">null</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;Kinder orientation&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-13 09:15&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">false</span>,
+   (<span class="k">select</span> <span class="k">coalesce</span>(array_agg(id order by sort_order), <span class="s">&#x27;{}&#x27;</span>)
+     <span class="k">from</span> calendar.people <span class="k">where</span> name <span class="k">in</span> (<span class="s">&#x27;Silas&#x27;</span>)),
+   <span class="k">null</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;Silas kinder&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-14 00:00&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">true</span>,
+   (<span class="k">select</span> <span class="k">coalesce</span>(array_agg(id order by sort_order), <span class="s">&#x27;{}&#x27;</span>)
+     <span class="k">from</span> calendar.people <span class="k">where</span> name <span class="k">in</span> (<span class="s">&#x27;Silas&#x27;</span>)),
+   <span class="k">null</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;Marloes jong&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-14 00:00&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">true</span>,
+   (<span class="k">select</span> <span class="k">coalesce</span>(array_agg(id order by sort_order), <span class="s">&#x27;{}&#x27;</span>)
+     <span class="k">from</span> calendar.people <span class="k">where</span> name <span class="k">in</span> (<span class="s">&#x27;Marloes&#x27;</span>)),
+   <span class="s">&#x27;Read as jong. Handwriting unclear.&#x27;</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;North&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-15 17:30&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">false</span>,
+   <span class="s">&#x27;{}&#x27;</span>::<span class="k">uuid</span>[],
+   <span class="s">&#x27;Written as 5.30 North. No further detail.&#x27;</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;BRE Shark Park&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-18 16:30&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">false</span>,
+   <span class="s">&#x27;{}&#x27;</span>::<span class="k">uuid</span>[],
+   <span class="s">&#x27;Unclear. Possibly Snak Park.&#x27;</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;10.30am entry - could not read&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-21 10:30&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">false</span>,
+   <span class="s">&#x27;{}&#x27;</span>::<span class="k">uuid</span>[],
+   <span class="s">&#x27;Time only, no legible title. Check and rename.&#x27;</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;Ortho - boys&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-24 09:30&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-24 11:00&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">false</span>,
+   (<span class="k">select</span> <span class="k">coalesce</span>(array_agg(id order by sort_order), <span class="s">&#x27;{}&#x27;</span>)
+     <span class="k">from</span> calendar.people <span class="k">where</span> name <span class="k">in</span> (<span class="s">&#x27;Lars&#x27;</span>, <span class="s">&#x27;Sam&#x27;</span>)),
+   <span class="s">&#x27;Two times on the page, 9.30 and 10.30. Split in the app if separate.&#x27;</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;Dr Travis&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-25 10:30&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">false</span>,
+   (<span class="k">select</span> <span class="k">coalesce</span>(array_agg(id order by sort_order), <span class="s">&#x27;{}&#x27;</span>)
+     <span class="k">from</span> calendar.people <span class="k">where</span> name <span class="k">in</span> (<span class="s">&#x27;Marloes&#x27;</span>)),
+   <span class="k">null</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;Back to school night&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-27 18:00&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">false</span>,
+   <span class="s">&#x27;{}&#x27;</span>::<span class="k">uuid</span>[],
+   <span class="s">&#x27;No time written. 6pm is a guess.&#x27;</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;No school&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-28 00:00&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">true</span>,
+   <span class="s">&#x27;{}&#x27;</span>::<span class="k">uuid</span>[],
+   <span class="k">null</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;Esther jong&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-08-28 00:00&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">true</span>,
+   <span class="s">&#x27;{}&#x27;</span>::<span class="k">uuid</span>[],
+   <span class="s">&#x27;Read as jong. Handwriting unclear.&#x27;</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;No school&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-09-14 00:00&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">true</span>,
+   <span class="s">&#x27;{}&#x27;</span>::<span class="k">uuid</span>[],
+   <span class="k">null</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;No school&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-09-15 00:00&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">true</span>,
+   <span class="s">&#x27;{}&#x27;</span>::<span class="k">uuid</span>[],
+   <span class="k">null</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="k">insert</span> <span class="k">into</span> calendar.events
+  (title, starts_at, ends_at, all_day, person_ids, notes, created_by)
+<span class="k">values</span>
+  (<span class="s">&#x27;No school&#x27;</span>,
+   timestamp <span class="s">&#x27;2026-09-25 00:00&#x27;</span> at time zone <span class="s">&#x27;America/Chicago&#x27;</span>,
+   <span class="k">null</span>,
+   <span class="k">true</span>,
+   <span class="s">&#x27;{}&#x27;</span>::<span class="k">uuid</span>[],
+   <span class="k">null</span>,
+   <span class="s">&#x27;paper calendar&#x27;</span>);
+
+<span class="c">-- Expect: 23</span>
+<span class="k">select</span> <span class="k">count</span>(*) <span class="k">as</span> imported <span class="k">from</span> calendar.events <span class="k">where</span> created_by = <span class="s">&#x27;paper calendar&#x27;</span>;</code></pre>
+      </div>
+      <p>A few entries were hard to read. Those went in with a note recording the
+         doubt — they'll show in the app, and you can tap any of them to correct it.</p>
+    </div>
+  </section>
+
+  <section class="step">
+    <button class="marker mono" aria-pressed="false" aria-label="Mark step 8 done">8</button>
     <div class="body">
       <h2>Paste the keys into the app</h2>
       <ul class="path">
