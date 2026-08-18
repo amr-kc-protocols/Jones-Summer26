@@ -1,0 +1,12 @@
+<!-- Drop In app icon. The PNGs beside this are rendered from the same
+     geometry by render.py in this folder — edit the two together. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="110" fill="#101a2e"/>
+  <g fill="none" stroke="#4d7ce8" stroke-width="23.6" stroke-linejoin="round">
+    <path d="M201.7 168.4v-4.9a15.4 15.4 0 0 1 15.4-15.4h77.8a15.4 15.4 0 0 1 15.4 15.4v4.9"/>
+    <rect x="102.4" y="174.1" width="307.2" height="215.0" rx="29.7"/>
+  </g>
+  <circle cx="256" cy="286.7" r="59.4" fill="none" stroke="#4d7ce8" stroke-width="23.6"/>
+  <circle cx="256" cy="286.7" r="24.6" fill="#e8effd"/>
+  <circle cx="364.5" cy="231.4" r="15.4" fill="#e2434c"/>
+</svg>
