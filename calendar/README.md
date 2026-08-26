@@ -152,8 +152,10 @@ A month with no rows is far likelier to be a month you stopped logging than a
 month you spent nothing, and crediting it would quietly inflate the one number
 the whole thing rests on. The current month is never banked — it isn't over.
 
-Note that both phones share one login, so this isn't private from the other
-one.
+**Marloes can see all of it**, and that's the point rather than a limitation
+to work around — both phones share one login, so the want list, the decisions
+and the burn-down are all visible from hers. Being answerable to someone is
+half of why this works.
 
 > Adding this needs two new tables, so **re-run `supabase/schema.sql`** once
 > after deploying — SQL Editor → New query → paste → Run. It's idempotent.
