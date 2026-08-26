@@ -157,10 +157,11 @@ to work around — both phones share one login, so the want list, the decisions
 and the burn-down are all visible from hers. Being answerable to someone is
 half of why this works.
 
-> Adding this needs two new tables, so **re-run `supabase/schema.sql`** once
-> after deploying — SQL Editor → New query → paste → Run. It's idempotent.
-> Until it's run, the Money tab is simply empty and the rest of the calendar
-> carries on as before.
+> Adding this needs two new tables. Either **re-run `supabase/schema.sql`**,
+> or paste the smaller [`supabase/add-money.sql`](./supabase/add-money.sql),
+> which does just this part — SQL Editor → New query → paste → Run. Both are
+> idempotent and both end up in the same place. Until one of them is run, the
+> Money tab is simply empty and the rest of the calendar carries on as before.
 
 ## The look
 
