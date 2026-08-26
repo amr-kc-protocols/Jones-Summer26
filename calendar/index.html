@@ -56,6 +56,9 @@
   /* the same flourish in all four corners, for the lock tile */
   --orn4:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='%2327478f' stroke-width='1.25' stroke-linecap='round'%3E%3Cg%3E%3Cpath d='M3 3L10.5 10.5'/%3E%3Cpath d='M11.4 3.4C14.9 3.4 15.6 8 12.1 8.4 9.7 8.6 9.4 5.3 11.8 5.5'/%3E%3Cpath d='M3.4 11.4C3.4 14.9 8 15.6 8.4 12.1 8.6 9.7 5.3 9.4 5.5 11.8'/%3E%3Cpath d='M13.8 13.8L16.4 16.4'/%3E%3C/g%3E%3Cg transform='translate(100,0) scale(-1,1)'%3E%3Cpath d='M3 3L10.5 10.5'/%3E%3Cpath d='M11.4 3.4C14.9 3.4 15.6 8 12.1 8.4 9.7 8.6 9.4 5.3 11.8 5.5'/%3E%3Cpath d='M3.4 11.4C3.4 14.9 8 15.6 8.4 12.1 8.6 9.7 5.3 9.4 5.5 11.8'/%3E%3Cpath d='M13.8 13.8L16.4 16.4'/%3E%3C/g%3E%3Cg transform='translate(0,100) scale(1,-1)'%3E%3Cpath d='M3 3L10.5 10.5'/%3E%3Cpath d='M11.4 3.4C14.9 3.4 15.6 8 12.1 8.4 9.7 8.6 9.4 5.3 11.8 5.5'/%3E%3Cpath d='M3.4 11.4C3.4 14.9 8 15.6 8.4 12.1 8.6 9.7 5.3 9.4 5.5 11.8'/%3E%3Cpath d='M13.8 13.8L16.4 16.4'/%3E%3C/g%3E%3Cg transform='translate(100,100) scale(-1,-1)'%3E%3Cpath d='M3 3L10.5 10.5'/%3E%3Cpath d='M11.4 3.4C14.9 3.4 15.6 8 12.1 8.4 9.7 8.6 9.4 5.3 11.8 5.5'/%3E%3Cpath d='M3.4 11.4C3.4 14.9 8 15.6 8.4 12.1 8.6 9.7 5.3 9.4 5.5 11.8'/%3E%3Cpath d='M13.8 13.8L16.4 16.4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 
+  /* the same flourish in gold, for the navy plaque the total sits on */
+  --orn4-gold:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='%23c9a563' stroke-opacity='.55' stroke-width='1.25' stroke-linecap='round'%3E%3Cg%3E%3Cpath d='M3 3L10.5 10.5'/%3E%3Cpath d='M11.4 3.4C14.9 3.4 15.6 8 12.1 8.4 9.7 8.6 9.4 5.3 11.8 5.5'/%3E%3Cpath d='M3.4 11.4C3.4 14.9 8 15.6 8.4 12.1 8.6 9.7 5.3 9.4 5.5 11.8'/%3E%3Cpath d='M13.8 13.8L16.4 16.4'/%3E%3C/g%3E%3Cg transform='translate(100,0) scale(-1,1)'%3E%3Cpath d='M3 3L10.5 10.5'/%3E%3Cpath d='M11.4 3.4C14.9 3.4 15.6 8 12.1 8.4 9.7 8.6 9.4 5.3 11.8 5.5'/%3E%3Cpath d='M3.4 11.4C3.4 14.9 8 15.6 8.4 12.1 8.6 9.7 5.3 9.4 5.5 11.8'/%3E%3Cpath d='M13.8 13.8L16.4 16.4'/%3E%3C/g%3E%3Cg transform='translate(0,100) scale(1,-1)'%3E%3Cpath d='M3 3L10.5 10.5'/%3E%3Cpath d='M11.4 3.4C14.9 3.4 15.6 8 12.1 8.4 9.7 8.6 9.4 5.3 11.8 5.5'/%3E%3Cpath d='M3.4 11.4C3.4 14.9 8 15.6 8.4 12.1 8.6 9.7 5.3 9.4 5.5 11.8'/%3E%3Cpath d='M13.8 13.8L16.4 16.4'/%3E%3C/g%3E%3Cg transform='translate(100,100) scale(-1,-1)'%3E%3Cpath d='M3 3L10.5 10.5'/%3E%3Cpath d='M11.4 3.4C14.9 3.4 15.6 8 12.1 8.4 9.7 8.6 9.4 5.3 11.8 5.5'/%3E%3Cpath d='M3.4 11.4C3.4 14.9 8 15.6 8.4 12.1 8.6 9.7 5.3 9.4 5.5 11.8'/%3E%3Cpath d='M13.8 13.8L16.4 16.4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+
   --safe-b:env(safe-area-inset-bottom,0px);
   --safe-t:env(safe-area-inset-top,0px);
 }
@@ -338,6 +341,8 @@ main{padding-bottom:calc(96px + var(--safe-b));}
   background:var(--surface2);border:1px solid var(--accent);
 }
 .inbox-card.answered{border-color:var(--good);}
+.inbox-card.decide{border-color:var(--gold);}
+.inbox-card.decide .ic-go{color:var(--gold);}
 .inbox-card .ic-body{flex:1;min-width:0;}
 .inbox-card .ic-title{font-family:var(--serif);font-size:14.5px;line-height:1.25;}
 .inbox-card .ic-sub{font-size:11.5px;color:var(--dim);margin-top:1px;}
@@ -421,6 +426,118 @@ main{padding-bottom:calc(96px + var(--safe-b));}
   .dots-row i,.ev-bar,.who i,.chip .sw,.who-pick button i{filter:brightness(1.45) saturate(1.05);}
 }
 
+/* ══ money ══
+   The want list, the burn-down, and the one number the whole thing is
+   for. That number sits on a navy plaque in both themes — parchment is
+   the wrong ground for gold — so it reads the same at 7am and at night. */
+.saved-card{
+  margin:12px 12px 14px;padding:24px 18px 18px;border-radius:var(--r);
+  background:linear-gradient(160deg,#20304d 0%,#141d31 100%);
+  border:1px solid #2c3b57;box-shadow:var(--shadow);
+  background-image:var(--orn4-gold),linear-gradient(160deg,#20304d 0%,#141d31 100%);
+  background-size:100% 100%,100% 100%;background-repeat:no-repeat,no-repeat;
+  text-align:center;position:relative;overflow:hidden;
+}
+.saved-label{
+  font-size:9.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:#c9a563;opacity:.8;
+}
+.saved-num{
+  font-family:var(--serif);font-size:clamp(46px,16vw,68px);line-height:1.05;
+  color:#e2c07a;font-variant-numeric:tabular-nums;margin:6px 0 2px;
+  text-shadow:0 2px 12px rgba(226,192,122,.22);
+}
+.saved-sub{font-size:12px;color:#9fb0cc;margin-top:4px;}
+/* the count-up caption — what you just talked yourself out of */
+.saved-bump{
+  font-family:var(--serif);font-size:14px;color:#e2c07a;margin-top:9px;min-height:20px;
+  opacity:0;transform:translateY(5px);transition:opacity .3s,transform .3s;
+}
+.saved-bump.on{opacity:1;transform:translateY(0);}
+
+.money-acts{display:flex;gap:9px;padding:0 12px 16px;}
+.money-acts button{
+  flex:1;padding:13px 8px;border-radius:var(--r-sm);font-weight:700;font-size:14.5px;
+  border:1px solid var(--line);background:var(--surface2);color:var(--accent);
+}
+.money-acts button.primary{background:var(--gold);border-color:var(--gold);color:#1a2338;}
+.money-acts button:active{transform:scale(.98);}
+
+/* burn-down */
+.burn{background:var(--surface);border-top:1px solid var(--line);padding:13px 16px 15px;margin-bottom:9px;}
+.burn+.burn{margin-top:-9px;}
+.burn-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+.burn-head .bh-label{
+  font-family:var(--serif);font-size:13px;color:var(--gold);
+  letter-spacing:1.1px;text-transform:uppercase;
+}
+.burn-head .bh-num{font-family:var(--serif);font-size:19px;font-variant-numeric:tabular-nums;}
+.burn-head .bh-num.over{color:var(--danger);}
+.bar{
+  position:relative;height:9px;border-radius:999px;background:var(--surface2);
+  border:1px solid var(--line);margin:9px 0 7px;overflow:hidden;
+}
+.bar-fill{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:999px;transition:width .3s;}
+.bar-fill.over{background:var(--danger);}
+/* where you'd be if you spent evenly — the line worth staying left of */
+.bar-pace{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--gold);border-radius:2px;}
+.burn-note{font-size:12px;color:var(--dim);}
+.burn-note b{color:var(--good);font-weight:700;}
+.burn-note b.over{color:var(--danger);}
+
+/* the lists */
+.money-sec{background:var(--surface);border-top:1px solid var(--line);margin-bottom:9px;}
+.sp-row{display:flex;gap:11px;align-items:center;padding:10px 16px;border-top:1px solid var(--line2);width:100%;text-align:left;}
+.money-sec .sp-row:first-of-type{border-top:none;}
+.sp-row:active{background:var(--surface2);}
+.sp-main{flex:1;min-width:0;}
+.sp-title{font-family:var(--serif);font-size:15.5px;line-height:1.3;word-break:break-word;}
+.sp-meta{font-size:11.5px;color:var(--faint);margin-top:1px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;}
+.sp-meta .due-now{color:var(--today);font-weight:700;}
+.sp-price{
+  font-family:var(--serif);font-size:16px;font-variant-numeric:tabular-nums;flex:0 0 auto;
+}
+.sp-price.let-go{color:var(--gold);}
+.sp-tag{
+  font-size:9.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;
+  padding:2px 6px;border-radius:999px;border:1px solid currentColor;color:var(--faint);
+}
+.sp-tag.wanted{color:var(--today);}
+.sp-tag.needed{color:var(--dim);}
+
+/* a coin in the month grid on the day a decision comes due */
+.dots-row i.coin{
+  background:transparent!important;box-shadow:inset 0 0 0 2px var(--gold);
+  width:7px;height:7px;
+}
+.ev.is-spend .ev-time{color:var(--gold);font-weight:700;font-family:var(--serif);font-size:13.5px;}
+
+/* needed / wanted, and the amount field */
+.seg{display:flex;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;}
+.seg button{flex:1;padding:12px 0;font-size:14px;font-weight:700;color:var(--dim);background:var(--surface2);}
+.seg button+button{border-left:1px solid var(--line);}
+.seg button.on{background:var(--accent);color:var(--accent-ink);}
+.seg button.on[data-kind=wanted]{background:var(--today);color:#fdfbf5;}
+.field input.amount-in{
+  width:100%;background:var(--surface2);border:1px solid var(--line);border-radius:var(--r-sm);
+  padding:12px;font-family:var(--serif);font-size:24px;font-variant-numeric:tabular-nums;
+}
+.btn-gold{
+  width:100%;padding:15px;border-radius:var(--r-sm);background:var(--gold);
+  color:#1a2338;font-weight:800;font-size:16px;margin-bottom:10px;
+}
+.btn-gold:active{filter:brightness(.94);}
+.wait-note{
+  padding:11px 13px;border-radius:var(--r-sm);background:var(--surface2);
+  border:1px solid var(--line);font-size:13px;color:var(--dim);margin-top:-6px;margin-bottom:15px;
+}
+.wait-note b{color:var(--ink);font-weight:700;}
+
+@media (prefers-reduced-motion: reduce){
+  .saved-bump{transition:none;}
+  .bar-fill{transition:none;}
+}
+
 /* choice dialog */
 #choice{
   position:fixed;left:16px;right:16px;bottom:calc(16px + var(--safe-b));z-index:230;
@@ -471,6 +588,7 @@ main{padding-bottom:calc(96px + var(--safe-b));}
       <button data-view="month" class="on">Month</button>
       <button data-view="week">Week</button>
       <button data-view="agenda">Agenda</button>
+      <button data-view="money">Money</button>
     </div>
     <div class="filters" id="filters"></div>
     <div id="inbox" hidden></div>
@@ -588,6 +706,17 @@ main{padding-bottom:calc(96px + var(--safe-b));}
       </div>
     </div>
     <div class="field">
+      <label>Spending</label>
+      <div class="row" style="align-items:center;gap:11px">
+        <input type="text" id="spendBudget" inputmode="decimal" placeholder="600" autocomplete="off">
+      </div>
+      <div class="hint" style="margin-top:7px">
+        Your own monthly budget — everything personal, including gas, food and
+        haircuts. The Money tab burns it down a week at a time, and whatever is
+        left when a month closes is banked into your total.
+      </div>
+    </div>
+    <div class="field">
       <label>Week starts on</label>
       <select id="weekStart">
         <option value="0">Sunday</option>
@@ -666,6 +795,93 @@ main{padding-bottom:calc(96px + var(--safe-b));}
     </div>
     <button class="btn-soft" id="ansCounter">Can't do these — suggest another time</button>
     <button class="btn-danger" id="ansDecline">Say no</button>
+  </div>
+</div>
+
+<!-- ══ want list: log it instead of buying it ══ -->
+<div class="sheet" id="wantSheet">
+  <div class="sheet-head">
+    <button class="ghost" id="wantCancel">Cancel</button>
+    <h2>Want something</h2>
+    <button id="wantSave">Save</button>
+  </div>
+  <div class="sheet-body">
+    <div class="field">
+      <label>What is it</label>
+      <input type="text" id="wantTitle" placeholder="The boots, that jacket…"
+             autocomplete="off" enterkeyhint="done">
+    </div>
+
+    <div class="field">
+      <label>How much</label>
+      <input type="text" id="wantPrice" class="amount-in" inputmode="decimal"
+             placeholder="0" autocomplete="off">
+    </div>
+    <div class="wait-note" id="wantWait">Put in a price and this will tell you when you decide.</div>
+
+    <div class="field">
+      <label>Where you saw it</label>
+      <input type="text" id="wantPlace" placeholder="Optional" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label>Why you want it</label>
+      <textarea id="wantNotes" placeholder="Optional — worth reading back on the day"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ══ log a purchase ══ -->
+<div class="sheet" id="logSheet">
+  <div class="sheet-head">
+    <button class="ghost" id="logCancel">Cancel</button>
+    <h2 id="logHeading">Log a purchase</h2>
+    <button id="logSave">Save</button>
+  </div>
+  <div class="sheet-body">
+    <div class="field">
+      <label>How much</label>
+      <input type="text" id="logAmount" class="amount-in" inputmode="decimal"
+             placeholder="0" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label>Which was it</label>
+      <div class="seg" id="logKind">
+        <button data-kind="needed">Needed</button>
+        <button data-kind="wanted" class="on">Wanted</button>
+      </div>
+      <div class="hint" style="margin-top:7px">
+        Gas, groceries and a haircut are needed — they come out of the budget
+        but they aren't what this is for.
+      </div>
+    </div>
+
+    <div class="field">
+      <label>What for</label>
+      <input type="text" id="logNote" placeholder="Optional" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label>When</label>
+      <input type="date" id="logDate">
+    </div>
+  </div>
+</div>
+
+<!-- ══ the decision, when a cooling-off day comes round ══ -->
+<div class="sheet" id="decSheet">
+  <div class="sheet-head">
+    <button class="ghost" id="decClose">Close</button>
+    <h2 id="decHeading">Still want it?</h2>
+    <span style="width:44px"></span>
+  </div>
+  <div class="sheet-body">
+    <div id="decSummary"></div>
+    <button class="btn-gold" id="decLetGo">Let it go</button>
+    <button class="btn-soft" id="decBuy">I bought it</button>
+    <button class="btn-soft" id="decWait">Give it another week</button>
+    <button class="btn-danger" id="decDrop">Remove from the list</button>
   </div>
 </div>
 

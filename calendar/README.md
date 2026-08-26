@@ -22,7 +22,7 @@ instead of the calendar.
 |---|---|
 | `index.html` | Markup and all styling |
 | `app.js` | Views, editor, auth, sync |
-| `lib.js` | Dates, holidays, recurrence — pure functions, no DOM |
+| `lib.js` | Dates, holidays, recurrence, the spending maths — pure functions, no DOM |
 | `config.js` | Your Supabase keys and the PIN salt |
 | `test.mjs` | Tests for `lib.js` |
 | `sw.js` | Offline shell |
@@ -35,10 +35,10 @@ node calendar/test.mjs
 
 ## Using it
 
-**Three views.** *Month* is a Sunday-first grid with a coloured dot per event,
+**Four views.** *Month* is a Sunday-first grid with a coloured dot per event,
 and the selected day's schedule listed underneath — tap any date to see it.
 *Week* lists all seven days in full. *Agenda* is a rolling list of what's
-coming up.
+coming up. *Money* is the spending tracker — see below.
 
 **Colour is per person.** Everyone gets a colour, set in ⚙ Settings. An event
 can belong to several people at once ("first day of school — Sam and Lars"),
@@ -101,6 +101,66 @@ gets a card back telling them what was said, which clears when they tap it.
 Both phones share one login, so **who is asking whom comes from *This phone
 belongs to*** in ⚙ Settings. If that's unset the phone can't tell the two of you
 apart and will show every pending ask — set it on both phones and it behaves.
+
+## Money
+
+A fourth view, and the only part of this that isn't about the family — it's
+Hunter's own spending, in the app he already opens every day.
+
+**One number, and it's the point.** *Total saved*, in gold on a navy plaque.
+Two things feed it, both real money: everything you talked yourself out of,
+and whatever was left of the monthly budget when a month closed. Tap-free —
+it just sits there getting bigger.
+
+**The want list is the intervention.** Instead of buying, write it down. The
+app works out a cooling-off period from the price — under $25 just buy it,
+$25–100 waits three days, over $100 waits a week — and puts the decision on
+that day in the calendar. It shows up as a hollow gold coin in the month grid
+and a row in the day list, because a decision you've scheduled is a thing on
+your calendar like any other.
+
+When the day arrives a card appears under the header, on whichever view you're
+looking at: *Still want the $140 boots?* Four answers —
+
+- **Let it go** banks the price, and the total counts up on screen with the
+  thing you didn't buy named underneath. That's deliberate: the hook in a good
+  deal is the *"I saved $80"* hit, so this pays out the same hit for not
+  spending.
+- **I bought it** is a win too, not a relapse — you thought about it for a week
+  and decided yes. It opens the purchase log prefilled, since what it actually
+  cost is rarely the listed price.
+- **Give it another week** pushes the date out, for when you genuinely can't
+  tell yet.
+- **Remove from the list** drops it without counting it as let go.
+
+Whatever you wrote in *why you want it* is read back to you on the day, which
+is most of what makes the answer easy.
+
+**The budget burns down weekly.** The monthly figure — $600, set in ⚙ Settings
+— is also spread across the week, because a month's pot can be gone by the 6th
+and a week's can't. Each bar carries a gold pace marker: left of it you're
+spending slower than even, right of it faster. The month gets its own bar
+underneath.
+
+**Every purchase is needed or wanted.** One tap either way when you log it.
+Gas, groceries and haircuts come out of the same budget but aren't what this
+is trying to change, so the burn-down counts both and the rest of the screen
+only ever looks at *wanted*.
+
+**What a closed month banks.** Only months you actually logged something in.
+A month with no rows is far likelier to be a month you stopped logging than a
+month you spent nothing, and crediting it would quietly inflate the one number
+the whole thing rests on. The current month is never banked — it isn't over.
+
+**Marloes can see all of it**, and that's the point rather than a limitation
+to work around — both phones share one login, so the want list, the decisions
+and the burn-down are all visible from hers. Being answerable to someone is
+half of why this works.
+
+> Adding this needs two new tables, so **re-run `supabase/schema.sql`** once
+> after deploying — SQL Editor → New query → paste → Run. It's idempotent.
+> Until it's run, the Money tab is simply empty and the rest of the calendar
+> carries on as before.
 
 ## The look
 

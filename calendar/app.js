@@ -16,7 +16,9 @@ import {
   DAY_MS, startOfDay, addDays, addMonths, daysBetween, ymd, fromYmd, hm, pad2, sameDay, startOfWeek,
   MONTHS, MON_SHORT, DOW_SHORT, DOW_MIN, DAYCODE,
   fmtTime, holidays, celebrations, parseAnnual, parseRRule, occurrenceDays, makeOccurrence,
-  proposalOptions, fmtOption, inbox, proposalMarkers, eventFromProposal
+  proposalOptions, fmtOption, inbox, proposalMarkers, eventFromProposal,
+  COOL_OFF, coolOffDays, decideOn, money, burnDown, totalSaved,
+  dueItems, waitingItems, spendMarkers
 } from './lib.js';
 import { PAPER_SEED, SEED_TAG, SEED_ZONE, seedRows } from './paper-seed.js';
 
@@ -60,6 +62,9 @@ const state = {
   filter: new Set(),            // empty = everyone
   weekStart: 0,
   anniversary: '',            // MM-DD or YYYY-MM-DD, household-wide
+  spendItems: [],               // the want list
+  spends: [],                   // logged purchases
+  budget: 600,                  // personal monthly budget
   deviceOwner: localStorage.getItem('jfc-owner') || ''
 };
 
@@ -106,6 +111,10 @@ function buildDayMap(from, to) {
     if (visible(o)) push(o.dateKey, o);
   }
 
+  /* A cooling-off day is a thing on the calendar like anything else —
+     that's the whole reason the want list lives in here. */
+  for (const o of spendMarkers(state.spendItems, from, to)) push(o.dateKey, o);
+
   /* Generated rather than stored — see celebrations() in lib.js. */
   for (const o of celebrations(state.people, state.anniversary, from, to)) {
     if (visible(o)) push(o.dateKey, o);
@@ -127,12 +136,21 @@ function render() {
   renderFilters();
   renderInbox();
   view.replaceChildren();
+  /* Money isn't a span of dates, so the things that move through dates
+     have nothing to do there. */
+  const isMoney = state.view === 'money';
+  $('#fab').hidden = isMoney;
+  $('#prev').hidden = $('#next').hidden = $('#todayBtn').hidden = isMoney;
+  $('#filters').hidden = isMoney;
+
   if (state.view === 'month') renderMonth();
   else if (state.view === 'week') renderWeek();
+  else if (isMoney) renderMoney();
   else renderAgenda();
 }
 
 function headerTitle() {
+  if (state.view === 'money') return 'Money';
   if (state.view === 'month') {
     return `${MONTHS[state.cursor.getMonth()]} ${state.cursor.getFullYear()}`;
   }
@@ -193,7 +211,7 @@ function renderMonth() {
     if (list.length) {
       const dots = el('div', 'dots-row');
       for (const o of list.slice(0, 6)) {
-        const i2 = el('i', o.proposed ? 'proposed' : null);
+        const i2 = el('i', o.spendItem ? 'coin' : o.proposed ? 'proposed' : null);
         i2.style.background = colorOf(o); dots.append(i2);
       }
       cell.append(dots);
@@ -270,11 +288,14 @@ function dayGroup(d, map, showEmpty) {
 function eventRow(o) {
   const row = el('div', 'ev'
     + (o.celebration ? ' is-celebration' : '')
+    + (o.spendItem ? ' is-spend' : '')
     + (o.proposed ? ' is-proposed' : ''));
   const bar = el('div', 'ev-bar');
   bar.style.background = colorOf(o);
 
-  const time = el('div', 'ev-time', o.allDay ? 'All day' : fmtTime(o.start));
+  // A decision day says what it would cost, since that's the question.
+  const time = el('div', 'ev-time', o.spendItem ? money(o.spendItem.price)
+                                  : o.allDay ? 'All day' : fmtTime(o.start));
   const body = el('div', 'ev-body');
 
   const title = el('div', 'ev-title');
@@ -288,8 +309,9 @@ function eventRow(o) {
   body.append(title);
 
   const meta = el('div', 'ev-meta');
-  // A birthday already says whose it is in the title.
-  if (o.celebration !== 'birthday') {
+  // A birthday already says whose it is in the title, and a decision off
+  // the want list belongs to nobody — "Everyone" would be noise on both.
+  if (o.celebration !== 'birthday' && !o.spendItem) {
     for (const id of o.personIds) {
       const p = personById(id);
       if (!p) continue;
@@ -314,7 +336,8 @@ function eventRow(o) {
   // Birthdays and the anniversary aren't events, so there's nothing to edit
   // here — send the tap where they're actually changed.
   row.onclick = () => {
-    if (o.proposed) {
+    if (o.spendItem) openDecide(o.spendItem);
+    else if (o.proposed) {
       // Only the other phone can answer; the asker just sees it pending.
       if (o.askedBy !== state.deviceOwner) openAnswer(o.proposal);
     } else if (o.celebration) openSettings();
@@ -609,6 +632,7 @@ function openSettings() {
   sel.value = state.deviceOwner && state.people.some(p => p.name === state.deviceOwner)
     ? state.people.find(p => p.name === state.deviceOwner).id : '';
   $('#weekStart').value = String(state.weekStart);
+  $('#spendBudget').value = state.budget ? String(state.budget) : '';
   draftAnniversary = state.anniversary;
   $('#anniversaryPick').replaceChildren(
     annualPicker(state.anniversary, v => { draftAnniversary = v; }));
@@ -698,10 +722,15 @@ $('#setSave').onclick = async () => {
     }
     state.weekStart = Number($('#weekStart').value);
     state.anniversary = draftAnniversary || '';
+    // A blank or unreadable budget keeps the one already set rather than
+    // silently zeroing it — a zero budget would read as "always over".
+    const budget = parseAmount($('#spendBudget').value);
+    if (budget != null && budget > 0) state.budget = budget;
     localStorage.setItem('jfc-weekstart', String(state.weekStart));
     await run(sb.from('household_settings').update({
       week_starts_on: state.weekStart,
       anniversary: state.anniversary || null,
+      spend_budget: state.budget,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
     }).eq('id', 1));
 
@@ -782,13 +811,17 @@ function loadCache() {
     state.events = raw.events || [];
     state.exceptions = new Map((raw.exceptions || [])
       .map(e => [`${e.event_id}|${e.occurrence_date}`, e]));
+    state.spendItems = raw.spendItems || [];
+    state.spends = raw.spends || [];
+    if (raw.budget != null) state.budget = Number(raw.budget);
     return true;
   } catch { return false; }
 }
 
-function saveCache(people, events, exceptions) {
+function saveCache(people, events, exceptions, spendItems, spends) {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ people, events, exceptions }));
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      people, events, exceptions, spendItems, spends, budget: state.budget }));
   } catch { /* quota — not fatal */ }
 }
 
@@ -803,12 +836,14 @@ async function refresh() {
   if (refreshing) return;
   refreshing = true;
   try {
-    const [people, events, excs, settings, proposals] = await Promise.all([
+    const [people, events, excs, settings, proposals, items, spends] = await Promise.all([
       sb.from('people').select('*').order('sort_order'),
       sb.from('events').select('*'),
       sb.from('event_exceptions').select('*'),
       sb.from('household_settings').select('*').eq('id', 1).maybeSingle(),
-      sb.from('proposals').select('*').order('created_at', { ascending: false })
+      sb.from('proposals').select('*').order('created_at', { ascending: false }),
+      sb.from('spend_items').select('*').order('decide_on'),
+      sb.from('spends').select('*').order('spent_on', { ascending: false })
     ]);
     for (const r of [people, events, excs]) if (r.error) throw r.error;
 
@@ -820,12 +855,20 @@ async function refresh() {
     // schema.sql has no proposals table, and the rest of the calendar
     // should still work. The feature just stays out of sight.
     state.proposals = proposals.error ? [] : (proposals.data || []);
-    if (settings.data) state.anniversary = settings.data.anniversary || '';
+    // Same tolerance for the spending tables: an install that predates them
+    // keeps a working calendar, just without the Money tab having anything
+    // in it. Re-running schema.sql is what turns it on.
+    state.spendItems = items.error ? [] : (items.data || []);
+    state.spends = spends.error ? [] : (spends.data || []);
+    if (settings.data) {
+      state.anniversary = settings.data.anniversary || '';
+      if (settings.data.spend_budget != null) state.budget = Number(settings.data.spend_budget);
+    }
     if (settings.data && settings.data.week_starts_on != null) {
       state.weekStart = settings.data.week_starts_on;
       localStorage.setItem('jfc-weekstart', String(state.weekStart));
     }
-    saveCache(state.people, state.events, excs.data || []);
+    saveCache(state.people, state.events, excs.data || [], state.spendItems, state.spends);
     setSync(`Synced ${fmtTime(new Date())}`, false);
     render();
   } catch (e) {
@@ -943,6 +986,7 @@ function clampSelectionToCursor() {
 }
 
 function step(dir) {
+  if (state.view === 'money') return;
   if (state.view === 'month') state.cursor = addMonths(state.cursor, dir);
   else if (state.view === 'week') state.cursor = addDays(state.cursor, dir * 7);
   clampSelectionToCursor();
@@ -989,8 +1033,21 @@ let answering = null;     // the proposal open in the answer sheet
 function renderInbox() {
   const box = $('#inbox');
   const { toAnswer, answered } = inbox(state.proposals, state.deviceOwner);
+  const due = dueItems(state.spendItems, new Date());
   box.replaceChildren();
-  box.hidden = !(toAnswer.length + answered.length);
+  box.hidden = !(toAnswer.length + answered.length + due.length);
+
+  /* The cooling-off period is up. This card is the whole intervention, so
+     it sits above everything and shows on every view. */
+  for (const it of due) {
+    const waited = Math.max(0, daysBetween(new Date(it.created_at || it.decide_on), new Date()));
+    const card = inboxCard(
+      `Still want the ${money(it.price)} ${it.title}?`,
+      waited ? `Written down ${waited} day${waited === 1 ? '' : 's'} ago` : 'Written down today',
+      'Decide', false, () => openDecide(it));
+    card.classList.add('decide');
+    box.append(card);
+  }
 
   for (const p of toAnswer) {
     const n = proposalOptions(p).length;
@@ -1198,3 +1255,437 @@ $('#ansCounter').onclick = () => {
   openAsk(state.selected, p);
 };
 $('#ansClose').onclick = hideSheets;
+
+/* ══ money ══════════════════════════════════════════════
+   The want list, the burn-down, and one number.
+
+   The shape of the thing: wanting something writes it down and puts a
+   decision on a future day instead of a charge on today. When the day
+   comes the app asks once. Letting it go banks the price — same "I saved
+   $80" hit, without the $80 leaving. */
+
+/* '$40', '40', ' 40.50 ' → 40.5. Null when there's no number in there,
+   so a blank field can be told apart from a deliberate zero. */
+function parseAmount(v) {
+  const n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, ''));
+  return isNaN(n) ? null : n;
+}
+
+const shortDate = d => `${DOW_SHORT[d.getDay()]} ${MON_SHORT[d.getMonth()]} ${d.getDate()}`;
+
+/* Count-up on the plaque. `savedShown` is what the number on screen last
+   read, so a re-render for some unrelated reason doesn't replay it. */
+let savedShown = null;
+let pendingBump = null;          // { amount, title } — set when you let something go
+
+function countUp(node, from, to, ms = 950) {
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (still || from == null || Math.abs(to - from) < 0.5) {
+    node.textContent = money(to);
+    return;
+  }
+  const t0 = performance.now();
+  const tick = now => {
+    const p = Math.min(1, (now - t0) / ms);
+    const eased = 1 - Math.pow(1 - p, 3);
+    node.textContent = money(from + (to - from) * eased);
+    if (p < 1) requestAnimationFrame(tick);
+    else node.textContent = money(to);
+  };
+  requestAnimationFrame(tick);
+}
+
+function renderMoney() {
+  const today = startOfDay(new Date());
+  const saved = totalSaved(state.spendItems, state.spends, state.budget, today);
+  const burn = burnDown(state.spends, state.budget, today, state.weekStart);
+
+  /* ── the plaque ── */
+  const card = el('div', 'saved-card');
+  card.append(el('div', 'saved-label', 'Total saved'));
+  const num = el('div', 'saved-num', money(savedShown != null ? savedShown : saved.total));
+  card.append(num);
+
+  const parts = [];
+  if (saved.declined) parts.push(`${money(saved.declined)} let go`);
+  if (saved.banked) parts.push(`${money(saved.banked)} banked`);
+  card.append(el('div', 'saved-sub', parts.length
+    ? parts.join(' · ')
+    : 'Write down the next thing you want instead of buying it'));
+
+  const bump = el('div', 'saved-bump');
+  card.append(bump);
+  view.append(card);
+
+  countUp(num, savedShown, saved.total);
+  if (pendingBump) {
+    bump.textContent = `+ ${money(pendingBump.amount)} · ${pendingBump.title}`;
+    requestAnimationFrame(() => bump.classList.add('on'));
+    pendingBump = null;
+  }
+  savedShown = saved.total;
+
+  /* ── the two things you can do ── */
+  const acts = el('div', 'money-acts');
+  const wantBtn = el('button', 'primary', 'Want something');
+  wantBtn.onclick = () => openWant();
+  const logBtn = el('button', null, 'Log a purchase');
+  logBtn.onclick = () => openLog();
+  acts.append(wantBtn, logBtn);
+  view.append(acts);
+
+  /* ── this week, then this month ── */
+  view.append(burnBlock(
+    'This week',
+    burn.week.total, burn.allowance,
+    burn.elapsed / 7,
+    burn.ahead >= 0
+      ? [`${money(burn.week.total, true)} of ${money(burn.allowance)} · `, `${money(Math.abs(burn.ahead))} under pace`, '']
+      : [`${money(burn.week.total, true)} of ${money(burn.allowance)} · `, `${money(Math.abs(burn.ahead))} over pace`, 'over']
+  ));
+
+  const wantedPart = burn.month.wanted
+    ? ` · ${money(burn.month.wanted)} of it wanted`
+    : ' · none of it wanted so far';
+  view.append(burnBlock(
+    MONTHS[today.getMonth()],
+    burn.month.total, burn.budget,
+    burn.monthElapsed / burn.monthDays,
+    [`${money(burn.month.total, true)} of ${money(burn.budget)}${wantedPart}`, '', '']
+  ));
+
+  /* ── waiting on a decision ── */
+  const waiting = waitingItems(state.spendItems);
+  if (waiting.length) {
+    const sec = moneySection(`Cooling off · ${money(waiting.reduce((n, i) => n + Number(i.price || 0), 0))}`);
+    for (const it of waiting) {
+      const day = fromYmd(it.decide_on);
+      const isDue = day <= today;
+      const meta = el('div', 'sp-meta');
+      meta.append(el('span', isDue ? 'due-now' : null,
+        isDue ? 'Ready to decide' : `Decides ${shortDate(day)}`));
+      if (it.place) meta.append(el('span', null, it.place));
+      sec.append(spendRow(it.title, meta, money(it.price), null, () => openDecide(it)));
+    }
+    view.append(sec);
+  }
+
+  /* ── the ledger: what you decided, most recent first ── */
+  const settled = state.spendItems
+    .filter(i => i.status !== 'waiting')
+    .sort((a, b) => new Date(b.decided_at || 0) - new Date(a.decided_at || 0))
+    .slice(0, 8);
+  if (settled.length) {
+    const sec = moneySection('Decided');
+    for (const it of settled) {
+      const letGo = it.status === 'let_go';
+      const meta = el('div', 'sp-meta');
+      meta.append(el('span', null, letGo ? 'Let it go' : 'Bought it, having thought about it'));
+      if (it.decided_at) meta.append(el('span', null, shortDate(new Date(it.decided_at))));
+      sec.append(spendRow(it.title, meta, money(it.price), letGo ? 'let-go' : null,
+        () => openDecide(it)));
+    }
+    view.append(sec);
+  }
+
+  /* ── what actually went out ── */
+  const recent = state.spends.slice(0, 8);
+  if (recent.length) {
+    const sec = moneySection('Spent');
+    for (const sp of recent) {
+      const meta = el('div', 'sp-meta');
+      meta.append(el('span', `sp-tag ${sp.kind === 'needed' ? 'needed' : 'wanted'}`,
+        sp.kind === 'needed' ? 'Needed' : 'Wanted'));
+      meta.append(el('span', null, shortDate(fromYmd(sp.spent_on))));
+      sec.append(spendRow(sp.note || (sp.kind === 'needed' ? 'Something needed' : 'Something wanted'),
+        meta, money(sp.amount, true), null, () => deleteSpend(sp)));
+    }
+    view.append(sec);
+  }
+
+  if (!waiting.length && !settled.length && !recent.length) {
+    view.append(el('div', 'empty',
+      'Nothing logged yet. The next time you catch yourself about to buy something, put it on the want list instead.'));
+  }
+}
+
+function moneySection(label) {
+  const sec = el('div', 'money-sec');
+  const head = el('div', 'dg-head');
+  head.append(el('span', null, label));
+  sec.append(head);
+  return sec;
+}
+
+function spendRow(title, metaNode, priceText, priceCls, onClick) {
+  const row = el('button', 'sp-row');
+  const main = el('div', 'sp-main');
+  main.append(el('div', 'sp-title', title));
+  if (metaNode) main.append(metaNode);
+  row.append(main, el('div', 'sp-price' + (priceCls ? ' ' + priceCls : ''), priceText));
+  row.onclick = onClick;
+  return row;
+}
+
+/* A bar with a gold pace marker on it: left of the marker is under, right
+   of it is over. The bar caps at full so going over doesn't overflow the
+   track, but the note underneath still says by how much. */
+function burnBlock(label, spent, cap, paceFraction, [noteLead, noteBold, boldCls]) {
+  const box = el('div', 'burn');
+  const head = el('div', 'burn-head');
+  head.append(el('span', 'bh-label', label));
+  const left = cap - spent;
+  const n = el('span', 'bh-num' + (left < 0 ? ' over' : ''),
+    left >= 0 ? `${money(left)} left` : `${money(-left)} over`);
+  head.append(n);
+  box.append(head);
+
+  const bar = el('div', 'bar');
+  const fill = el('div', 'bar-fill' + (left < 0 ? ' over' : ''));
+  fill.style.width = `${Math.min(100, cap > 0 ? (spent / cap) * 100 : 0)}%`;
+  const pace = el('div', 'bar-pace');
+  pace.style.left = `${Math.min(100, Math.max(0, paceFraction * 100))}%`;
+  bar.append(fill, pace);
+  box.append(bar);
+
+  const note = el('div', 'burn-note');
+  note.append(document.createTextNode(noteLead));
+  if (noteBold) note.append(el('b', boldCls || null, noteBold));
+  box.append(note);
+  return box;
+}
+
+/* ── writing something down instead of buying it ── */
+function openWant() {
+  $('#wantTitle').value = '';
+  $('#wantPrice').value = '';
+  $('#wantPlace').value = '';
+  $('#wantNotes').value = '';
+  renderWantWait();
+  showSheet($('#wantSheet'));
+  setTimeout(() => $('#wantTitle').focus(), 320);
+}
+
+/* Says what will happen before you commit to it, and updates as you type
+   — the wait is the product, so it shouldn't be a surprise after saving. */
+function renderWantWait() {
+  const price = parseAmount($('#wantPrice').value);
+  const note = $('#wantWait');
+  const save = $('#wantSave');
+  note.replaceChildren();
+
+  if (price == null || price <= 0) {
+    note.textContent = 'Put in a price and this will tell you when you decide.';
+    save.textContent = 'Save';
+    return;
+  }
+  const days = coolOffDays(price);
+  if (!days) {
+    note.append(document.createTextNode('Under your '));
+    note.append(el('b', null, money(COOL_OFF.free)));
+    note.append(document.createTextNode(' line — not worth thinking over. Saving it logs it as bought.'));
+    save.textContent = 'Log it';
+    return;
+  }
+  const day = decideOn(price, new Date());
+  note.append(document.createTextNode('It goes on the calendar for '));
+  note.append(el('b', null, shortDate(day)));
+  note.append(document.createTextNode(` — ${days} days from now. Nothing leaves your budget until then.`));
+  save.textContent = 'Save';
+}
+$('#wantPrice').oninput = renderWantWait;
+$('#wantCancel').onclick = hideSheets;
+
+$('#wantSave').onclick = async () => {
+  const btn = $('#wantSave');
+  const title = $('#wantTitle').value.trim();
+  const price = parseAmount($('#wantPrice').value);
+  if (!title) { alert('What is it?'); return; }
+  if (price == null || price <= 0) { alert('How much is it?'); return; }
+
+  /* Small enough that a cooling-off period would just be bureaucracy —
+     straight into the ledger as a purchase, no decision to make later. */
+  if (!coolOffDays(price)) {
+    btn.disabled = true;
+    try {
+      await run(sb.from('spends').insert({
+        spent_on: ymd(startOfDay(new Date())), amount: price,
+        kind: 'wanted', note: title, owner: state.deviceOwner || null
+      }));
+      hideSheets();
+      await refresh();
+    } catch (e) {
+      alert('Could not save that: ' + e.message);
+    } finally { btn.disabled = false; }
+    return;
+  }
+
+  btn.disabled = true;
+  try {
+    const day = decideOn(price, new Date());
+    await run(sb.from('spend_items').insert({
+      title, price, place: $('#wantPlace').value.trim() || null,
+      notes: $('#wantNotes').value.trim() || null,
+      owner: state.deviceOwner || null,
+      status: 'waiting', decide_on: ymd(day)
+    }));
+    // Land on the day it will come back, so you see it sitting there.
+    state.selected = day;
+    state.cursor = day;
+    hideSheets();
+    await refresh();
+  } catch (e) {
+    alert('Could not save that: ' + e.message);
+  } finally { btn.disabled = false; }
+};
+
+/* ── logging what did go out ── */
+let logKind = 'wanted';
+let logItem = null;              // the want-list item this purchase settles
+
+function openLog(prefill) {
+  logItem = prefill?.item || null;
+  logKind = prefill?.kind || 'wanted';
+  $('#logHeading').textContent = logItem ? 'What did it cost?' : 'Log a purchase';
+  $('#logAmount').value = prefill?.amount != null ? String(prefill.amount) : '';
+  $('#logNote').value = prefill?.note || '';
+  $('#logDate').value = ymd(startOfDay(new Date()));
+  renderLogKind();
+  showSheet($('#logSheet'));
+  setTimeout(() => $('#logAmount').focus(), 320);
+}
+
+function renderLogKind() {
+  document.querySelectorAll('#logKind button').forEach(b => {
+    b.classList.toggle('on', b.dataset.kind === logKind);
+  });
+}
+document.querySelectorAll('#logKind button').forEach(b => {
+  b.onclick = () => { logKind = b.dataset.kind; renderLogKind(); };
+});
+$('#logCancel').onclick = hideSheets;
+
+$('#logSave').onclick = async () => {
+  const btn = $('#logSave');
+  const amount = parseAmount($('#logAmount').value);
+  if (amount == null || amount <= 0) { alert('How much was it?'); return; }
+  const on = $('#logDate').value || ymd(startOfDay(new Date()));
+
+  btn.disabled = true;
+  try {
+    await run(sb.from('spends').insert({
+      spent_on: on, amount, kind: logKind,
+      note: $('#logNote').value.trim() || null,
+      owner: state.deviceOwner || null,
+      item_id: logItem ? logItem.id : null
+    }));
+    /* Buying at the end of a cooling-off is a decision, not a relapse —
+       the item closes as decided rather than staying on the list. */
+    if (logItem) {
+      await run(sb.from('spend_items')
+        .update({ status: 'bought', decided_at: new Date().toISOString() })
+        .eq('id', logItem.id));
+    }
+    hideSheets();
+    await refresh();
+  } catch (e) {
+    alert('Could not save that: ' + e.message);
+  } finally { btn.disabled = false; }
+};
+
+async function deleteSpend(sp) {
+  if (!confirm(`Remove this ${money(sp.amount, true)} purchase?`)) return;
+  try {
+    await run(sb.from('spends').delete().eq('id', sp.id));
+    await refresh();
+  } catch (e) {
+    alert('Could not remove that: ' + e.message);
+  }
+}
+
+/* ── the decision ── */
+let deciding = null;
+
+function openDecide(item) {
+  deciding = item;
+  const settled = item.status !== 'waiting';
+  $('#decHeading').textContent = settled ? 'Already decided' : 'Still want it?';
+
+  const sum = el('div', 'ask-summary');
+  sum.append(el('div', 'as-title', `${item.title} · ${money(item.price)}`));
+
+  const bits = [];
+  if (item.place) bits.push(item.place);
+  if (item.created_at) {
+    const waited = Math.max(0, daysBetween(new Date(item.created_at), new Date()));
+    bits.push(waited ? `written down ${waited} day${waited === 1 ? '' : 's'} ago` : 'written down today');
+  }
+  if (settled) bits.push(item.status === 'let_go' ? 'let go' : 'bought');
+  sum.append(el('div', 'as-meta', bits.join(' · ')));
+  // Why you wanted it, in your own words, read back on the day — which is
+  // most of what makes the answer easy.
+  if (item.notes) sum.append(el('div', 'as-note', `“${item.notes}”`));
+  $('#decSummary').replaceChildren(sum);
+
+  $('#decLetGo').hidden = settled;
+  $('#decBuy').hidden = settled;
+  $('#decWait').hidden = settled;
+  $('#decDrop').textContent = settled ? 'Remove from the ledger' : 'Remove from the list';
+  showSheet($('#decSheet'));
+}
+
+$('#decClose').onclick = hideSheets;
+
+$('#decLetGo').onclick = async () => {
+  const item = deciding;
+  if (!item) return;
+  try {
+    await run(sb.from('spend_items')
+      .update({ status: 'let_go', decided_at: new Date().toISOString() })
+      .eq('id', item.id));
+    // The payoff, on the screen that holds the number.
+    pendingBump = { amount: Number(item.price) || 0, title: item.title };
+    state.view = 'money';
+    document.querySelectorAll('.views button')
+      .forEach(b => b.classList.toggle('on', b.dataset.view === 'money'));
+    hideSheets();
+    await refresh();
+  } catch (e) {
+    alert('Could not save that: ' + e.message);
+  }
+};
+
+$('#decBuy').onclick = () => {
+  const item = deciding;
+  if (!item) return;
+  hideSheets();
+  // The listed price is a guess; what it actually cost is what the budget
+  // needs, so this goes through the ordinary log sheet.
+  openLog({ amount: item.price, kind: 'wanted', note: item.title, item });
+};
+
+$('#decWait').onclick = async () => {
+  const item = deciding;
+  if (!item) return;
+  try {
+    const day = addDays(startOfDay(new Date()), 7);
+    await run(sb.from('spend_items').update({ decide_on: ymd(day) }).eq('id', item.id));
+    hideSheets();
+    await refresh();
+  } catch (e) {
+    alert('Could not save that: ' + e.message);
+  }
+};
+
+$('#decDrop').onclick = async () => {
+  const item = deciding;
+  if (!item) return;
+  if (!confirm(`Remove "${item.title}"? It won't count as let go.`)) return;
+  try {
+    await run(sb.from('spend_items').delete().eq('id', item.id));
+    hideSheets();
+    await refresh();
+  } catch (e) {
+    alert('Could not remove that: ' + e.message);
+  }
+};

@@ -120,6 +120,54 @@ create table if not exists calendar.proposals (
 
 create index if not exists proposals_status_idx on calendar.proposals (status, created_at desc);
 
+-- ── spending ──────────────────────────────────────────────
+-- A want list with a cooling-off period, plus the purchases that
+-- burn down the monthly budget.
+--
+-- The want list is the point of the thing: instead of buying, you write
+-- it down and the app puts a decision on a future day. `decide_on` is a
+-- date rather than a timestamp because it belongs on a calendar square.
+--
+--   waiting → the cooling-off period is running
+--   let_go  → talked yourself out of it; `price` is banked as saved
+--   bought  → decided yes, which is a considered purchase and fine;
+--             the actual charge lands in `spends` as a 'wanted' row
+create table if not exists calendar.spend_items (
+  id          uuid primary key default gen_random_uuid(),
+  title       text not null,
+  price       numeric(10,2) not null default 0,
+  place       text,
+  notes       text,
+  owner       text,                            -- device owner name
+  status      text not null default 'waiting'
+              check (status in ('waiting', 'let_go', 'bought')),
+  decide_on   date not null,
+  decided_at  timestamptz,
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists spend_items_open_idx
+  on calendar.spend_items (decide_on) where status = 'waiting';
+
+-- One logged purchase.
+--   needed → gas, groceries, a haircut. Comes out of the budget, but
+--            isn't what this is trying to change.
+--   wanted → the thing this exists for.
+-- item_id is set when the purchase came off the want list, so a bought
+-- item and its charge stay tied together.
+create table if not exists calendar.spends (
+  id         uuid primary key default gen_random_uuid(),
+  spent_on   date not null default current_date,
+  amount     numeric(10,2) not null,
+  kind       text not null default 'wanted' check (kind in ('needed', 'wanted')),
+  note       text,
+  owner      text,
+  item_id    uuid references calendar.spend_items(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists spends_spent_on_idx on calendar.spends (spent_on);
+
 -- ── household settings ────────────────────────────────────
 -- Single row. Keeps both phones agreeing on timezone / week start.
 create table if not exists calendar.household_settings (
@@ -167,7 +215,8 @@ alter default privileges in schema calendar
 do $$
 declare t text;
 begin
-  foreach t in array array['people', 'events', 'event_exceptions', 'household_settings', 'proposals']
+  foreach t in array array['people', 'events', 'event_exceptions', 'household_settings',
+                          'proposals', 'spend_items', 'spends']
   loop
     execute format('alter table calendar.%I enable row level security', t);
     execute format('drop policy if exists household_all on calendar.%I', t);
@@ -184,7 +233,8 @@ end $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['people', 'events', 'event_exceptions', 'household_settings', 'proposals']
+  foreach t in array array['people', 'events', 'event_exceptions', 'household_settings',
+                          'proposals', 'spend_items', 'spends']
   loop
     if not exists (
       select 1 from pg_publication_tables
@@ -205,6 +255,11 @@ alter table calendar.people
   add column if not exists birthday text;
 alter table calendar.household_settings
   add column if not exists anniversary text;
+
+-- The personal monthly spending budget the burn-down runs against.
+-- Editable in the app under ⚙ Settings → Spending.
+alter table calendar.household_settings
+  add column if not exists spend_budget numeric(10,2) not null default 600;
 
 -- Format guard: 'MM-DD', or 'YYYY-MM-DD' when the year is known.
 do $$
