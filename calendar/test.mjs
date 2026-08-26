@@ -5,7 +5,9 @@ import {
   ymd, fromYmd, addDays, startOfWeek, daysBetween, fmtTime,
   holidays, easter, parseAnnual, annualDate, celebrations,
   proposalOptions, fmtOption, proposalRole, inbox, proposalMarkers, eventFromProposal,
-  parseRRule, occurrenceDays, makeOccurrence
+  parseRRule, occurrenceDays, makeOccurrence,
+  coolOffDays, decideOn, money, sumSpends, weeklyAllowance, burnDown,
+  bankedMonths, totalSaved, dueItems, waitingItems, spendMarkers
 } from './lib.js';
 import { PAPER_SEED, seedRows, zonedTimeToUtc } from './paper-seed.js';
 
@@ -415,6 +417,133 @@ check('until is inclusive of its own day',
     .toISOString(), '2026-01-15T15:00:00.000Z');
   check('summer reads CDT', zonedTimeToUtc('2026-07-15', '09:00', 'America/Chicago')
     .toISOString(), '2026-07-15T14:00:00.000Z');
+}
+
+/* ── spending: cooling off ───────────────────────────── */
+check('a small buy needs no thinking', coolOffDays(18), 0);
+check('the threshold itself waits', coolOffDays(25), 3);
+check('mid range waits three days', coolOffDays(64.99), 3);
+check('a hundred waits a week', coolOffDays(100), 7);
+check('a big one waits a week', coolOffDays(340), 7);
+check('a junk price is treated as free', coolOffDays(null), 0);
+
+check('a cheap thing decides today', ymd(decideOn(18, fromYmd('2026-08-26'))), '2026-08-26');
+check('a mid one decides in three days', ymd(decideOn(60, fromYmd('2026-08-26'))), '2026-08-29');
+check('a big one decides in a week', ymd(decideOn(140, fromYmd('2026-08-26'))), '2026-09-02');
+check('the wait crosses a month end', ymd(decideOn(140, fromYmd('2026-08-30'))), '2026-09-06');
+
+/* ── money formatting ────────────────────────────────── */
+check('thousands are grouped', money(1240), '$1,240');
+check('a big total is grouped twice', money(1234567), '$1,234,567');
+check('the hero number drops cents', money(138.62), '$139');
+check('cents when asked for', money(138.08000000000001, true), '$138.08');
+check('negative reads as a debt', money(-42), '-$42');
+check('zero is zero', money(0), '$0');
+
+/* ── spend rows ──────────────────────────────────────── */
+const sp = (on, amount, kind = 'wanted') => ({ spent_on: on, amount, kind });
+const august = [
+  sp('2026-08-01', 60, 'needed'),      // gas
+  sp('2026-08-03', 140),               // boots
+  sp('2026-08-24', 45, 'needed'),      // groceries
+  sp('2026-08-26', 30)                 // today
+];
+
+check('the split is kept',
+  sumSpends(august, fromYmd('2026-08-01'), fromYmd('2026-08-31')),
+  { needed: 105, wanted: 170, total: 275 });
+check('a range excludes what falls outside it',
+  sumSpends(august, fromYmd('2026-08-02'), fromYmd('2026-08-04')).total, 140);
+check('an empty range is zero, not NaN',
+  sumSpends(august, fromYmd('2026-09-01'), fromYmd('2026-09-30')).total, 0);
+check('a row with no date is skipped',
+  sumSpends([...august, { amount: 999, kind: 'wanted' }], fromYmd('2026-08-01'), fromYmd('2026-08-31')).total, 275);
+
+/* ── the weekly allowance and pace ───────────────────── */
+check('$600 a month is about $138 a week',
+  Math.round(weeklyAllowance(600) * 100) / 100, 138.08);
+
+{
+  // Wed 2026-08-26, week starting Sunday 2026-08-23. In range: the 24th
+  // ($45) and the 26th ($30). Four days elapsed of seven.
+  const b = burnDown(august, 600, fromYmd('2026-08-26'), 0);
+  check('the week starts on Sunday', ymd(b.weekFrom), '2026-08-23');
+  check('and ends on Saturday', ymd(b.weekTo), '2026-08-29');
+  check('only this week counts', b.week.total, 75);
+  check('today counts as elapsed', b.elapsed, 4);
+  check('pace is four sevenths of the allowance', Math.round(b.pace), 79);
+  check('under pace reads positive', Math.round(b.ahead), 4);
+  check('the month is the whole month', b.month.total, 275);
+  check('and the month has budget left', b.monthLeft, 325);
+  check('August has 31 days', b.monthDays, 31);
+}
+{
+  // A week that straddles the month end still sums both sides of it.
+  const straddle = [sp('2026-08-30', 20), sp('2026-09-01', 35)];
+  const b = burnDown(straddle, 600, fromYmd('2026-09-02'), 0);
+  check('a week spanning a month end sums both halves', b.week.total, 55);
+  check('but the month only counts its own days', b.month.total, 35);
+}
+
+/* ── banking a finished month ────────────────────────── */
+{
+  const spends = [
+    sp('2026-06-10', 400, 'needed'),   // June: closed, under
+    sp('2026-07-11', 720, 'needed'),   // July: closed, over
+    sp('2026-08-03', 140)              // August: the current month
+  ];
+  const banked = bankedMonths(spends, 600, fromYmd('2026-08-26'));
+  check('only closed months are banked', banked.map(m => m.month), ['2026-06', '2026-07']);
+  check('an under month banks the difference', banked[0].saved, 200);
+  check('an over month banks nothing, never a debt', banked[1].saved, 0);
+  check('a month with nothing logged is not credited',
+    bankedMonths([sp('2026-08-03', 140)], 600, fromYmd('2026-08-26')), []);
+}
+
+/* ── the headline number ─────────────────────────────── */
+{
+  const items = [
+    { id: 'i1', title: 'Boots', price: 140, status: 'let_go' },
+    { id: 'i2', title: 'Jacket', price: 90, status: 'let_go' },
+    { id: 'i3', title: 'Runners', price: 120, status: 'bought' },
+    { id: 'i4', title: 'Watch', price: 300, status: 'waiting', decide_on: '2026-09-02' }
+  ];
+  const spends = [sp('2026-06-10', 400, 'needed'), sp('2026-08-03', 140)];
+  const t = totalSaved(items, spends, 600, fromYmd('2026-08-26'));
+  check('only what was let go is declined', t.declined, 230);
+  check('closed months are banked alongside it', t.banked, 200);
+  check('the hero number is the two together', t.total, 430);
+  check('nothing logged at all is a clean zero',
+    totalSaved([], [], 600, fromYmd('2026-08-26')), { declined: 0, banked: 0, total: 0 });
+}
+
+/* ── the want list ───────────────────────────────────── */
+{
+  const items = [
+    { id: 'a', title: 'Watch', price: 300, status: 'waiting', decide_on: '2026-08-29' },
+    { id: 'b', title: 'Boots', price: 140, status: 'waiting', decide_on: '2026-08-24' },
+    { id: 'c', title: 'Belt',  price: 40,  status: 'waiting', decide_on: '2026-08-26' },
+    { id: 'd', title: 'Jeans', price: 80,  status: 'let_go',  decide_on: '2026-08-20' }
+  ];
+  check('a decision due today counts as due',
+    dueItems(items, fromYmd('2026-08-26')).map(i => i.id), ['b', 'c']);
+  check('the longest wait is answered first',
+    dueItems(items, fromYmd('2026-08-30')).map(i => i.id), ['b', 'c', 'a']);
+  check('an answered item never comes back',
+    dueItems(items, fromYmd('2026-08-30')).some(i => i.id === 'd'), false);
+  check('nothing is due before its day',
+    dueItems(items, fromYmd('2026-08-23')), []);
+  check('the waiting list runs next-decision-first',
+    waitingItems(items).map(i => i.id), ['b', 'c', 'a']);
+
+  const marks = spendMarkers(items, fromYmd('2026-08-24'), fromYmd('2026-08-27'));
+  check('only waiting items are marked on the grid',
+    marks.map(m => m.title), ['Decide: Boots', 'Decide: Belt']);
+  check('a marker lands on its decision day', marks[0].dateKey, '2026-08-24');
+  check('and is shaped like an all-day occurrence',
+    [marks[0].allDay, marks[0].personIds, marks[0].repeating], [true, [], false]);
+  check('a decision outside the window is left out',
+    spendMarkers(items, fromYmd('2026-09-01'), fromYmd('2026-09-30')), []);
 }
 
 /* ── report ──────────────────────────────────────────── */

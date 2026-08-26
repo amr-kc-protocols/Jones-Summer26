@@ -400,3 +400,157 @@ export function makeOccurrence(ev, day, exc) {
   }
   return o;
 }
+
+/* ══ spending ═══════════════════════════════════════════
+   A want list with a cooling-off period, and a budget to burn down.
+
+   The point of the cooling-off date is that it lives on the calendar:
+   logging something you want puts a decision on a future day instead of
+   a charge on today. When the day arrives the app asks once, and letting
+   it go banks the price.
+
+   All of this is deliberately arithmetic on plain rows — no clock, no
+   network — so test.mjs can pin the awkward cases (month boundaries, a
+   month you never logged, a week straddling the start of a month). */
+
+/* Below `free` you just buy it; a rule with a rule for everything is a
+   rule nobody keeps. Between `free` and `mid` it waits `midDays`, above
+   `mid` it waits `bigDays`. */
+export const COOL_OFF = { free: 25, mid: 100, midDays: 3, bigDays: 7 };
+
+export function coolOffDays(price, tiers = COOL_OFF) {
+  const p = Number(price) || 0;
+  if (p < tiers.free) return 0;
+  if (p < tiers.mid) return tiers.midDays;
+  return tiers.bigDays;
+}
+
+export function decideOn(price, from, tiers = COOL_OFF) {
+  return addDays(startOfDay(from), coolOffDays(price, tiers));
+}
+
+/* '$1,240', or '$18.40' when the cents matter. Rounded to cents first so
+   a float sum doesn't print $138.08000000000001. */
+export function money(n, cents = false) {
+  const v = Math.round((Number(n) || 0) * 100) / 100;
+  const sign = v < 0 ? '-' : '';
+  const abs = Math.abs(v);
+  const s = cents ? abs.toFixed(2) : String(Math.round(abs));
+  const [whole, frac] = s.split('.');
+  return `${sign}$${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${frac ? '.' + frac : ''}`;
+}
+
+export const monthKey = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+
+/* Spends inside [from, to], split by the one distinction that matters:
+   groceries and gas come out of the same $600 but aren't the problem. */
+export function sumSpends(spends, from, to) {
+  let needed = 0, wanted = 0;
+  for (const s of spends || []) {
+    if (!s.spent_on) continue;
+    const d = fromYmd(s.spent_on);
+    if (isNaN(d) || d < from || d > to) continue;
+    const a = Number(s.amount) || 0;
+    if (s.kind === 'needed') needed += a; else wanted += a;
+  }
+  return { needed, wanted, total: needed + wanted };
+}
+
+/* A month's budget spread over a week. Averaged across the year rather
+   than divided by the current month's length, so the weekly number holds
+   still instead of jumping every February. */
+export const weeklyAllowance = budget => (Number(budget) || 0) * 12 / 365 * 7;
+
+/* Where you stand right now, weekly first — a month's pot can be gone by
+   the 6th, a week's can't. `ahead` is what you'd have left if you stopped
+   here: positive is under pace. */
+export function burnDown(spends, budget, today, weekStart = 0) {
+  const day = startOfDay(today);
+  const weekFrom = startOfWeek(day, weekStart), weekTo = addDays(weekFrom, 6);
+  const week = sumSpends(spends, weekFrom, weekTo);
+  const allowance = weeklyAllowance(budget);
+  const elapsed = daysBetween(weekFrom, day) + 1;         // today is spent-in-progress
+  const pace = allowance * elapsed / 7;
+
+  const monthFrom = new Date(day.getFullYear(), day.getMonth(), 1);
+  const monthTo = new Date(day.getFullYear(), day.getMonth() + 1, 0);
+  const month = sumSpends(spends, monthFrom, monthTo);
+  const cap = Number(budget) || 0;
+
+  return {
+    week, allowance, weekLeft: allowance - week.total,
+    pace, ahead: pace - week.total, elapsed, weekFrom, weekTo,
+    month, budget: cap, monthLeft: cap - month.total,
+    monthDays: monthTo.getDate(), monthElapsed: day.getDate()
+  };
+}
+
+/* Leftover budget, banked one finished month at a time.
+
+   Only months you actually logged something in count. A month with no
+   rows is far more likely to be a month you stopped logging than a month
+   you spent nothing, and crediting it would quietly inflate the one
+   number the whole thing rests on. The current month is never banked —
+   it isn't over. */
+export function bankedMonths(spends, budget, today) {
+  const byMonth = new Map();
+  for (const s of spends || []) {
+    const k = (s.spent_on || '').slice(0, 7);
+    if (k.length !== 7) continue;
+    byMonth.set(k, (byMonth.get(k) || 0) + (Number(s.amount) || 0));
+  }
+  const cap = Number(budget) || 0;
+  const current = monthKey(startOfDay(today));
+  return [...byMonth.entries()]
+    .filter(([k]) => k < current)
+    .map(([month, spent]) => ({ month, spent, saved: Math.max(0, cap - spent) }))
+    .sort((a, b) => (a.month < b.month ? -1 : 1));
+}
+
+/* The headline. Two sources, both real money: what you talked yourself
+   out of, and what you didn't spend in a month that's now closed. */
+export function totalSaved(items, spends, budget, today) {
+  const declined = (items || [])
+    .filter(i => i.status === 'let_go')
+    .reduce((n, i) => n + (Number(i.price) || 0), 0);
+  const banked = bankedMonths(spends, budget, today)
+    .reduce((n, m) => n + m.saved, 0);
+  return { declined, banked, total: declined + banked };
+}
+
+/* Waiting items whose day has come — oldest first, so the one that has
+   been sitting longest gets answered first. */
+export function dueItems(items, today) {
+  const t = ymd(startOfDay(today));
+  return (items || [])
+    .filter(i => i.status === 'waiting' && (i.decide_on || '') <= t)
+    .sort((a, b) => (a.decide_on < b.decide_on ? -1 : a.decide_on > b.decide_on ? 1 : 0));
+}
+
+/* Everything still cooling off, next decision first. */
+export function waitingItems(items) {
+  return (items || [])
+    .filter(i => i.status === 'waiting')
+    .sort((a, b) => (a.decide_on < b.decide_on ? -1 : a.decide_on > b.decide_on ? 1 : 0));
+}
+
+/* Occurrence-shaped, like holidays and birthdays, so the grid and the day
+   list draw a pending decision without knowing what one is. */
+export function spendMarkers(items, from, to) {
+  const out = [];
+  for (const i of items || []) {
+    if (i.status !== 'waiting' || !i.decide_on) continue;
+    const day = fromYmd(i.decide_on);
+    if (isNaN(day) || day < from || day > to) continue;
+    out.push({
+      spendItem: i, ev: null, eventId: `spend:${i.id}`,
+      dateKey: ymd(day), day,
+      title: `Decide: ${i.title}`,
+      notes: i.notes || null, location: i.place || null,
+      allDay: true, start: day, end: day,
+      personIds: [], color: 'var(--gold)',
+      repeating: false, isOverride: false
+    });
+  }
+  return out;
+}
