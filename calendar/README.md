@@ -142,6 +142,22 @@ and a week's can't. Each bar carries a gold pace marker: left of it you're
 spending slower than even, right of it faster. The month gets its own bar
 underneath.
 
+**Logging several at once.** *＋ Log several at once*, under the two buttons,
+is for a weekend's worth in one sitting. Attach a screenshot — a bank app, a
+statement, an order history — and it pins to the top of the sheet while you
+type amounts down a column underneath it. The rows grow as you fill them, so
+eight purchases cost eight amounts and no taps on *add*, and a running total
+at the bottom shows what the batch does to that week before you commit to it.
+
+The screenshot is **never uploaded**. It's a local object URL that exists only
+while the sheet is open and is discarded when it closes — nothing is sent
+anywhere, so a bank screenshot never leaves the phone. It's there to read off,
+not to store.
+
+One date covers the batch, since a screenshot is usually one sitting. If a
+batch really does span several days, do one per day — the bar that matters is
+weekly.
+
 **Every purchase is needed or wanted.** One tap either way when you log it.
 Gas, groceries and haircuts come out of the same budget but aren't what this
 is trying to change, so the burn-down counts both and the rest of the screen

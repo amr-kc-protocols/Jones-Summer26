@@ -538,6 +538,79 @@ main{padding-bottom:calc(96px + var(--safe-b));}
   .bar-fill{transition:none;}
 }
 
+/* ══ logging several at once ══
+   Built around a screenshot you read off while you type. The image is
+   never uploaded — it's a local object URL that dies with the sheet —
+   so a bank screenshot never leaves the phone. */
+.shot-drop{
+  display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  padding:16px 12px;border-radius:var(--r-sm);margin-bottom:14px;
+  background:var(--surface2);border:1.5px dashed var(--line);
+  font-size:14px;font-weight:700;color:var(--accent);
+}
+.shot-drop:active{background:var(--surface);}
+/* Pinned to the top of the sheet, so a ten-row statement stays readable
+   while you scroll down the rows you're typing into it. */
+/* A sticky element pins to the scrollport inset by the scroll
+   container's padding, so with the body's usual 14px top padding it
+   would sit 14px down and rows would scroll through the gap above it.
+   The padding moves onto the sticky box itself, which pins flush and
+   paints that band with its own background. */
+#batchSheet .sheet-body{padding-top:0;}
+#batchSheet .shot-drop{margin-top:14px;}
+#batchShotBox{
+  position:sticky;top:0;z-index:5;background:var(--sheet);
+  padding-top:14px;margin-bottom:12px;
+}
+.shot-wrap{
+  position:relative;border-radius:var(--r-sm);
+  border:1px solid var(--line);background:var(--surface2);overflow:auto;
+  max-height:26dvh;
+}
+/* Tapped open, the image goes to natural width so you can pan around and
+   actually read a row of small figures. */
+.shot-wrap.tall{max-height:62dvh;}
+.shot-wrap img{display:block;width:100%;height:auto;}
+.shot-wrap.tall img{width:auto;max-width:none;min-width:100%;}
+.shot-bar{
+  display:flex;gap:8px;align-items:center;justify-content:space-between;
+  padding:5px 1px 6px;font-size:11.5px;color:var(--faint);
+}
+.shot-bar button{font-size:12px;font-weight:700;color:var(--accent);padding:4px 2px;}
+.shot-bar button.drop{color:var(--danger);}
+
+.brow{display:flex;gap:6px;align-items:center;margin-bottom:7px;}
+.brow input[type=text]{
+  background:var(--surface2);border:1px solid var(--line);border-radius:var(--r-sm);
+  padding:10px 9px;font-size:15px;min-width:0;
+}
+.brow .b-amt{
+  flex:0 0 88px;font-family:var(--serif);font-size:17px;
+  font-variant-numeric:tabular-nums;text-align:right;
+}
+.brow .b-note{flex:1;}
+/* One tap flips it rather than opening a picker — the whole point is
+   that a row costs as little as possible. */
+.brow .b-kind{
+  flex:0 0 40px;padding:10px 0;border-radius:var(--r-sm);text-align:center;
+  font-size:11px;font-weight:800;letter-spacing:.5px;
+  border:1px solid currentColor;background:var(--surface2);color:var(--dim);
+}
+.brow .b-kind.want{color:var(--today);}
+.brow .b-drop{flex:0 0 26px;color:var(--danger);font-size:19px;text-align:center;}
+.brow.ghost .b-amt,.brow.ghost .b-note{opacity:.72;}
+
+.btotal{
+  display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  padding:12px 13px;border-radius:var(--r-sm);margin-top:14px;
+  background:var(--surface2);border:1px solid var(--line);
+}
+.btotal .bt-label{font-size:12px;color:var(--dim);}
+.btotal .bt-num{font-family:var(--serif);font-size:20px;font-variant-numeric:tabular-nums;}
+.bweek{font-size:12px;color:var(--dim);margin-top:8px;text-align:center;}
+.bweek b{color:var(--ink);font-weight:700;}
+.bweek b.over{color:var(--danger);}
+
 /* choice dialog */
 #choice{
   position:fixed;left:16px;right:16px;bottom:calc(16px + var(--safe-b));z-index:230;
@@ -882,6 +955,57 @@ main{padding-bottom:calc(96px + var(--safe-b));}
     <button class="btn-soft" id="decBuy">I bought it</button>
     <button class="btn-soft" id="decWait">Give it another week</button>
     <button class="btn-danger" id="decDrop">Remove from the list</button>
+  </div>
+</div>
+
+<!-- ══ log several at once, off a screenshot ══ -->
+<div class="sheet" id="batchSheet">
+  <div class="sheet-head">
+    <button class="ghost" id="batchCancel">Cancel</button>
+    <h2>Log several</h2>
+    <button id="batchSave">Save</button>
+  </div>
+  <div class="sheet-body">
+    <!-- Never uploaded anywhere: read off it while you type, then it's gone. -->
+    <input type="file" id="batchShotInput" accept="image/*" hidden>
+    <button class="shot-drop" id="batchShotPick">
+      <span>📷</span><span>Add a screenshot to read off</span>
+    </button>
+    <div id="batchShotBox" hidden>
+      <div class="shot-wrap" id="batchShotWrap"><img id="batchShotImg" alt="Your screenshot"></div>
+      <div class="shot-bar">
+        <span>Stays on this phone — it's never uploaded</span>
+        <span>
+          <button id="batchShotZoom">Bigger</button>
+          <button class="drop" id="batchShotDrop">Remove</button>
+        </span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>The purchases</label>
+      <div id="batchRows"></div>
+      <button class="add-line" id="batchAddRow">+ Add a row</button>
+      <div class="hint" style="margin-top:9px">
+        Tap <b>N</b>/<b>W</b> to flip a row between needed and wanted. A new row
+        appears as you fill the last one.
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Dated</label>
+      <input type="date" id="batchDate">
+      <div class="hint" style="margin-top:7px">
+        One date for the lot. If they span several days and it matters, do a
+        batch per day — the budget bar is weekly.
+      </div>
+    </div>
+
+    <div class="btotal">
+      <span class="bt-label" id="batchCount">Nothing yet</span>
+      <span class="bt-num" id="batchTotal">$0</span>
+    </div>
+    <div class="bweek" id="batchWeek"></div>
   </div>
 </div>
 
