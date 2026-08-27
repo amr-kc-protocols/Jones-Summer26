@@ -554,3 +554,54 @@ export function spendMarkers(items, from, to) {
   }
   return out;
 }
+
+/* ── logging several at once ───────────────────────────
+   The friction that decides whether the numbers stay honest is typing
+   a statement in one purchase at a time. These take the rows off a
+   batch sheet and turn them into what the table wants.
+
+   A row is { amount, note, kind } as typed — all strings, since they
+   come straight off inputs. Blank rows are expected: the sheet always
+   keeps an empty one at the bottom to type into. */
+
+/* '$40', '40', ' 40.50 ' → 40.5. Null when there is no number in
+   there, so a blank field can be told apart from a deliberate zero. */
+export function parseAmount(v) {
+  const n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, ''));
+  return isNaN(n) ? null : n;
+}
+
+/* Rows worth keeping: a positive amount. A note on its own is someone
+   half-way through typing, not a purchase. */
+export function batchRows(rows) {
+  return (rows || []).filter(r => {
+    const a = parseAmount(r.amount);
+    return a != null && a > 0;
+  });
+}
+
+/* What the sheet shows at the bottom while you type, so the size of
+   what you're about to enter is visible before you commit to it. */
+export function batchSummary(rows) {
+  let count = 0, total = 0, wanted = 0;
+  for (const r of batchRows(rows)) {
+    const a = parseAmount(r.amount);
+    count++; total += a;
+    if (r.kind !== 'needed') wanted += a;
+  }
+  return { count, total, wanted, needed: total - wanted };
+}
+
+/* The insert payload. One date for the whole batch — a statement
+   screenshot is usually one sitting, and a date per row would cost more
+   taps than the batch saves. */
+export function batchToSpends(rows, on, owner) {
+  return batchRows(rows).map(r => ({
+    spent_on: on,
+    amount: parseAmount(r.amount),
+    kind: r.kind === 'needed' ? 'needed' : 'wanted',
+    note: (r.note || '').trim() || null,
+    owner: owner || null,
+    item_id: null
+  }));
+}

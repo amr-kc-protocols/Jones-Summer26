@@ -18,7 +18,8 @@ import {
   fmtTime, holidays, celebrations, parseAnnual, parseRRule, occurrenceDays, makeOccurrence,
   proposalOptions, fmtOption, inbox, proposalMarkers, eventFromProposal,
   COOL_OFF, coolOffDays, decideOn, money, burnDown, totalSaved,
-  dueItems, waitingItems, spendMarkers
+  dueItems, waitingItems, spendMarkers,
+  parseAmount, batchRows, batchSummary, batchToSpends
 } from './lib.js';
 import { PAPER_SEED, SEED_TAG, SEED_ZONE, seedRows } from './paper-seed.js';
 
@@ -843,7 +844,12 @@ async function refresh() {
       sb.from('household_settings').select('*').eq('id', 1).maybeSingle(),
       sb.from('proposals').select('*').order('created_at', { ascending: false }),
       sb.from('spend_items').select('*').order('decide_on'),
-      sb.from('spends').select('*').order('spent_on', { ascending: false })
+      // Ordered by entry time within a day as well, so what you just
+      // logged is at the top of the list rather than lost among the
+      // other rows that share its date.
+      sb.from('spends').select('*')
+        .order('spent_on', { ascending: false })
+        .order('created_at', { ascending: false })
     ]);
     for (const r of [people, events, excs]) if (r.error) throw r.error;
 
@@ -1264,13 +1270,6 @@ $('#ansClose').onclick = hideSheets;
    comes the app asks once. Letting it go banks the price — same "I saved
    $80" hit, without the $80 leaving. */
 
-/* '$40', '40', ' 40.50 ' → 40.5. Null when there's no number in there,
-   so a blank field can be told apart from a deliberate zero. */
-function parseAmount(v) {
-  const n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, ''));
-  return isNaN(n) ? null : n;
-}
-
 const shortDate = d => `${DOW_SHORT[d.getDay()]} ${MON_SHORT[d.getMonth()]} ${d.getDate()}`;
 
 /* Count-up on the plaque. `savedShown` is what the number on screen last
@@ -1333,6 +1332,15 @@ function renderMoney() {
   logBtn.onclick = () => openLog();
   acts.append(wantBtn, logBtn);
   view.append(acts);
+
+  // The one that gets used after a weekend: a statement screenshot on
+  // screen and a column of amounts under it.
+  const many = el('div', 'money-acts');
+  many.style.marginTop = '-8px';
+  const manyBtn = el('button', null, '＋ Log several at once');
+  manyBtn.onclick = () => openBatch();
+  many.append(manyBtn);
+  view.append(many);
 
   /* ── this week, then this month ── */
   view.append(burnBlock(
@@ -1688,4 +1696,178 @@ $('#decDrop').onclick = async () => {
   } catch (e) {
     alert('Could not remove that: ' + e.message);
   }
+};
+
+/* ══ logging several at once ════════════════════════════
+   A statement screenshot pinned at the top and a column of amounts
+   under it. The screenshot is a local object URL and is never uploaded
+   — it exists to be read off, and dies when the sheet closes.
+
+   The row list always keeps one empty row at the bottom, and grows as
+   you fill it, so a batch of nine costs nine amounts and no taps on
+   "add". That is the whole point: the friction of logging is what
+   decides whether these numbers stay honest. */
+
+let batchDraft = [];
+let shotUrl = null;
+
+const blankRow = () => ({ amount: '', note: '', kind: 'wanted' });
+
+function openBatch() {
+  batchDraft = [blankRow(), blankRow()];
+  $('#batchDate').value = ymd(startOfDay(new Date()));
+  clearShot();
+  renderBatchRows();
+  showSheet($('#batchSheet'));
+}
+
+function clearShot() {
+  if (shotUrl) { URL.revokeObjectURL(shotUrl); shotUrl = null; }
+  $('#batchShotImg').removeAttribute('src');
+  $('#batchShotBox').hidden = true;
+  $('#batchShotPick').hidden = false;
+  $('#batchShotWrap').classList.remove('tall');
+  $('#batchShotZoom').textContent = 'Bigger';
+  $('#batchShotInput').value = '';
+}
+
+$('#batchShotPick').onclick = () => $('#batchShotInput').click();
+$('#batchShotInput').onchange = () => {
+  const file = $('#batchShotInput').files[0];
+  if (!file) return;
+  if (shotUrl) URL.revokeObjectURL(shotUrl);
+  shotUrl = URL.createObjectURL(file);
+  $('#batchShotImg').src = shotUrl;
+  $('#batchShotBox').hidden = false;
+  $('#batchShotPick').hidden = true;
+};
+$('#batchShotDrop').onclick = clearShot;
+$('#batchShotZoom').onclick = () => {
+  // Tall shows the image at natural width inside a scroller, which is
+  // what makes a column of small figures actually readable.
+  const wrap = $('#batchShotWrap');
+  const tall = wrap.classList.toggle('tall');
+  $('#batchShotZoom').textContent = tall ? 'Smaller' : 'Bigger';
+};
+
+/* Rows are built one at a time and appended, never re-rendered as a
+   list while you type: replacing the input you are currently in throws
+   focus away and can swallow a keystroke. Only deleting a row — where
+   you are not mid-word — rebuilds the lot. */
+function buildRow(r) {
+  const row = el('div', 'brow');
+
+  const amt = el('input', 'b-amt');
+  amt.type = 'text'; amt.inputMode = 'decimal'; amt.value = r.amount;
+  amt.placeholder = '0'; amt.enterKeyHint = 'next';
+  amt.oninput = () => {
+    r.amount = amt.value;
+    // Filling the last row grows the sheet, so a long statement never
+    // needs a trip to the "add" button. Appending rather than
+    // re-rendering leaves the caret exactly where it was.
+    if (r === batchDraft[batchDraft.length - 1] && amt.value.trim()) {
+      const next = blankRow();
+      batchDraft.push(next);
+      $('#batchRows').append(buildRow(next));
+    }
+    markGhosts();
+    syncBatchTotal();
+  };
+
+  const note = el('input', 'b-note');
+  note.type = 'text'; note.value = r.note;
+  note.placeholder = 'What for (optional)';
+  note.autocomplete = 'off'; note.enterKeyHint = 'next';
+  note.oninput = () => { r.note = note.value; };
+
+  // One tap flips it. A picker would cost more than the row is worth.
+  const kind = el('button', 'b-kind');
+  const paintKind = () => {
+    kind.textContent = r.kind === 'needed' ? 'N' : 'W';
+    kind.title = r.kind === 'needed' ? 'Needed' : 'Wanted';
+    kind.classList.toggle('want', r.kind !== 'needed');
+  };
+  paintKind();
+  kind.onclick = () => {
+    r.kind = r.kind === 'needed' ? 'wanted' : 'needed';
+    paintKind();
+    syncBatchTotal();
+  };
+
+  const drop = el('button', 'b-drop', '×');
+  drop.onclick = () => {
+    const i = batchDraft.indexOf(r);
+    if (i >= 0) batchDraft.splice(i, 1);
+    if (!batchDraft.length) batchDraft.push(blankRow());
+    if (batchDraft[batchDraft.length - 1].amount.trim()) batchDraft.push(blankRow());
+    renderBatchRows();
+  };
+
+  row.append(amt, note, kind, drop);
+  return row;
+}
+
+/* The trailing empty row is dimmed, so it reads as somewhere to type
+   rather than as a purchase of nothing. */
+function markGhosts() {
+  const rows = [...$('#batchRows').children];
+  rows.forEach((node, i) => {
+    node.classList.toggle('ghost', !batchDraft[i]?.amount.trim() && i === rows.length - 1);
+  });
+}
+
+function renderBatchRows() {
+  const box = $('#batchRows');
+  box.replaceChildren(...batchDraft.map(buildRow));
+  markGhosts();
+  syncBatchTotal();
+}
+
+/* The size of what you're about to enter, and what it does to the week,
+   before you commit to it rather than after. */
+function syncBatchTotal() {
+  const sum = batchSummary(batchDraft);
+  $('#batchCount').textContent = sum.count
+    ? `${sum.count} purchase${sum.count === 1 ? '' : 's'}`
+      + (sum.wanted ? ` · ${money(sum.wanted, true)} wanted` : ' · none of it wanted')
+    : 'Nothing yet';
+  $('#batchTotal').textContent = money(sum.total, true);
+
+  const note = $('#batchWeek');
+  note.replaceChildren();
+  if (!sum.count) return;
+
+  const on = $('#batchDate').value || ymd(startOfDay(new Date()));
+  const day = fromYmd(on);
+  const burn = burnDown(state.spends, state.budget, day, state.weekStart);
+  const after = burn.week.total + sum.total;
+  const over = after > burn.allowance;
+  note.append(document.createTextNode('That week goes to '));
+  note.append(el('b', over ? 'over' : null, money(after, true)));
+  note.append(document.createTextNode(` of ${money(burn.allowance)}`));
+}
+$('#batchDate').onchange = syncBatchTotal;
+
+$('#batchAddRow').onclick = () => {
+  batchDraft.push(blankRow());
+  renderBatchRows();
+};
+$('#batchCancel').onclick = () => { clearShot(); hideSheets(); };
+
+$('#batchSave').onclick = async () => {
+  const btn = $('#batchSave');
+  const keep = batchRows(batchDraft);
+  if (!keep.length) { alert('Put an amount on at least one row.'); return; }
+  const on = $('#batchDate').value || ymd(startOfDay(new Date()));
+
+  btn.disabled = true;
+  try {
+    await run(sb.from('spends').insert(
+      batchToSpends(batchDraft, on, state.deviceOwner || null)));
+    clearShot();
+    hideSheets();
+    await refresh();
+  } catch (e) {
+    alert('Could not save those: ' + e.message);
+  } finally { btn.disabled = false; }
 };

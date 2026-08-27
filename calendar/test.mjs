@@ -7,7 +7,8 @@ import {
   proposalOptions, fmtOption, proposalRole, inbox, proposalMarkers, eventFromProposal,
   parseRRule, occurrenceDays, makeOccurrence,
   coolOffDays, decideOn, money, sumSpends, weeklyAllowance, burnDown,
-  bankedMonths, totalSaved, dueItems, waitingItems, spendMarkers
+  bankedMonths, totalSaved, dueItems, waitingItems, spendMarkers,
+  parseAmount, batchRows, batchSummary, batchToSpends
 } from './lib.js';
 import { PAPER_SEED, seedRows, zonedTimeToUtc } from './paper-seed.js';
 
@@ -544,6 +545,53 @@ check('$600 a month is about $138 a week',
     [marks[0].allDay, marks[0].personIds, marks[0].repeating], [true, [], false]);
   check('a decision outside the window is left out',
     spendMarkers(items, fromYmd('2026-09-01'), fromYmd('2026-09-30')), []);
+}
+
+/* ── logging several at once ─────────────────────────── */
+check('a bare number parses', parseAmount('40'), 40);
+check('a dollar sign is ignored', parseAmount('$40.50'), 40.5);
+check('so is surrounding space', parseAmount('  12.75 '), 12.75);
+check('a blank field is null, not zero', parseAmount(''), null);
+check('so is undefined', parseAmount(undefined), null);
+check('and so is pure text', parseAmount('abc'), null);
+check('a deliberate zero survives', parseAmount('0'), 0);
+
+{
+  const typed = [
+    { amount: '52.40', note: 'Gas', kind: 'needed' },
+    { amount: '', note: '', kind: 'wanted' },              // the empty row at the bottom
+    { amount: '88', note: 'Overshirt', kind: 'wanted' },
+    { amount: '', note: 'started typing this one', kind: 'wanted' },
+    { amount: '0', note: 'refunded', kind: 'wanted' },     // zero is not a purchase
+    { amount: '14.20', note: '', kind: 'needed' }
+  ];
+  check('blank and zero rows are dropped',
+    batchRows(typed).map(r => r.amount), ['52.40', '88', '14.20']);
+  check('a note with no amount is someone mid-type, not a purchase',
+    batchRows(typed).some(r => r.note === 'started typing this one'), false);
+
+  check('the running total counts only real rows',
+    batchSummary(typed), { count: 3, total: 154.6, wanted: 88, needed: 66.6 });
+  check('an untouched sheet totals nothing',
+    batchSummary([{ amount: '', note: '', kind: 'wanted' }]),
+    { count: 0, total: 0, wanted: 0, needed: 0 });
+
+  const out = batchToSpends(typed, '2026-08-26', 'Hunter');
+  check('every kept row becomes one insert', out.length, 3);
+  check('the batch date goes on all of them',
+    out.every(r => r.spent_on === '2026-08-26'), true);
+  check('amounts arrive as numbers, not strings',
+    out.map(r => r.amount), [52.4, 88, 14.2]);
+  check('the kind is carried through', out.map(r => r.kind), ['needed', 'wanted', 'needed']);
+  check('an empty note is null rather than an empty string', out[2].note, null);
+  check('the owner is stamped on each row',
+    out.every(r => r.owner === 'Hunter'), true);
+  check('nothing is tied to a want-list item',
+    out.every(r => r.item_id === null), true);
+  check('anything not marked needed counts as wanted',
+    batchToSpends([{ amount: '5', kind: undefined }], '2026-08-26', null)[0].kind, 'wanted');
+  check('no owner set is null, not the string "null"',
+    batchToSpends([{ amount: '5', kind: 'needed' }], '2026-08-26', '')[0].owner, null);
 }
 
 /* ── report ──────────────────────────────────────────── */
