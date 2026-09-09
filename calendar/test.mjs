@@ -12,7 +12,8 @@ import {
   zonedTimeToUtc
 } from './lib.js';
 import { PAPER_SEED, seedRows } from './paper-seed.js';
-import { FOOTBALL_SEED, gameRows, gameTitle } from './football-seed.js';
+import { FOOTBALL_SEED, PRACTICES, gameRows, practiceRows, seasonRows, gameTitle }
+  from './football-seed.js';
 
 let pass = 0, fail = 0;
 const results = [];
@@ -472,6 +473,58 @@ check('until is inclusive of its own day',
     orphaned.length, 6);
   check('just attached to nobody',
     orphaned.every(r => r.person_ids.length === 0), true);
+}
+
+/* ── flag football: the Wednesday practice ───────────── */
+{
+  const sam = [{ id: 'p-sam', name: 'Sam', sort_order: 4 }];
+  check('the practice is one repeating row, not one per week',
+    practiceRows(sam).length, 1);
+
+  const [pr] = practiceRows(sam);
+
+  // 5pm Chicago in September is CDT, UTC-5, so 22:00Z.
+  check('practice starts at its Chicago hour', pr.starts_at, '2026-09-02T22:00:00.000Z');
+  // The email states 6:30, so unlike the games this one does have an end.
+  check('and the email\'s end time is kept', pr.ends_at, '2026-09-02T23:30:00.000Z');
+  check('the practice field is the location', pr.location,
+    'The J - 5801 W. 115th St., Overland Park, KS 66211');
+  check('it repeats on Wednesdays', pr.rrule, 'FREQ=WEEKLY;INTERVAL=1;BYDAY=WE');
+  check('the guessed last date is carried', pr.recurrence_until, '2026-10-21');
+  check('the practice is Sam\'s too', pr.person_ids, ['p-sam']);
+  check('and shares the games\' tag, so one import replaces both',
+    pr.created_by, 'flag football');
+
+  // What the calendar actually draws: every Wednesday from Sep 2 to the
+  // last date, and nothing after it. This is the check that fails if the
+  // rrule, the start day and recurrence_until ever disagree.
+  const days = occurrenceDays(
+    { starts_at: pr.starts_at, rrule: pr.rrule, recurrence_until: pr.recurrence_until },
+    fromYmd('2026-08-01'), fromYmd('2026-12-31')
+  ).map(ymd);
+  check('it lands on the eight Wednesdays of the season', days, [
+    '2026-09-02', '2026-09-09', '2026-09-16', '2026-09-23', '2026-09-30',
+    '2026-10-07', '2026-10-14', '2026-10-21'
+  ]);
+  check('every one is a Wednesday',
+    days.every(d => fromYmd(d).getDay() === 3), true);
+  check('the last date is included, not cut off',
+    days.at(-1), PRACTICES[0].until);
+  check('nothing repeats past it',
+    days.some(d => d > PRACTICES[0].until), false);
+
+  // Practice starts nearly three weeks before the first game — the email
+  // says Sep 2, the schedule says Sep 20. Not a mistake.
+  check('practice starts before the first game',
+    pr.starts_at < gameRows(sam)[0].starts_at, true);
+
+  // One import, one tag, one delete: the button writes both halves.
+  const all = seasonRows(sam);
+  check('the season is the games plus the practice', all.length, 7);
+  check('all of it carries the one tag',
+    all.every(r => r.created_by === 'flag football'), true);
+  check('the practice still lands with no Sam',
+    practiceRows([])[0].person_ids, []);
 }
 
 /* ── spending: cooling off ───────────────────────────── */

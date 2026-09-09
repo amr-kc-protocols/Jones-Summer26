@@ -22,7 +22,7 @@ import {
   parseAmount, batchRows, batchSummary, batchToSpends
 } from './lib.js';
 import { PAPER_SEED, SEED_TAG, SEED_ZONE, seedRows } from './paper-seed.js';
-import { FOOTBALL_SEED, GAMES_TAG, GAMES_ZONE, PLAYER, gameRows } from './football-seed.js';
+import { FOOTBALL_SEED, GAMES_TAG, GAMES_ZONE, PLAYER, seasonRows } from './football-seed.js';
 
 
 window.__jfcBooted = true;
@@ -811,10 +811,10 @@ wireImport({
 
 wireImport({
   btn: '#importFootball', hint: '#footballHint', idle: FOOTBALL_HINT,
-  tag: GAMES_TAG, one: 'game', many: 'games',
+  tag: GAMES_TAG, one: 'entry', many: 'entries',
   people: [PLAYER],
-  rows: () => gameRows(state.people, GAMES_ZONE),
-  asks: `Import ${FOOTBALL_SEED.length} flag football games?`
+  rows: () => seasonRows(state.people, GAMES_ZONE),
+  asks: `Import ${FOOTBALL_SEED.length} flag football games and the weekly practice?`
 });
 
 $('#setClose').onclick = hideSheets;
