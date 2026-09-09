@@ -10,6 +10,8 @@
    Keep the two in step. If you edit an entry here, edit it there.
    ══════════════════════════════════════════════════════════ */
 
+import { zonedTimeToUtc } from './lib.js';
+
 /* Every row this file writes carries the tag, and the import clears
    the tag before inserting. That is what makes it safe to re-run:
    it only ever removes its own rows, never one you typed in. */
@@ -63,42 +65,6 @@ export const PAPER_SEED = [
   { date: '2026-09-15', title: 'No school', who: [] },
   { date: '2026-09-25', title: 'No school', who: [] }
 ];
-
-/* ── wall-clock in a named zone → the instant it names ────
-   `new Date(y, m, d, h, mi)` reads the *device's* zone, which is the
-   right thing when you type a time into the app on your own phone and
-   the wrong thing here: these times came off a paper page in Chicago.
-   Importing from a laptop on Amsterdam time would otherwise land every
-   appointment seven hours out.
-
-   Two passes because the offset depends on the instant we are still
-   solving for: guess that the wall-clock is UTC, ask what Chicago's
-   offset was around then, then re-ask at the corrected instant. The
-   second pass is what gets the hours either side of a DST change
-   right — both these months sit in CDT, but the seed outlives them. */
-export function zonedTimeToUtc(date, time, zone) {
-  const [y, mo, d] = date.split('-').map(Number);
-  const [h, mi] = (time || '00:00').split(':').map(Number);
-  const guess = Date.UTC(y, mo - 1, d, h, mi);
-  return new Date(guess - zoneOffset(guess - zoneOffset(guess, zone), zone));
-}
-
-/* How far ahead of UTC `zone` is at this instant, in ms. */
-function zoneOffset(utcMs, zone) {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: zone, hour12: false,
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit'
-  }).formatToParts(new Date(utcMs));
-
-  const p = {};
-  for (const { type, value } of parts) p[type] = value;
-  // Some engines render midnight as hour 24 rather than 00.
-  const hour = p.hour === '24' ? 0 : Number(p.hour);
-  const asUtc = Date.UTC(Number(p.year), Number(p.month) - 1, Number(p.day),
-                         hour, Number(p.minute), Number(p.second));
-  return asUtc - utcMs;
-}
 
 /* ── seed entries → rows ready for calendar.events ────────
    `people` is the app's people list. Names that aren't in it resolve

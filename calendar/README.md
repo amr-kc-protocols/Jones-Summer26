@@ -23,8 +23,10 @@ instead of the calendar.
 | `index.html` | Markup and all styling |
 | `app.js` | Views, editor, auth, sync |
 | `lib.js` | Dates, holidays, recurrence, the spending maths — pure functions, no DOM |
+| `paper-seed.js` | The August/September paper pages as data, for ⚙ Settings → Import |
+| `football-seed.js` | Sam's fall 2026 flag football season, same |
 | `config.js` | Your Supabase keys and the PIN salt |
-| `test.mjs` | Tests for `lib.js` |
+| `test.mjs` | Tests for `lib.js` and the two seeds |
 | `sw.js` | Offline shell |
 
 Run the tests with:
@@ -81,6 +83,44 @@ birthday is marked on Mar 1 in common years rather than skipped.
 > Adding these needs two new columns, so **re-run `supabase/schema.sql`** once
 > after deploying — SQL Editor → New query → paste → Run. It's idempotent, and
 > it seeds the family's dates without overwriting anything already set.
+
+## Sam's flag football
+
+The fall 2026 KCC Panthers season on Sam's ochre — six games off GameChanger
+and the Wednesday practice out of the season email. ⚙ Settings → **Import Sam's
+game schedule** loads the lot; running it again replaces only what it loaded
+before, so nothing you typed yourself is at risk.
+`supabase/seed-football.sql` does the same thing from the SQL editor, and it
+all lives in [`football-seed.js`](./football-seed.js) too — edit one, edit the
+other.
+
+| | | |
+|---|---|---|
+| Sun 20 Sep | 3:00 pm | @ Bell — first game, uniforms handed out |
+| Sun 4 Oct | 3:00 pm | vs. Franke |
+| Sun 11 Oct | 2:00 pm | @ Jones |
+| Sun 18 Oct | 4:00 pm | vs. Martin |
+| Sun 25 Oct | 3:00 pm | @ Bell |
+| Sun 25 Oct | 4:00 pm | vs. Jones |
+
+Practice is **Wednesdays 5:00–6:30 pm** at The J — baseball field 1 or 2,
+5801 W. 115th St., Overland Park, on the southern edge of the Jewish Community
+Campus behind Andretti. It goes in as one repeating event rather than eight, so
+a week called off for weather can be skipped without disturbing the rest of the
+term.
+
+**Two things the game schedule doesn't say, so the seed doesn't either.**
+GameChanger prints a kick-off and no end time, so the games carry a start only
+rather than a made-up hour blocking out the afternoon. And it gives no venue:
+the address above is where the team *practises*, which is not the same claim as
+where it plays, so it goes on the practice and not on the games. Both are worth
+filling in per game once the league says. The practice has both times and a
+place because the email states them outright.
+
+**The one date here that's a guess** is when practices stop. The email gives a
+start and no end, so the series ends Wed 21 Oct, the Wednesday before the last
+game we know of. The event says so in its notes — stretch it in the app if the
+season runs into November.
 
 ## Asking
 
