@@ -9,7 +9,7 @@
    cache, which also re-fetches the pinned Supabase bundle on the next
    online load — cheap, and only awkward if the very first open after a
    deploy happens with no signal. */
-const CACHE = 'jfc-v2';
+const CACHE = 'jfc-v3';
 
 const SHELL = [
   './',
@@ -17,6 +17,7 @@ const SHELL = [
   './app.js',
   './lib.js',
   './paper-seed.js',
+  './football-seed.js',
   './config.js',
   './manifest.webmanifest',
   './icons/icon-192.png',

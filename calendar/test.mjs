@@ -8,9 +8,11 @@ import {
   parseRRule, occurrenceDays, makeOccurrence,
   coolOffDays, decideOn, money, sumSpends, weeklyAllowance, burnDown,
   bankedMonths, totalSaved, dueItems, waitingItems, spendMarkers,
-  parseAmount, batchRows, batchSummary, batchToSpends
+  parseAmount, batchRows, batchSummary, batchToSpends,
+  zonedTimeToUtc
 } from './lib.js';
-import { PAPER_SEED, seedRows, zonedTimeToUtc } from './paper-seed.js';
+import { PAPER_SEED, seedRows } from './paper-seed.js';
+import { FOOTBALL_SEED, gameRows, gameTitle } from './football-seed.js';
 
 let pass = 0, fail = 0;
 const results = [];
@@ -418,6 +420,58 @@ check('until is inclusive of its own day',
     .toISOString(), '2026-01-15T15:00:00.000Z');
   check('summer reads CDT', zonedTimeToUtc('2026-07-15', '09:00', 'America/Chicago')
     .toISOString(), '2026-07-15T14:00:00.000Z');
+}
+
+/* ── the flag football seed ──────────────────────────── */
+{
+  check('the seed is the 6 games off GameChanger', FOOTBALL_SEED.length, 6);
+  check('every game is a Sunday',
+    FOOTBALL_SEED.every(g => fromYmd(g.date).getDay() === 0), true);
+
+  const rows = gameRows([
+    { id: 'p-sam',   name: 'Sam',   sort_order: 4 },
+    { id: 'p-silas', name: 'Silas', sort_order: 5 }
+  ]);
+
+  // 3pm Chicago in September is CDT, UTC-5, so 20:00Z. This is the check
+  // that fails if the seed ever starts reading the importing device's clock.
+  check('kick-off lands at its Chicago hour',
+    rows[0].starts_at, '2026-09-20T20:00:00.000Z');
+  check('the away marker is in the title', rows[0].title, 'Flag football @ Bell');
+  check('a home game says vs.', gameTitle({ vs: 'Franke', away: false }),
+    'Flag football vs. Franke');
+
+  // GameChanger gives a kick-off and nothing else. An invented hour would
+  // block out time on the calendar that nobody has actually been told about.
+  check('no end time is invented', rows.every(r => r.ends_at === null), true);
+  check('a game is not all-day', rows.every(r => r.all_day === false), true);
+  // The season email's address is the practice field, not the game venue.
+  check('no venue is invented', rows.every(r => r.location === null), true);
+
+  check('the games are Sam\'s', rows.every(r => r.person_ids.length === 1
+    && r.person_ids[0] === 'p-sam'), true);
+  check('every row is tagged for re-import',
+    rows.every(r => r.created_by === 'flag football'), true);
+  check('the tag is its own, so the paper import cannot reach the games',
+    rows.some(r => r.created_by === 'paper calendar'), false);
+
+  // Oct 25 is a double-header — two rows on one date, an hour apart.
+  const oct25 = rows.filter(r => r.starts_at.startsWith('2026-10-25'));
+  check('the double-header is two games', oct25.length, 2);
+  check('and they are an hour apart',
+    oct25.map(r => r.starts_at),
+    ['2026-10-25T20:00:00.000Z', '2026-10-25T21:00:00.000Z']);
+
+  check('the doubt about the day is carried into the app',
+    oct25[0].notes, 'Two games this afternoon, back to back.');
+  check('a game with nothing unclear has no note', rows[1].notes, null);
+
+  // Renaming Sam in the app before importing: the games still land.
+  const orphaned = gameRows([{ id: 'p-silas', name: 'Silas', sort_order: 5 }]);
+  check('the games still import with no Sam',
+    orphaned.length, 6);
+  check('just attached to nobody',
+    orphaned.every(r => r.person_ids.length === 0), true);
 }
 
 /* ── spending: cooling off ───────────────────────────── */

@@ -23,8 +23,10 @@ instead of the calendar.
 | `index.html` | Markup and all styling |
 | `app.js` | Views, editor, auth, sync |
 | `lib.js` | Dates, holidays, recurrence, the spending maths — pure functions, no DOM |
+| `paper-seed.js` | The August/September paper pages as data, for ⚙ Settings → Import |
+| `football-seed.js` | Sam's fall 2026 flag football games, same |
 | `config.js` | Your Supabase keys and the PIN salt |
-| `test.mjs` | Tests for `lib.js` |
+| `test.mjs` | Tests for `lib.js` and the two seeds |
 | `sw.js` | Offline shell |
 
 Run the tests with:
@@ -81,6 +83,34 @@ birthday is marked on Mar 1 in common years rather than skipped.
 > Adding these needs two new columns, so **re-run `supabase/schema.sql`** once
 > after deploying — SQL Editor → New query → paste → Run. It's idempotent, and
 > it seeds the family's dates without overwriting anything already set.
+
+## Sam's flag football
+
+The fall 2026 KCC Panthers season, off GameChanger, as six events on Sam's
+ochre. ⚙ Settings → **Import Sam's game schedule** loads them; running it again
+replaces only what it loaded before, so nothing you typed yourself is at risk.
+`supabase/seed-football.sql` does the same thing from the SQL editor, and the
+games live in [`football-seed.js`](./football-seed.js) — edit one, edit the
+other.
+
+| | | |
+|---|---|---|
+| Sun 20 Sep | 3:00 pm | @ Bell — first game, uniforms handed out |
+| Sun 4 Oct | 3:00 pm | vs. Franke |
+| Sun 11 Oct | 2:00 pm | @ Jones |
+| Sun 18 Oct | 4:00 pm | vs. Martin |
+| Sun 25 Oct | 3:00 pm | @ Bell |
+| Sun 25 Oct | 4:00 pm | vs. Jones |
+
+**Two things the schedule doesn't say, so the seed doesn't either.**
+GameChanger prints a kick-off and no end time, so these carry a start only
+rather than a made-up hour blocking out the afternoon. And it gives no venue:
+the address in the season email — The J, 5801 W. 115th St., Overland Park — is
+where the team *practises* on Wednesdays, which is not the same claim as where
+it plays. Both are worth filling in per game once the league says.
+
+Practices themselves aren't in here: Wednesdays 5:00–6:30 pm at The J, from
+Sep 2, with no end date given.
 
 ## Asking
 
