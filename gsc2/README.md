@@ -62,7 +62,10 @@ All data is held in `localStorage` on the device. Nothing is sent anywhere — w
 also means **install it to your home screen**. Browsers clear storage for sites that
 aren't installed and haven't been opened recently, and this is a ten-week log.
 Settings shows how long it has been since your last backup once you have something
-worth losing.
+worth losing, and offers two routes out: a `.json` download, and copy-as-text for
+when a download silently fails (which it can inside an installed iOS app). Import
+repairs anything missing from the blob it is handed, so a restore can't leave the
+app in a state it won't render.
 
 ## Fidelity to the source
 

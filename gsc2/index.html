@@ -14,7 +14,7 @@
 <style>
 :root{
   --bg:#0b0d10; --surface:#111419; --surface2:#1a1e25; --line:#20252d;
-  --ink:#f2f4f7; --dim:#8c95a3; --faint:#525c6b; --accent:#3d9cf0; --good:#3ecf8e; --red:#ff5a5a;
+  --ink:#f2f4f7; --dim:#8c95a3; --faint:#7a8594; --accent:#3d9cf0; --good:#3ecf8e; --red:#ff5a5a;
   --r:16px; --r-sm:10px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -319,6 +319,9 @@ body.ivl-on .timer-wrap{display:none;}
   background:transparent;color:var(--accent);font-size:11.5px;font-weight:700;
   font-family:inherit;cursor:pointer;letter-spacing:.3px;}
 .backup-note{font-size:11px;margin-top:9px;line-height:1.5;}
+#backupOut textarea{width:100%;height:150px;margin-top:10px;background:var(--surface2);
+  border:none;border-radius:11px;color:var(--ink);padding:11px;font-size:11px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;resize:vertical;}
 .backup-note.stale{color:var(--red);}
 
 </style>
@@ -1194,10 +1197,11 @@ function renderSettings(){
   + 'nothing is sent anywhere. <b>Add it to your home screen</b> (Share → Add to Home Screen): browsers can clear storage for '
   + 'sites that aren\'t installed and haven\'t been opened in a while, and this is a 10-week log.</div>'
   + '<button class="btn block" onclick="exportData()">Export backup (.json)</button><div style="height:8px;"></div>'
+  + '<button class="btn block" onclick="copyBackup()">Copy backup as text</button><div style="height:8px;"></div>'
   + '<label class="btn block" style="display:block;text-align:center;cursor:pointer;">Import backup'
   +   '<input type="file" id="importFile" accept="application/json" style="display:none;"></label><div style="height:8px;"></div>'
   + '<button class="btn block" style="color:var(--red);border-color:var(--red);" onclick="resetAll()">Reset all data</button>'
-  + backupNoteHtml() + '</div>'
+  + backupNoteHtml() + '<div id="backupOut"></div></div>'
   + '<div class="card" style="padding-top:2px;padding-bottom:2px;">'
   + '<details><summary>About this program<span class="chev">›</span></summary><div class="d-body small muted" style="line-height:1.6;">'
   + '<p>Built from Barbell Medicine&rsquo;s <b>General Strength and Conditioning II</b>, 4-day template (Jordan Feigenbaum, 2024). '
@@ -1278,6 +1282,30 @@ function backupNoteHtml(){
   const days = Math.floor((Date.now()-last.getTime())/86400000);
   const when = days===0 ? 'today' : days===1 ? 'yesterday' : days+' days ago';
   return '<div class="backup-note'+(days>=14?' stale':' muted')+'">Last backup '+when+'.</div>';
+}
+/* Downloads can fail silently in a standalone iOS app; the clipboard doesn't. */
+async function copyBackup(){
+  const json = JSON.stringify(STATE, null, 2);
+  try{
+    await navigator.clipboard.writeText(json);
+    markBackedUp();
+    alert('Backup copied. Paste it somewhere it will keep — a note to yourself, an email, a file.');
+  }catch(e){
+    // No clipboard permission (or not a secure context): hand over the text instead.
+    const out = document.getElementById('backupOut');
+    out.innerHTML = '<div class="tiny dim" style="margin-top:10px;">Select all and copy:</div>'
+                  + '<textarea readonly id="backupText"></textarea>';
+    const ta = document.getElementById('backupText');
+    ta.value = json;
+    ta.focus(); ta.select();
+    markBackedUp();
+  }
+}
+function markBackedUp(){
+  STATE.meta.lastExport = new Date().toISOString();
+  save();
+  const note = document.querySelector('.backup-note');
+  if(note) note.outerHTML = backupNoteHtml();
 }
 function exportData(){
   STATE.meta.lastExport = new Date().toISOString();
