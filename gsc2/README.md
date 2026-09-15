@@ -45,6 +45,9 @@ which day are configurable in Settings.
 - **Guided 20-minute field test** — runs the week 1 / week 6 test with its
   5-minute checkpoints, then takes your average HR and writes FTHR (95% of it),
   which drives every conditioning zone from there.
+- **Last week on the card** — the double progression turns entirely on what you
+  managed last time, so each exercise shows its previous logged sets
+  (`wk 2 · 300 × 6, 5 · top RPE 7.5`) directly above the suggestion drawn from them.
 - Rest timer, e1RM trends by lift family, 1RM / EMOM / target-weight / protein
   calculators, JSON export & import.
 
@@ -63,16 +66,24 @@ worth losing.
 
 ## Fidelity to the source
 
-184 week-by-exercise prescriptions were cross-checked against the spreadsheet.
-Two deliberate corrections:
+`node gsc2/test.mjs` checks the program baked into `index.html` against
+`source-fixture.json` — all 194 week-by-exercise prescriptions as the spreadsheet
+states them, extracted so the test runs without the .xlsx. It also asserts the
+structural claims this README makes: 20 slots per block, five per day, every day
+opening on a multi-joint lower body lift and still training upper body, EMOM
+percentages that climb, and the conditioning volumes.
+
+Three places the app departs from the sheet, because the sheet contradicts itself.
+Each is declared in `DEVIATIONS` at the top of the test, and the test fails if one
+stops being necessary — so this list can't quietly go stale:
 
 - **V-Grip Press Down, weeks 9–10.** The sheet repeats the Lat Pull Down line above it
   (6–10 @ RPE 7). Weeks 6–8 prescribe 8–12 @ RPE 6; the app uses that throughout.
+- **Cable Chop and Glute Ham Raises, weeks 9–10.** Same corruption: the sheet's
+  accessory column in those two weeks repeats the prescription of the slot above it.
+  The app carries week 8 forward.
 - **Box Step Ups, week 5.** The sheet replaces the quad isolation slot with a second
   Chest-Supported Row. The app keeps the quad slot, as in weeks 1–4.
-
-Block II trunk work in weeks 9–10 uses the week-8 set count (4); the sheet's own
-layout shifts there and its accessory rows duplicate the slot above them.
 
 ## Heart-rate zones
 
@@ -94,3 +105,5 @@ superior. The app's About section says the same thing.
 
 Static files — open `index.html`, or serve the directory and install from the
 browser. `sw.js` caches the shell offline-first and updates the page network-first.
+
+    node gsc2/test.mjs      # no dependencies

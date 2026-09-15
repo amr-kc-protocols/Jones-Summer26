@@ -282,6 +282,12 @@ select.daysel{width:100%;background:var(--surface2);border:none;border-radius:9p
 .zone-table td:nth-child(2){text-align:center;color:var(--dim);width:64px;}
 .calc-table.wide-first th:first-child{text-align:left;white-space:normal;min-width:150px;}
 .spark-bars i.edge{margin-right:7px;}
+.lastwk{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-size:12.5px;
+  color:var(--dim);margin:0 0 7px;font-variant-numeric:tabular-nums;line-height:1.5;}
+.lastwk .wk{font-size:10px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;
+  color:var(--faint);flex:none;}
+.lastwk b{color:var(--ink);font-weight:700;}
+.lastwk .rpe{color:var(--faint);}
 
 /* interval timer (EMOM + field test) */
 .ivl{position:fixed;left:0;right:0;bottom:calc(57px + env(safe-area-inset-bottom,0px));z-index:190;
@@ -593,6 +599,23 @@ function suggestionFor(key, week){
   return {weights:[roundLoad(targetWeight(e.e1rm, r[1], slot.rpe))],
           note:r[0]+'-'+r[1]+' @ RPE '+slot.rpe+' · from '+e.src+' '+Math.round(e.e1rm)};
 }
+/* The double progression turns entirely on what you managed last time, so put
+   the actual sets on the card rather than only the conclusion drawn from them. */
+function lastWeekHtml(key, week){
+  const prev = lastPerfInBlock(key, week);
+  if(!prev) return '';
+  const groups = [];
+  prev.sets.forEach(s=>{
+    const w = +s.w, r = +s.r;
+    const last = groups[groups.length-1];
+    if(last && last.w === w) last.reps.push(r);
+    else groups.push({w, reps:[r]});
+  });
+  const body = groups.map(g=>'<b>'+g.w+'</b> × '+g.reps.join(', ')).join(' &nbsp;·&nbsp; ');
+  const rpes = prev.sets.map(s=>s.p).filter(v=>v!=null && v!=='').map(Number);
+  const top = rpes.length ? '<span class="rpe">top RPE '+Math.max(...rpes)+'</span>' : '';
+  return '<div class="lastwk"><span class="wk">wk '+prev.week+'</span>'+body+top+'</div>';
+}
 function applySuggestion(key, week){
   const sug = suggestionFor(key, week);
   if(!sug) return;
@@ -852,6 +875,7 @@ function exerciseBlock(slot, week, isLead){
   + '</div>'
   + '<div class="ex-role">'+esc(slot.label)+(isLead?' · opens the session':'')+(slot.rest?(slot.kind==='power'?' · '+esc(slot.rest)+' pacing':' · rest '+esc(slot.rest)):'')+'</div>'
   + '<div class="ex-prog clamp clampable" onclick="this.classList.toggle(\'clamp\')">'+esc(progText(week, slot.key))+'</div>'
+  + lastWeekHtml(slot.key, week)
   + (sug ? '<div class="suggest"><span class="s-w">'+sug.weights.join(' · ')+'</span>'
          + '<span class="dim">lb · '+esc(sug.note)+'</span>'
          + '<button class="textlink" onclick="applySuggestion(\''+slot.key+'\','+week+')">Fill</button></div>' : '')
