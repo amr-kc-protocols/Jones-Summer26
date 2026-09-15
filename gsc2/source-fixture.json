@@ -1,0 +1,1730 @@
+{
+ "source": "General-Strength-and-Conditioning-II-4-day.xlsx (Barbell Medicine, 2024)",
+ "note": "Generated from the source spreadsheet. Each entry is one week-by-exercise prescription as the sheet states it. gsc2/test.mjs checks the app against this.",
+ "prescriptions": [
+  {
+   "week": 1,
+   "exercise": "2ct Paused Squat",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 1,
+   "exercise": "Back Extensions",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "7-8"
+  },
+  {
+   "week": 1,
+   "exercise": "Box Step Ups",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "8"
+  },
+  {
+   "week": 1,
+   "exercise": "Chest-Supported Row",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 1,
+   "exercise": "Conventional Deadlift",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 1,
+   "exercise": "Dips",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 1,
+   "exercise": "Flat Bench Press",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 1,
+   "exercise": "Floor Press",
+   "kind": "heavy"
+  },
+  {
+   "week": 1,
+   "exercise": "High Bar Back Squat",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 1,
+   "exercise": "High Handle Pull Down",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 1,
+   "exercise": "Hip Thrusts",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 1,
+   "exercise": "Leg Raises",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "7-8"
+  },
+  {
+   "week": 1,
+   "exercise": "Lying Leg Curl",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "8"
+  },
+  {
+   "week": 1,
+   "exercise": "Overhead Cable Triceps Extension",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "8"
+  },
+  {
+   "week": 1,
+   "exercise": "Preacher Curl",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "8"
+  },
+  {
+   "week": 1,
+   "exercise": "Pull-Up",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 1,
+   "exercise": "Split Squat",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "7"
+  },
+  {
+   "week": 1,
+   "exercise": "Standing Barbell Overhead Press",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 1,
+   "exercise": "Trap Bar Deadlift",
+   "kind": "heavy"
+  },
+  {
+   "week": 2,
+   "exercise": "2ct Paused Squat",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 2,
+   "exercise": "Back Extensions",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "7-8"
+  },
+  {
+   "week": 2,
+   "exercise": "Box Step Ups",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "8"
+  },
+  {
+   "week": 2,
+   "exercise": "Chest-Supported Row",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 2,
+   "exercise": "Conventional Deadlift",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 2,
+   "exercise": "Dips",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 2,
+   "exercise": "Flat Bench Press",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 2,
+   "exercise": "Floor Press",
+   "kind": "emom",
+   "pct": 60
+  },
+  {
+   "week": 2,
+   "exercise": "High Bar Back Squat",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 2,
+   "exercise": "High Handle Pull Down",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 2,
+   "exercise": "Hip Thrusts",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 2,
+   "exercise": "Leg Raises",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "7-8"
+  },
+  {
+   "week": 2,
+   "exercise": "Lying Leg Curl",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "8"
+  },
+  {
+   "week": 2,
+   "exercise": "Overhead Cable Triceps Extension",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "8"
+  },
+  {
+   "week": 2,
+   "exercise": "Preacher Curl",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "8"
+  },
+  {
+   "week": 2,
+   "exercise": "Pull-Up",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 2,
+   "exercise": "Split Squat",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "7"
+  },
+  {
+   "week": 2,
+   "exercise": "Standing Barbell Overhead Press",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 2,
+   "exercise": "Trap Bar Deadlift",
+   "kind": "emom",
+   "pct": 50
+  },
+  {
+   "week": 3,
+   "exercise": "2ct Paused Squat",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 3,
+   "exercise": "Back Extensions",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "7-8"
+  },
+  {
+   "week": 3,
+   "exercise": "Box Step Ups",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "8"
+  },
+  {
+   "week": 3,
+   "exercise": "Chest-Supported Row",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 3,
+   "exercise": "Conventional Deadlift",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 3,
+   "exercise": "Dips",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 3,
+   "exercise": "Flat Bench Press",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 3,
+   "exercise": "Floor Press",
+   "kind": "emom",
+   "pct": 63
+  },
+  {
+   "week": 3,
+   "exercise": "High Bar Back Squat",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 3,
+   "exercise": "High Handle Pull Down",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 3,
+   "exercise": "Hip Thrusts",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 3,
+   "exercise": "Leg Raises",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "7-8"
+  },
+  {
+   "week": 3,
+   "exercise": "Lying Leg Curl",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "8"
+  },
+  {
+   "week": 3,
+   "exercise": "Overhead Cable Triceps Extension",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "8"
+  },
+  {
+   "week": 3,
+   "exercise": "Preacher Curl",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "8"
+  },
+  {
+   "week": 3,
+   "exercise": "Pull-Up",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 3,
+   "exercise": "Split Squat",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "7"
+  },
+  {
+   "week": 3,
+   "exercise": "Standing Barbell Overhead Press",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 3,
+   "exercise": "Trap Bar Deadlift",
+   "kind": "emom",
+   "pct": 53
+  },
+  {
+   "week": 4,
+   "exercise": "2ct Paused Squat",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 4,
+   "exercise": "Back Extensions",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "7-8"
+  },
+  {
+   "week": 4,
+   "exercise": "Box Step Ups",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "8"
+  },
+  {
+   "week": 4,
+   "exercise": "Chest-Supported Row",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 4,
+   "exercise": "Conventional Deadlift",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 4,
+   "exercise": "Dips",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 4,
+   "exercise": "Flat Bench Press",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 4,
+   "exercise": "Floor Press",
+   "kind": "emom",
+   "pct": 66
+  },
+  {
+   "week": 4,
+   "exercise": "High Bar Back Squat",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 4,
+   "exercise": "High Handle Pull Down",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 4,
+   "exercise": "Hip Thrusts",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 4,
+   "exercise": "Leg Raises",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "7-8"
+  },
+  {
+   "week": 4,
+   "exercise": "Lying Leg Curl",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "8"
+  },
+  {
+   "week": 4,
+   "exercise": "Overhead Cable Triceps Extension",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "8"
+  },
+  {
+   "week": 4,
+   "exercise": "Preacher Curl",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "8"
+  },
+  {
+   "week": 4,
+   "exercise": "Pull-Up",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 4,
+   "exercise": "Split Squat",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "7"
+  },
+  {
+   "week": 4,
+   "exercise": "Standing Barbell Overhead Press",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 4,
+   "exercise": "Trap Bar Deadlift",
+   "kind": "emom",
+   "pct": 56
+  },
+  {
+   "week": 5,
+   "exercise": "2ct Paused Squat",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 5,
+   "exercise": "Back Extensions",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "7-8"
+  },
+  {
+   "week": 5,
+   "exercise": "Chest-Supported Row",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 5,
+   "exercise": "Conventional Deadlift",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 5,
+   "exercise": "Dips",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 5,
+   "exercise": "Flat Bench Press",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 5,
+   "exercise": "Floor Press",
+   "kind": "emom",
+   "pct": 69
+  },
+  {
+   "week": 5,
+   "exercise": "High Bar Back Squat",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 5,
+   "exercise": "High Handle Pull Down",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 5,
+   "exercise": "Hip Thrusts",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 5,
+   "exercise": "Leg Raises",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "7-8"
+  },
+  {
+   "week": 5,
+   "exercise": "Lying Leg Curl",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "8"
+  },
+  {
+   "week": 5,
+   "exercise": "Overhead Cable Triceps Extension",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "8"
+  },
+  {
+   "week": 5,
+   "exercise": "Preacher Curl",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "8"
+  },
+  {
+   "week": 5,
+   "exercise": "Pull-Up",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 5,
+   "exercise": "Split Squat",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "7"
+  },
+  {
+   "week": 5,
+   "exercise": "Standing Barbell Overhead Press",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 5,
+   "exercise": "Trap Bar Deadlift",
+   "kind": "emom",
+   "pct": 59
+  },
+  {
+   "week": 6,
+   "exercise": "1-Arm DB Row",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 6,
+   "exercise": "Bulgarian Split Squat",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 6,
+   "exercise": "Cable Chop",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "7-8"
+  },
+  {
+   "week": 6,
+   "exercise": "Chin-Up",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 6,
+   "exercise": "Close Grip Bench Press",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 6,
+   "exercise": "Concentration Curl",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 6,
+   "exercise": "Conventional Deadlift",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 6,
+   "exercise": "Flat Bench Press",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 6,
+   "exercise": "Glute Ham Raises",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "7-8"
+  },
+  {
+   "week": 6,
+   "exercise": "High Bar Back Squat",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 6,
+   "exercise": "High Incline (45-60*) Barbell Press",
+   "kind": "heavy"
+  },
+  {
+   "week": 6,
+   "exercise": "Hip Thrusts",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 6,
+   "exercise": "Lat Pull Down",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 6,
+   "exercise": "Leg Extensions",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 6,
+   "exercise": "Pendlay Row",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 6,
+   "exercise": "Romanian Deadlift",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 6,
+   "exercise": "Safety bar Squat",
+   "kind": "heavy"
+  },
+  {
+   "week": 6,
+   "exercise": "Single Leg Lying Leg Curl",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 6,
+   "exercise": "Standing Barbell Overhead Press",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 6,
+   "exercise": "V-Grip Press Down",
+   "kind": "dp",
+   "sets": 1,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 7,
+   "exercise": "1-Arm DB Row",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 7,
+   "exercise": "Bulgarian Split Squat",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 7,
+   "exercise": "Cable Chop",
+   "kind": "dp",
+   "sets": 4,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "7-8"
+  },
+  {
+   "week": 7,
+   "exercise": "Chin-Up",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 7,
+   "exercise": "Close Grip Bench Press",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 7,
+   "exercise": "Concentration Curl",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 7,
+   "exercise": "Conventional Deadlift",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 7,
+   "exercise": "Flat Bench Press",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 7,
+   "exercise": "Glute Ham Raises",
+   "kind": "dp",
+   "sets": 4,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "7-8"
+  },
+  {
+   "week": 7,
+   "exercise": "High Bar Back Squat",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 7,
+   "exercise": "High Incline (45-60*) Barbell Press",
+   "kind": "emom",
+   "pct": 60
+  },
+  {
+   "week": 7,
+   "exercise": "Hip Thrusts",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 7,
+   "exercise": "Lat Pull Down",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 7,
+   "exercise": "Leg Extensions",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 7,
+   "exercise": "Pendlay Row",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 7,
+   "exercise": "Romanian Deadlift",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 7,
+   "exercise": "Safety bar Squat",
+   "kind": "emom",
+   "pct": 55
+  },
+  {
+   "week": 7,
+   "exercise": "Single Leg Lying Leg Curl",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 7,
+   "exercise": "Standing Barbell Overhead Press",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 7,
+   "exercise": "V-Grip Press Down",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 8,
+   "exercise": "1-Arm DB Row",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 8,
+   "exercise": "Bulgarian Split Squat",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 8,
+   "exercise": "Cable Chop",
+   "kind": "dp",
+   "sets": 4,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "7-8"
+  },
+  {
+   "week": 8,
+   "exercise": "Chin-Up",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 8,
+   "exercise": "Close Grip Bench Press",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 8,
+   "exercise": "Concentration Curl",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 8,
+   "exercise": "Conventional Deadlift",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 8,
+   "exercise": "Flat Bench Press",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 8,
+   "exercise": "Glute Ham Raises",
+   "kind": "dp",
+   "sets": 4,
+   "lo": 10,
+   "hi": 15,
+   "rpe": "7-8"
+  },
+  {
+   "week": 8,
+   "exercise": "High Bar Back Squat",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 8,
+   "exercise": "High Incline (45-60*) Barbell Press",
+   "kind": "emom",
+   "pct": 63
+  },
+  {
+   "week": 8,
+   "exercise": "Hip Thrusts",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 8,
+   "exercise": "Lat Pull Down",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 8,
+   "exercise": "Leg Extensions",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 8,
+   "exercise": "Pendlay Row",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 8,
+   "exercise": "Romanian Deadlift",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 8,
+   "exercise": "Safety bar Squat",
+   "kind": "emom",
+   "pct": 58
+  },
+  {
+   "week": 8,
+   "exercise": "Single Leg Lying Leg Curl",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 8,
+   "exercise": "Standing Barbell Overhead Press",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 8,
+   "exercise": "V-Grip Press Down",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 9,
+   "exercise": "1-Arm DB Row",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 9,
+   "exercise": "Bulgarian Split Squat",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 9,
+   "exercise": "Cable Chop",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 9,
+   "exercise": "Chin-Up",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 9,
+   "exercise": "Close Grip Bench Press",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 9,
+   "exercise": "Concentration Curl",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 9,
+   "exercise": "Conventional Deadlift",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 9,
+   "exercise": "Flat Bench Press",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 9,
+   "exercise": "Glute Ham Raises",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 9,
+   "exercise": "High Bar Back Squat",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 9,
+   "exercise": "High Incline (45-60*) Barbell Press",
+   "kind": "emom",
+   "pct": 66
+  },
+  {
+   "week": 9,
+   "exercise": "Hip Thrusts",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 9,
+   "exercise": "Lat Pull Down",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 9,
+   "exercise": "Leg Extensions",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 9,
+   "exercise": "Pendlay Row",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 9,
+   "exercise": "Romanian Deadlift",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 9,
+   "exercise": "Safety bar Squat",
+   "kind": "emom",
+   "pct": 60
+  },
+  {
+   "week": 9,
+   "exercise": "Single Leg Lying Leg Curl",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 9,
+   "exercise": "Standing Barbell Overhead Press",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 9,
+   "exercise": "V-Grip Press Down",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 10,
+   "exercise": "1-Arm DB Row",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 10,
+   "exercise": "Bulgarian Split Squat",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 10,
+   "exercise": "Cable Chop",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 10,
+   "exercise": "Chin-Up",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 4,
+   "hi": 6,
+   "rpe": "6"
+  },
+  {
+   "week": 10,
+   "exercise": "Close Grip Bench Press",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 10,
+   "exercise": "Concentration Curl",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 10,
+   "exercise": "Conventional Deadlift",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 10,
+   "exercise": "Flat Bench Press",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 10,
+   "exercise": "Glute Ham Raises",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 10,
+   "exercise": "High Bar Back Squat",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 10,
+   "exercise": "High Incline (45-60*) Barbell Press",
+   "kind": "emom",
+   "pct": 69
+  },
+  {
+   "week": 10,
+   "exercise": "Hip Thrusts",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 10,
+   "exercise": "Lat Pull Down",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  },
+  {
+   "week": 10,
+   "exercise": "Leg Extensions",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 10,
+   "exercise": "Pendlay Row",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 10,
+   "exercise": "Romanian Deadlift",
+   "kind": "dp",
+   "sets": 2,
+   "lo": 5,
+   "hi": 8,
+   "rpe": "6"
+  },
+  {
+   "week": 10,
+   "exercise": "Safety bar Squat",
+   "kind": "emom",
+   "pct": 63
+  },
+  {
+   "week": 10,
+   "exercise": "Single Leg Lying Leg Curl",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 8,
+   "hi": 12,
+   "rpe": "6"
+  },
+  {
+   "week": 10,
+   "exercise": "Standing Barbell Overhead Press",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 3,
+   "hi": 5,
+   "rpe": "6"
+  },
+  {
+   "week": 10,
+   "exercise": "V-Grip Press Down",
+   "kind": "dp",
+   "sets": 3,
+   "lo": 6,
+   "hi": 10,
+   "rpe": "7"
+  }
+ ],
+ "conditioning": [
+  {
+   "week": 1,
+   "volume": 120
+  },
+  {
+   "week": 2,
+   "volume": 120
+  },
+  {
+   "week": 3,
+   "volume": 140
+  },
+  {
+   "week": 4,
+   "volume": 140
+  },
+  {
+   "week": 5,
+   "volume": 140
+  },
+  {
+   "week": 6,
+   "volume": 160
+  },
+  {
+   "week": 7,
+   "volume": 165
+  },
+  {
+   "week": 8,
+   "volume": 165
+  },
+  {
+   "week": 9,
+   "volume": 170
+  },
+  {
+   "week": 10,
+   "volume": 170
+  }
+ ]
+}
