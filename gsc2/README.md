@@ -39,10 +39,27 @@ which day are configurable in Settings.
 - **Conditioning** — each week's prescribed sessions as a checklist, weekly minute
   target, and heart-rate zones. Logging a 20-min test with an average HR sets your
   FTHR to 95% of it, which then drives the zone table.
+- **EMOM timer** — the power days are "N reps every minute on the minute × 10
+  minutes", so the app runs them: round counter, per-round countdown, an audible
+  cue on each minute, and the working weight carried over from the card.
+- **Guided 20-minute field test** — runs the week 1 / week 6 test with its
+  5-minute checkpoints, then takes your average HR and writes FTHR (95% of it),
+  which drives every conditioning zone from there.
 - Rest timer, e1RM trends by lift family, 1RM / EMOM / target-weight / protein
   calculators, JSON export & import.
 
-All data is held in `localStorage` on the device. Nothing is sent anywhere.
+Both interval timers queue their cues onto the Web Audio clock the moment you tap
+start, instead of firing them from `setInterval` — background tabs throttle timers
+hard, but audio already scheduled still plays. The visual countdown is derived from
+an absolute start timestamp, so it stays correct through a reload or a backgrounded
+tab regardless. Screen-locked audio on iOS is still not guaranteed; treat the beeps
+as a convenience, not a referee.
+
+All data is held in `localStorage` on the device. Nothing is sent anywhere — which
+also means **install it to your home screen**. Browsers clear storage for sites that
+aren't installed and haven't been opened recently, and this is a ten-week log.
+Settings shows how long it has been since your last backup once you have something
+worth losing.
 
 ## Fidelity to the source
 

@@ -19,6 +19,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html{scrollbar-width:none;}
+body.ivl-on{padding-bottom:250px;}
 body{
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:78px;
@@ -282,6 +283,38 @@ select.daysel{width:100%;background:var(--surface2);border:none;border-radius:9p
 .calc-table.wide-first th:first-child{text-align:left;white-space:normal;min-width:150px;}
 .spark-bars i.edge{margin-right:7px;}
 
+/* interval timer (EMOM + field test) */
+.ivl{position:fixed;left:0;right:0;bottom:calc(57px + env(safe-area-inset-bottom,0px));z-index:190;
+  background:rgba(11,13,16,.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-top:1px solid var(--line);padding:15px 16px 16px;
+  transform:translateY(130%);transition:transform .22s cubic-bezier(.2,.8,.3,1);}
+.ivl.open{transform:translateY(0);}
+body.ivl-on .timer-wrap{display:none;}
+.ivl-inner{max-width:560px;margin:0 auto;}
+.ivl-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:9px;}
+.ivl-name{font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--dim);}
+.ivl-round{font-size:12.5px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;}
+.ivl-count{font-size:56px;font-weight:800;line-height:1;letter-spacing:-2.5px;
+  font-variant-numeric:tabular-nums;margin:2px 0 4px;}
+.ivl-count.go{color:var(--good);}
+.ivl-cue{font-size:13px;color:var(--ink);min-height:19px;line-height:1.4;}
+.ivl-cue b{color:var(--accent);}
+.ivl-bars{display:flex;gap:3px;margin:12px 0 4px;}
+.ivl-bars i{flex:1;height:5px;border-radius:3px;background:var(--surface2);}
+.ivl-bars i.on{background:var(--accent);}
+.ivl-bars i.now{background:var(--good);}
+.ivl-actions{display:flex;gap:9px;margin-top:13px;}
+.ivl-actions .btn{flex:1;margin:0;}
+.ivl-fthr{display:flex;gap:9px;margin-top:11px;}
+.ivl-fthr input{flex:1;background:var(--surface2);border:none;border-radius:11px;color:var(--ink);
+  padding:12px;font-size:15px;font-family:inherit;}
+.emom-start{width:100%;margin:2px 0 11px;font-weight:700;}
+.cond-go{margin-top:8px;padding:7px 13px;border-radius:999px;border:1px solid var(--accent);
+  background:transparent;color:var(--accent);font-size:11.5px;font-weight:700;
+  font-family:inherit;cursor:pointer;letter-spacing:.3px;}
+.backup-note{font-size:11px;margin-top:9px;line-height:1.5;}
+.backup-note.stale{color:var(--red);}
+
 </style>
 </head>
 <body>
@@ -315,6 +348,10 @@ select.daysel{width:100%;background:var(--surface2);border:none;border-radius:9p
   <button class="timer-fab" id="timerFab" aria-label="Rest timer">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="13" r="8.2"/><line x1="12" y1="13" x2="12" y2="8.6"/><line x1="9.5" y1="2.5" x2="14.5" y2="2.5"/></svg>
   </button>
+</div>
+
+<div class="ivl" id="ivlPanel" aria-live="polite">
+  <div class="ivl-inner" id="ivlInner"></div>
 </div>
 
 <nav class="bottom-nav">
@@ -818,6 +855,9 @@ function exerciseBlock(slot, week, isLead){
   + (sug ? '<div class="suggest"><span class="s-w">'+sug.weights.join(' · ')+'</span>'
          + '<span class="dim">lb · '+esc(sug.note)+'</span>'
          + '<button class="textlink" onclick="applySuggestion(\''+slot.key+'\','+week+')">Fill</button></div>' : '')
+  + (slot.kind==='power' && weekInBlock(week)>1
+      ? '<button class="btn emom-start" onclick="startEmomFor(\''+slot.key+'\','+week+')">▶ Run EMOM · '
+        + slot.emomMin+' rounds × '+slot.emomReps+' reps</button>' : '')
   + '<div data-setswrap="'+k+'" data-week="'+week+'" data-slot="'+slot.key+'">'+setsTableHtml(week, slot.key)+'</div>'
   + '</div>';
 }
@@ -849,6 +889,7 @@ function renderConditioning(){
       + '<div style="flex:1;min-width:0;">'
       +   '<div class="cond-label">'+esc(s.label)+' <span class="dim">· '+s.min+' min</span></div>'
       +   '<div class="tiny muted" style="line-height:1.45;margin-top:2px;">'+esc(s.detail)+'</div>'
+      +   (s.kind==='test' ? '<button class="cond-go" onclick="event.stopPropagation();startFieldTest('+week+')">▶ Run the 20-min test</button>' : '')
       + '</div></div>';
   }).join('');
 
@@ -1118,10 +1159,14 @@ function renderSettings(){
   + 'over the week 1 twenty-minute test — is the accurate basis and overrides it.</div></div>'
   + exHtml
   + '<div class="card"><h2>Data</h2>'
+  + '<div class="small muted" style="line-height:1.55;margin-bottom:11px;">Your log lives in this browser on this device — '
+  + 'nothing is sent anywhere. <b>Add it to your home screen</b> (Share → Add to Home Screen): browsers can clear storage for '
+  + 'sites that aren\'t installed and haven\'t been opened in a while, and this is a 10-week log.</div>'
   + '<button class="btn block" onclick="exportData()">Export backup (.json)</button><div style="height:8px;"></div>'
   + '<label class="btn block" style="display:block;text-align:center;cursor:pointer;">Import backup'
   +   '<input type="file" id="importFile" accept="application/json" style="display:none;"></label><div style="height:8px;"></div>'
-  + '<button class="btn block" style="color:var(--red);border-color:var(--red);" onclick="resetAll()">Reset all data</button></div>'
+  + '<button class="btn block" style="color:var(--red);border-color:var(--red);" onclick="resetAll()">Reset all data</button>'
+  + backupNoteHtml() + '</div>'
   + '<div class="card" style="padding-top:2px;padding-bottom:2px;">'
   + '<details><summary>About this program<span class="chev">›</span></summary><div class="d-body small muted" style="line-height:1.6;">'
   + '<p>Built from Barbell Medicine&rsquo;s <b>General Strength and Conditioning II</b>, 4-day template (Jordan Feigenbaum, 2024). '
@@ -1193,7 +1238,19 @@ function saveSettingsGeneral(){
   }
   save(); toast(); refreshHeader(); renderSettings();
 }
+/* Nudge toward a backup once there is something worth losing. */
+function backupNoteHtml(){
+  const logged = Object.keys(STATE.logs).filter(k=>exerciseStats(k).hasData).length;
+  if(!logged) return '';
+  const last = STATE.meta.lastExport ? new Date(STATE.meta.lastExport) : null;
+  if(!last) return '<div class="backup-note stale">'+logged+' exercise'+(logged>1?'s':'')+' logged and never backed up.</div>';
+  const days = Math.floor((Date.now()-last.getTime())/86400000);
+  const when = days===0 ? 'today' : days===1 ? 'yesterday' : days+' days ago';
+  return '<div class="backup-note'+(days>=14?' stale':' muted')+'">Last backup '+when+'.</div>';
+}
 function exportData(){
+  STATE.meta.lastExport = new Date().toISOString();
+  save();
   const blob = new Blob([JSON.stringify(STATE,null,2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1220,6 +1277,175 @@ function resetAll(){
   STATE = defaultState();
   save(); jumpTo('today');
 }
+
+/* ---------- Interval timer: EMOM work sets and the 20-minute field test ----------
+   Cues are scheduled into the Web Audio clock up front, at the moment the user
+   taps start, rather than fired from setInterval — background tabs throttle
+   timers hard, but audio already queued on the audio clock still plays. The
+   visual countdown is derived from an absolute start timestamp, so it stays
+   correct across a reload or a backgrounded tab either way.                     */
+const IVL_KEY = 'gsc2_interval';
+let ivlCtx = null, ivlInt = null;
+
+function beepAt(ctx, when, freq, gain){
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.connect(g); g.connect(ctx.destination);
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(gain, when);
+  g.gain.exponentialRampToValueAtTime(.001, when + .22);
+  o.start(when); o.stop(when + .24);
+}
+function ivlScheduleAudio(plan, fromSec){
+  ivlKillAudio();
+  try{
+    ivlCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if(ivlCtx.state === 'suspended') ivlCtx.resume();
+    const t0 = ivlCtx.currentTime + 0.06 - fromSec;
+    plan.cues.forEach(c=>{
+      if(c.t < fromSec) return;                 // already gone by
+      const when = t0 + c.t;
+      if(c.tone === 'end'){                     // finish: a two-note flourish
+        beepAt(ivlCtx, when, 880, .2);
+        beepAt(ivlCtx, when + .2, 1175, .2);
+      } else if(c.tone === 'cue'){              // checkpoint: lower, single
+        beepAt(ivlCtx, when, 660, .17);
+      } else {                                  // round start
+        beepAt(ivlCtx, when, 1046, .2);
+      }
+    });
+  }catch(e){ ivlCtx = null; }
+}
+function ivlKillAudio(){
+  if(ivlCtx){ try{ ivlCtx.close(); }catch(e){} ivlCtx = null; }
+}
+
+/* ---- plans ---- */
+function planEmom(slot, week, weight){
+  const rounds = slot.emomMin, reps = slot.emomReps;
+  const cues = [];
+  for(let i=0;i<rounds;i++) cues.push({t:i*60, tone:'round'});
+  cues.push({t:rounds*60, tone:'end'});
+  return {kind:'emom', name:exName(week, slot.key), rounds, reps, weight:weight||null,
+          phaseSec:60, total:rounds*60, cues, week, slotKey:slot.key};
+}
+function planTest(week){
+  return {kind:'test', name:'20-minute field test', rounds:4, phaseSec:300, total:1200,
+          cues:[{t:0,tone:'round'},{t:300,tone:'cue'},{t:600,tone:'cue'},{t:900,tone:'cue'},{t:1200,tone:'end'}],
+          week};
+}
+
+/* ---- lifecycle ---- */
+function ivlStart(plan){
+  plan.startedAt = Date.now();
+  try{ localStorage.setItem(IVL_KEY, JSON.stringify(plan)); }catch(e){}
+  stopTimer();                                  // the plain rest timer steps aside
+  ivlScheduleAudio(plan, 0);
+  ivlRun();
+}
+function ivlLoad(){
+  try{
+    const raw = localStorage.getItem(IVL_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function ivlStop(){
+  clearInterval(ivlInt); ivlInt = null;
+  ivlKillAudio();
+  localStorage.removeItem(IVL_KEY);
+  const panel = document.getElementById('ivlPanel');
+  panel.classList.remove('open');
+  setTimeout(()=>{ if(!ivlLoad()) document.getElementById('ivlInner').innerHTML=''; }, 240);
+  document.body.classList.remove('ivl-on');
+}
+function ivlRun(){
+  clearInterval(ivlInt);
+  ivlTick();
+  ivlInt = setInterval(ivlTick, 250);
+}
+function ivlTick(){
+  const plan = ivlLoad();
+  if(!plan){ ivlStop(); return; }
+  const elapsed = (Date.now() - plan.startedAt)/1000;
+  const panel = document.getElementById('ivlPanel');
+  panel.classList.add('open');
+  document.body.classList.add('ivl-on');
+
+  if(elapsed >= plan.total){ ivlRenderDone(plan); return; }
+
+  const idx = Math.floor(elapsed / plan.phaseSec);          // 0-based phase
+  const intoPhase = elapsed - idx*plan.phaseSec;
+  const left = Math.ceil(plan.phaseSec - intoPhase);
+  const fresh = intoPhase < 2.5;                            // just rolled over
+
+  let roundLabel, cue;
+  if(plan.kind === 'emom'){
+    roundLabel = 'Round ' + (idx+1) + ' / ' + plan.rounds;
+    cue = fresh ? '<b>Go.</b> ' + plan.reps + ' reps' + (plan.weight ? ' @ ' + plan.weight + ' lb' : '')
+                : plan.reps + ' reps' + (plan.weight ? ' @ ' + plan.weight + ' lb' : '') + ' — rest until the next minute';
+  } else {
+    const mins = Math.floor(elapsed/60);
+    roundLabel = 'Minute ' + (mins+1) + ' / 20';
+    cue = fresh && idx > 0
+      ? '<b>Checkpoint.</b> At your limit? Ease off. More in the tank? Go faster. Neither? Hold.'
+      : (idx === 0 ? 'Settle in around RPE 7 — you get a checkpoint every 5 minutes.'
+                   : 'Hold this pace to the next checkpoint.');
+  }
+  const bars = Array.from({length:plan.rounds}, (_,i)=>
+    '<i class="'+(i<idx?'on':(i===idx?'now':''))+'"></i>').join('');
+
+  document.getElementById('ivlInner').innerHTML =
+    '<div class="ivl-top"><div class="ivl-name">'+esc(plan.name)+'</div>'
+  + '<div class="ivl-round">'+roundLabel+'</div></div>'
+  + '<div class="ivl-count'+(fresh?' go':'')+'">'+fmtTime(Math.max(0,left))+'</div>'
+  + '<div class="ivl-cue">'+cue+'</div>'
+  + '<div class="ivl-bars">'+bars+'</div>'
+  + '<div class="ivl-actions"><button class="btn" onclick="ivlStop()">Stop</button></div>';
+}
+function ivlRenderDone(plan){
+  clearInterval(ivlInt); ivlInt = null;
+  const isTest = plan.kind === 'test';
+  document.getElementById('ivlPanel').classList.add('open');
+  document.body.classList.add('ivl-on');
+  document.getElementById('ivlInner').innerHTML =
+    '<div class="ivl-top"><div class="ivl-name">'+esc(plan.name)+'</div>'
+  + '<div class="ivl-round">done</div></div>'
+  + '<div class="ivl-count go">'+(isTest ? '20:00' : plan.rounds+'×'+plan.reps)+'</div>'
+  + (isTest
+      ? '<div class="ivl-cue">Enter your <b>average heart rate</b> over the 20 minutes — 95% of it becomes your FTHR.</div>'
+        + '<div class="ivl-fthr"><input type="number" inputmode="numeric" id="ivlHR" placeholder="avg bpm">'
+        + '<button class="btn primary" onclick="ivlSaveTest()">Save</button></div>'
+        + '<div class="ivl-actions"><button class="btn" onclick="ivlStop()">Skip</button></div>'
+      : '<div class="ivl-cue">Set complete. Log the weight and total reps on the card.</div>'
+        + '<div class="ivl-actions"><button class="btn primary" onclick="ivlStop()">Done</button></div>');
+}
+function ivlSaveTest(){
+  const hr = parseFloat(document.getElementById('ivlHR').value);
+  const plan = ivlLoad();
+  if(!(hr > 0)){ ivlStop(); return; }
+  STATE.meta.fthr = String(Math.round(hr*0.95));
+  STATE.conditioningLogs.push({
+    week: (plan && plan.week) || STATE.currentWeek,
+    date: new Date().toISOString().slice(0,10),
+    zone: '20-min test', duration: '20', dist: '', hr: String(Math.round(hr)),
+    notes: 'field test — FTHR set to ' + STATE.meta.fthr
+  });
+  save();
+  ivlStop();
+  alert('FTHR set to ' + STATE.meta.fthr + ' bpm. Your conditioning zones now come off this number.');
+  if(document.body.dataset.tab === 'conditioning') renderConditioning();
+}
+
+/* ---- entry points ---- */
+function startEmomFor(slotKey, week){
+  const slot = slotFor(week, slotKey);
+  if(!slot || slot.kind !== 'power') return;
+  const log = STATE.logs[logKey(week, slotKey)];
+  const logged = log && log.sets.find(s=>s.w!=null && s.w!=='');
+  const sug = suggestionFor(slotKey, week);
+  const weight = logged ? +logged.w : (sug ? sug.weights[0] : null);
+  ivlStart(planEmom(slot, week, weight));
+}
+function startFieldTest(week){ ivlStart(planTest(week)); }
 
 /* ---------- Rest timer ---------- */
 const TIMER_KEY = 'gsc2_timer_end';
@@ -1293,6 +1519,18 @@ function resetTimerFab(){
   refreshHeader();
   jumpTo('today');
   if((+localStorage.getItem(TIMER_KEY)||0) > Date.now()) runTimer();
+  // A timer left running survives a reload: re-derive the clock from the start
+  // timestamp and re-queue only the cues that have not passed yet.
+  const plan = ivlLoad();
+  if(plan){
+    const elapsed = (Date.now()-plan.startedAt)/1000;
+    if(elapsed < plan.total + 600){
+      if(elapsed < plan.total) ivlScheduleAudio(plan, elapsed);
+      ivlRun();
+    } else {
+      localStorage.removeItem(IVL_KEY);
+    }
+  }
 })();
 
 /* ---------- PWA ---------- */
