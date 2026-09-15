@@ -409,22 +409,29 @@ function defaultState(){
     currentWeek: 1
   };
 }
+/* Repair anything a stored or imported blob is missing. Restoring a backup is
+   the one path that must not be able to break the app, so both go through here. */
+function normalizeState(parsed){
+  const d = defaultState();
+  const st = Object.assign(d, parsed, {
+    meta: Object.assign(d.meta, (parsed && parsed.meta) || {}),
+    ui:   Object.assign(d.ui,   (parsed && parsed.ui)   || {})
+  });
+  if(!st.meta.startE1RM || typeof st.meta.startE1RM !== 'object') st.meta.startE1RM = {};
+  if(!st.meta.overrides || typeof st.meta.overrides !== 'object') st.meta.overrides = {};
+  if(!st.logs || typeof st.logs !== 'object') st.logs = {};
+  if(!st.condDone || typeof st.condDone !== 'object') st.condDone = {};
+  if(!Array.isArray(st.conditioningLogs)) st.conditioningLogs = [];
+  if(!Array.isArray(st.meta.trainDays) || st.meta.trainDays.length!==4) st.meta.trainDays = [1,2,4,5];
+  if(!Array.isArray(st.meta.dayOrder) || [...st.meta.dayOrder].sort().join('')!=='ABCD') st.meta.dayOrder = ['A','B','C','D'];
+  if(!'ABCD'.includes(st.ui.day)) st.ui.day = 'A';
+  if(!(st.currentWeek>=1 && st.currentWeek<=10)) st.currentWeek = 1;
+  return st;
+}
 function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return defaultState();
-    const parsed = JSON.parse(raw);
-    const st = Object.assign(defaultState(), parsed, {
-      meta: Object.assign(defaultState().meta, parsed.meta||{}),
-      ui: Object.assign(defaultState().ui, parsed.ui||{})
-    });
-    if(!st.meta.startE1RM || typeof st.meta.startE1RM !== 'object') st.meta.startE1RM = {};
-    if(!st.condDone || typeof st.condDone !== 'object') st.condDone = {};
-    if(!Array.isArray(st.meta.trainDays) || st.meta.trainDays.length!==4) st.meta.trainDays = [1,2,4,5];
-    if(!Array.isArray(st.meta.dayOrder) || [...st.meta.dayOrder].sort().join('')!=='ABCD') st.meta.dayOrder = ['A','B','C','D'];
-    if(!'ABCD'.includes(st.ui.day)) st.ui.day = 'A';
-    if(!(st.currentWeek>=1 && st.currentWeek<=10)) st.currentWeek = 1;
-    return st;
+    return raw ? normalizeState(JSON.parse(raw)) : defaultState();
   }catch(e){ return defaultState(); }
 }
 let saveTimer=null;
@@ -1288,11 +1295,17 @@ function importData(e){
   const reader = new FileReader();
   reader.onload = ev => {
     try{
-      STATE = Object.assign(defaultState(), JSON.parse(ev.target.result));
-      save(); alert('Import successful.');
-      renderSettings(); refreshHeader();
-    }catch(err){ alert('Could not read that file.'); }
+      const parsed = JSON.parse(ev.target.result);
+      if(!parsed || typeof parsed !== 'object') throw new Error('not an object');
+      STATE = normalizeState(parsed);
+      save();
+      const n = Object.keys(STATE.logs).filter(k=>exerciseStats(k).hasData).length;
+      alert('Import successful — '+n+' exercise'+(n===1?'':'s')+' logged, '
+            + STATE.conditioningLogs.length+' conditioning session'+(STATE.conditioningLogs.length===1?'':'s')+'.');
+      refreshHeader(); jumpTo('today');
+    }catch(err){ alert('Could not read that file — it does not look like a backup from this app.'); }
   };
+  reader.onerror = () => alert('Could not read that file.');
   reader.readAsText(file);
 }
 function resetAll(){

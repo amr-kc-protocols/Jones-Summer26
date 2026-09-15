@@ -16,10 +16,12 @@ self.addEventListener('install', e => {
   );
 });
 
+// Cache storage is shared across the whole origin, so only prune this app's
+// own caches — a bare `k !== CACHE` would evict the sibling PWAs' shells.
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => k.startsWith('hyp2-') && k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
