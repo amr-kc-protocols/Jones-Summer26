@@ -20,13 +20,22 @@ one pull + one arm/trunk slot.
 |---|---|---|
 | **A** Squat | **High Bar Back Squat** → Bench, CS Row, Leg Curl, OH Triceps Ext | **High Bar Back Squat** → Bench, Pendlay Row, SL Leg Curl, V-Grip Pressdown |
 | **B** Power | **Trap Bar Deadlift** → Floor Press, High Handle Pulldown, Split Squat, Leg Raises | **Safety Bar Squat** → High Incline Press, Lat Pulldown, Bulgarian Split Squat, Cable Chop |
-| **C** Vertical | **2ct Paused Squat** → OHP, Pull-Up, Box Step Ups, Preacher Curl | **Romanian Deadlift** → OHP, Chin-Up, Leg Extensions, Concentration Curl |
+| **C** Vertical | **High Bar 2ct Paused Squat** → OHP, Pull-Up, Box Step Ups, Preacher Curl | **Romanian Deadlift** → OHP, Chin-Up, Leg Extensions, Concentration Curl |
 | **D** Deadlift | **Conventional Deadlift** → Dips, CS Row, Hip Thrusts, Back Extensions | **Conventional Deadlift** → Close Grip Bench, 1-Arm DB Row, Hip Thrusts, GHR |
 
 Day order spaces the heavy axial work: with the suggested Mon/Tue/Thu/Fri schedule,
 the heavy squat (A) is followed by the light power day (B), and the two heaviest
 hinges land on separate days. Both the lifting days and which session falls on
 which day are configurable in Settings.
+
+Day C — Thursday on the default mapping — leads on a **High Bar 2ct Paused Squat**
+in Block I. The sheet just says "2ct Paused Squat"; naming the bar position is a
+deliberate default, recorded as `sourceName` on the slot so the fidelity test still
+checks its prescription against the right row. Block II has no supplemental squat
+slot in the source, so its day C leads on the Romanian Deadlift.
+
+Pause and tempo variants are offered as swaps on every lift that takes one —
+squat, hinge, both presses, both pulls and the isolation slots.
 
 ## What it does
 
@@ -48,6 +57,13 @@ which day are configurable in Settings.
 - **Last week on the card** — the double progression turns entirely on what you
   managed last time, so each exercise shows its previous logged sets
   (`wk 2 · 300 × 6, 5 · top RPE 7.5`) directly above the suggestion drawn from them.
+- **Completion tab** — the ten weeks as a 40-cell grid. A day fills in as you log
+  it and turns green when every exercise is in, or you tick it off yourself for the
+  sessions that end with something unlogged. Tap any cell to open that day.
+  Conditioning gets its own row of ten.
+- **Session clock** — enter a start and end time, or tap one button at each end of
+  the session, and the duration works itself out. Times that cross midnight still
+  read positive.
 - Rest timer, e1RM trends by lift family, 1RM / EMOM / target-weight / protein
   calculators, JSON export & import.
 

@@ -172,7 +172,8 @@ table.sets input:focus{outline:2px solid var(--accent);}
   background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;
 }
 .field input:focus,.field select:focus{outline:2px solid var(--accent);}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;}
+.grid2>*{min-width:0;}
 
 /* ── stats (calculators) ── */
 .stat-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
@@ -282,6 +283,34 @@ select.daysel{width:100%;background:var(--surface2);border:none;border-radius:9p
 .zone-table td:nth-child(2){text-align:center;color:var(--dim);width:64px;}
 .calc-table.wide-first th:first-child{text-align:left;white-space:normal;min-width:150px;}
 .spark-bars i.edge{margin-right:7px;}
+.readout{background:var(--surface2);border-radius:11px;padding:12px;font-size:15px;
+  font-variant-numeric:tabular-nums;}
+.donerow{display:flex;align-items:center;gap:11px;}
+.donebtn{flex:1;background:var(--surface2);border:none;border-radius:11px;color:var(--ink);
+  font-family:inherit;font-size:13.5px;font-weight:700;padding:13px;cursor:pointer;}
+.donebtn.on{background:var(--good);color:#0b0d10;}
+
+/* completion grid */
+.cgrid{display:grid;grid-template-columns:auto repeat(4,1fr);gap:6px;align-items:center;}
+.cgrid .chead{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--faint);text-align:center;padding-bottom:2px;}
+.cgrid .cwk{font-size:11px;font-weight:700;color:var(--faint);padding-right:4px;
+  font-variant-numeric:tabular-nums;}
+.cgrid .cwk.now{color:var(--accent);}
+.cell{position:relative;height:38px;border-radius:9px;background:var(--surface2);border:none;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:var(--faint);font-variant-numeric:tabular-nums;
+  font-family:inherit;padding:0;overflow:hidden;}
+.cell .fill{position:absolute;left:0;bottom:0;width:100%;background:var(--accent);opacity:.22;}
+.cell span{position:relative;}
+.cell.part{color:var(--ink);}
+.cell.done{background:var(--good);color:#0b0d10;}
+.cell.done .fill{display:none;}
+.cell.today{box-shadow:0 0 0 1.6px var(--accent);}
+.clegend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--dim);margin-top:11px;}
+.clegend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;
+  vertical-align:-1px;}
+.streak{font-size:34px;font-weight:800;letter-spacing:-1.4px;line-height:1;}
 .lastwk{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-size:12.5px;
   color:var(--dim);margin:0 0 7px;font-variant-numeric:tabular-nums;line-height:1.5;}
 .lastwk .wk{font-size:10px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;
@@ -341,6 +370,7 @@ body.ivl-on .timer-wrap{display:none;}
 <main>
   <div class="tab active" id="tab-today"></div>
   <div class="tab" id="tab-conditioning"></div>
+  <div class="tab" id="tab-done"></div>
   <div class="tab" id="tab-progress"></div>
   <div class="tab" id="tab-settings"></div>
 </main>
@@ -370,6 +400,9 @@ body.ivl-on .timer-wrap{display:none;}
   <button data-tab="conditioning" aria-label="Conditioning">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 13 7 13 10 5.5 14 19 16.5 13 22 13"/></svg>
   </button>
+  <button data-tab="done" aria-label="Completion">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 10.5 17 4 11"/></svg>
+  </button>
   <button data-tab="progress" aria-label="Stats">
     <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="12" width="4" height="9" rx="1.3"/><rect x="10" y="7" width="4" height="14" rx="1.3"/><rect x="17" y="3" width="4" height="18" rx="1.3"/></svg>
   </button>
@@ -379,7 +412,7 @@ body.ivl-on .timer-wrap{display:none;}
 </nav>
 
 <script>
-const PROGRAM = {"blocks":{"I":{"label":"Block I","weeks":[1,2,3,4,5],"slots":[{"key":"mainSquat","day":"A","label":"Main Squat","sub":"Squat","family":"squat","name":"High Bar Back Squat","kind":"dp","reps":[4,6],"rpe":6,"cap":8,"sets":[1,2,2,2,2],"inc":10,"rest":"3+ min"},{"key":"mainHorizPress","day":"A","label":"Main Horizontal Press","sub":"Chest","family":"bench","name":"Flat Bench Press","kind":"dp","reps":[4,6],"rpe":6,"cap":8,"sets":[1,2,3,3,3],"inc":5,"rest":"3+ min"},{"key":"mainHorizPull","day":"A","label":"Main Horizontal Pull","sub":"Back","family":"row","name":"Chest-Supported Row","kind":"dp","reps":[6,10],"rpe":7,"cap":9,"sets":[1,2,3,3,3],"inc":5,"rest":"2-3 min"},{"key":"hamIso","day":"A","label":"Hamstring Isolation","sub":"Hamstrings","name":"Lying Leg Curl","kind":"dp","reps":[10,15],"rpe":8,"cap":10,"sets":[1,2,3,3,3],"inc":5,"rest":"1-2 min"},{"key":"triceps","day":"A","label":"Triceps","sub":"Arms","name":"Overhead Cable Triceps Extension","kind":"dp","reps":[10,15],"rpe":8,"cap":10,"sets":[1,3,3,3,3],"inc":5,"rest":"1-2 min","partials":true},{"key":"speedHinge","day":"B","label":"Speed Hinge","sub":"Power","family":"hinge","name":"Trap Bar Deadlift","kind":"power","emomReps":2,"emomMin":10,"pct":[null,50,53,56,59],"olyPct":[null,65,67,70,73],"olyReps":2,"rest":"EMOM"},{"key":"speedPress","day":"B","label":"Speed Press","sub":"Power","name":"Floor Press","kind":"power","emomReps":3,"emomMin":10,"pct":[null,60,63,66,69],"rest":"EMOM"},{"key":"suppVertPull","day":"B","label":"Supplemental Vertical Pull","sub":"Back","name":"High Handle Pull Down","kind":"dp","reps":[8,12],"rpe":6,"cap":8,"sets":[1,2,3,3,3],"inc":5,"rest":"2-3 min"},{"key":"uniSquat","day":"B","label":"Unilateral Squat","sub":"Quads","name":"Split Squat","kind":"dp","reps":[8,12],"rpe":7,"cap":9,"sets":[1,2,3,3,3],"inc":5,"rest":"2-3 min"},{"key":"trunk1","day":"B","label":"Trunk","sub":"Trunk","name":"Leg Raises","kind":"bw","reps":[10,15],"rpe":"7-8","sets":[2,3,3,3,3],"rest":"1-2 min"},{"key":"suppSquat","day":"C","label":"Supplemental Squat","sub":"Squat","name":"2ct Paused Squat","kind":"dp","reps":[5,8],"rpe":6,"cap":8,"sets":[1,2,2,2,2],"inc":10,"rest":"3+ min"},{"key":"mainVertPress","day":"C","label":"Main Vertical Press","sub":"Shoulders","family":"ohp","name":"Standing Barbell Overhead Press","kind":"dp","reps":[4,6],"rpe":6,"cap":8,"sets":[1,2,3,3,3],"inc":5,"rest":"3+ min"},{"key":"mainVertPull","day":"C","label":"Main Vertical Pull","sub":"Back","family":"pull","name":"Pull-Up","kind":"dp","reps":[5,8],"rpe":6,"cap":8,"sets":[1,2,2,3,3],"inc":5,"rest":"2-3 min"},{"key":"quadIso","day":"C","label":"Quadriceps Isolation","sub":"Quads","name":"Box Step Ups","kind":"dp","reps":[10,15],"rpe":8,"cap":10,"sets":[1,2,3,3,3],"inc":5,"rest":"1-2 min"},{"key":"biceps","day":"C","label":"Biceps","sub":"Arms","name":"Preacher Curl","kind":"dp","reps":[10,15],"rpe":8,"cap":10,"sets":[1,3,3,3,3],"inc":5,"rest":"1-2 min","partials":true},{"key":"mainHinge","day":"D","label":"Main Hinge","sub":"Deadlift","family":"deadlift","name":"Conventional Deadlift","kind":"dp","reps":[4,6],"rpe":6,"cap":8,"sets":[1,2,2,2,1],"inc":10,"rest":"3+ min","repsByWeek":[[4,6],[4,6],[4,6],[4,6],[3,5]]},{"key":"suppVertPress","day":"D","label":"Supplemental Vertical Press","sub":"Chest","name":"Dips","kind":"dp","reps":[8,12],"rpe":6,"cap":8,"sets":[1,2,2,2,2],"inc":5,"rest":"2-3 min"},{"key":"suppHorizPull","day":"D","label":"Supplemental Horizontal Pull","sub":"Back","name":"Chest-Supported Row","kind":"dp","reps":[6,10],"rpe":7,"cap":9,"sets":[1,2,3,3,3],"inc":5,"rest":"2-3 min"},{"key":"suppHinge","day":"D","label":"Supplemental Hinge","sub":"Glutes","name":"Hip Thrusts","kind":"dp","reps":[6,10],"rpe":7,"cap":9,"sets":[1,2,3,3,3],"inc":10,"rest":"2-3 min"},{"key":"trunk2","day":"D","label":"Trunk","sub":"Trunk","name":"Back Extensions","kind":"bw","reps":[10,15],"rpe":"7-8","sets":[2,3,3,3,3],"rest":"1-2 min"}]},"II":{"label":"Block II","weeks":[6,7,8,9,10],"slots":[{"key":"mainSquat","day":"A","label":"Main Squat","sub":"Squat","family":"squat","name":"High Bar Back Squat","kind":"dp","reps":[3,5],"rpe":6,"cap":8,"sets":[1,2,2,2,2],"inc":10,"rest":"3+ min"},{"key":"mainHorizPress","day":"A","label":"Main Horizontal Press","sub":"Chest","family":"bench","name":"Flat Bench Press","kind":"dp","reps":[3,5],"rpe":6,"cap":8,"sets":[1,2,3,3,3],"inc":5,"rest":"3+ min"},{"key":"mainHorizPull","day":"A","label":"Main Horizontal Pull","sub":"Back","family":"row","name":"Pendlay Row","kind":"dp","reps":[5,8],"rpe":6,"cap":8,"sets":[1,2,2,3,3],"inc":5,"rest":"2-3 min"},{"key":"hamIso","day":"A","label":"Hamstring Isolation","sub":"Hamstrings","name":"Single Leg Lying Leg Curl","kind":"dp","reps":[8,12],"rpe":6,"cap":10,"sets":[1,2,3,3,3],"inc":5,"rest":"1-2 min"},{"key":"triceps","day":"A","label":"Triceps","sub":"Arms","name":"V-Grip Press Down","kind":"dp","reps":[8,12],"rpe":6,"cap":10,"sets":[1,3,3,3,3],"inc":5,"rest":"1-2 min","partials":true},{"key":"speedSquat","day":"B","label":"Speed Squat","sub":"Power","name":"Safety Bar Squat","kind":"power","emomReps":2,"emomMin":10,"pct":[null,55,58,60,63],"olyPct":[null,70,73,75,77],"olyReps":2,"rest":"EMOM"},{"key":"speedPress","day":"B","label":"Speed Press","sub":"Power","name":"High Incline (45-60°) Barbell Press","kind":"power","emomReps":3,"emomMin":10,"pct":[null,60,63,66,69],"rest":"EMOM"},{"key":"suppVertPull","day":"B","label":"Supplemental Vertical Pull","sub":"Back","name":"Lat Pull Down","kind":"dp","reps":[6,10],"rpe":7,"cap":9,"sets":[1,2,3,3,3],"inc":5,"rest":"2-3 min"},{"key":"uniSquat","day":"B","label":"Unilateral Squat","sub":"Quads","name":"Bulgarian Split Squat","kind":"dp","reps":[6,10],"rpe":7,"cap":9,"sets":[1,2,2,2,2],"inc":5,"rest":"2-3 min"},{"key":"trunk1","day":"B","label":"Trunk","sub":"Trunk","name":"Cable Chop","kind":"bw","reps":[10,15],"rpe":"7-8","sets":[2,4,4,4,4],"rest":"1-2 min"},{"key":"suppHinge","day":"C","label":"Supplemental Hinge","sub":"Hamstrings","name":"Romanian Deadlift","kind":"dp","reps":[5,8],"rpe":6,"cap":8,"sets":[1,2,2,2,2],"inc":10,"rest":"3+ min"},{"key":"mainVertPress","day":"C","label":"Main Vertical Press","sub":"Shoulders","family":"ohp","name":"Standing Barbell Overhead Press","kind":"dp","reps":[3,5],"rpe":6,"cap":8,"sets":[1,2,3,3,3],"inc":5,"rest":"3+ min"},{"key":"mainVertPull","day":"C","label":"Main Vertical Pull","sub":"Back","family":"pull","name":"Chin-Up","kind":"dp","reps":[4,6],"rpe":6,"cap":8,"sets":[1,2,3,3,3],"inc":5,"rest":"2-3 min"},{"key":"quadIso","day":"C","label":"Quadriceps Isolation","sub":"Quads","name":"Leg Extensions","kind":"dp","reps":[8,12],"rpe":6,"cap":10,"sets":[1,2,3,3,3],"inc":5,"rest":"1-2 min"},{"key":"biceps","day":"C","label":"Biceps","sub":"Arms","name":"Concentration Curl","kind":"dp","reps":[8,12],"rpe":6,"cap":10,"sets":[1,3,3,3,3],"inc":5,"rest":"1-2 min","partials":true},{"key":"mainHinge","day":"D","label":"Main Hinge","sub":"Deadlift","family":"deadlift","name":"Conventional Deadlift","kind":"dp","reps":[3,5],"rpe":6,"cap":8,"sets":[2,2,2,2,2],"inc":10,"rest":"3+ min"},{"key":"suppPress","day":"D","label":"Supplemental Press","sub":"Chest","name":"Close Grip Bench Press","kind":"dp","reps":[6,10],"rpe":7,"cap":9,"sets":[1,2,2,2,2],"inc":5,"rest":"2-3 min"},{"key":"suppHorizPull","day":"D","label":"Supplemental Horizontal Pull","sub":"Back","name":"1-Arm DB Row","kind":"dp","reps":[8,12],"rpe":6,"cap":8,"sets":[1,2,3,3,3],"inc":5,"rest":"2-3 min"},{"key":"suppHinge2","day":"D","label":"Supplemental Hinge","sub":"Glutes","name":"Hip Thrusts","kind":"dp","reps":[5,8],"rpe":6,"cap":8,"sets":[1,2,2,2,2],"inc":10,"rest":"2-3 min"},{"key":"trunk2","day":"D","label":"Trunk","sub":"Trunk","name":"Glute Ham Raises","kind":"bw","reps":[10,15],"rpe":"7-8","sets":[2,4,4,4,4],"rest":"1-2 min"}]}},"conditioning":[{"week":1,"volume":120,"summary":"Zone 1 and Zone 2 + threshold test","sessions":[{"kind":"test","min":20,"label":"20-min threshold test","detail":"10-15 min easy warm-up (RPE 3-4), then 20 min at the hardest pace you can hold. Start the first 5 min around RPE 7, then every 5 min decide whether you can go faster without slowing down later. Average HR over the 20 min x 0.95 = your FTHR."},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":40,"label":"Zone 1 easy","detail":"RPE 3-4 · 50-60% max HR · 70-80% FTHR"}]},{"week":2,"volume":120,"summary":"Zone 1 and Zone 2","sessions":[{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":30,"label":"Zone 1 easy","detail":"RPE 3-4 · 50-60% max HR · 70-80% FTHR"}]},{"week":3,"volume":140,"summary":"Zone 1 and Zone 2","sessions":[{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":50,"label":"Zone 1 easy","detail":"RPE 3-4 · 50-60% max HR · 70-80% FTHR"}]},{"week":4,"volume":140,"summary":"Zone 1 and Zone 2","sessions":[{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":50,"label":"Zone 1 easy","detail":"RPE 3-4 · 50-60% max HR · 70-80% FTHR"}]},{"week":5,"volume":140,"summary":"Zone 1 and Zone 2 + sprints","sessions":[{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":50,"label":"Zone 1 easy 40 min + sprints","detail":"40 min Zone 1 (RPE 3-4), then 20-second sprints (RPE 9-10) every minute on the minute for 10 min"}]},{"week":6,"volume":160,"summary":"Zone 1 and Zone 2 + threshold test","sessions":[{"kind":"test","min":20,"label":"20-min threshold test","detail":"10-15 min easy warm-up (RPE 3-4), then 20 min at the hardest pace you can hold. Start the first 5 min around RPE 7, then every 5 min decide whether you can go faster without slowing down later. Average HR over the 20 min x 0.95 = your FTHR."},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":50,"label":"Zone 1 easy","detail":"RPE 3-4 · 50-60% max HR · 70-80% FTHR"}]},{"week":7,"volume":165,"summary":"Zone 2-4","sessions":[{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":50,"label":"Zone 1 easy 40 min + sprints","detail":"40 min Zone 1 (RPE 3-4), then 20-second sprints (RPE 9-10) every minute on the minute for 10 min"},{"kind":"z4","min":25,"label":"Intervals: 2 min x 5","detail":"10 min easy warm-up, then 2 min at RPE 8 (70-85% max HR, 88-95% FTHR) / 1 min rest, 5 rounds"}]},{"week":8,"volume":165,"summary":"Zone 2-4","sessions":[{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":50,"label":"Zone 1 easy","detail":"RPE 3-4 · 50-60% max HR · 70-80% FTHR"},{"kind":"z4","min":25,"label":"Intervals: 2 min x 5","detail":"10 min easy warm-up, then 2 min at RPE 8 (70-85% max HR, 88-95% FTHR) / 1 min rest, 5 rounds"}]},{"week":9,"volume":170,"summary":"Zone 2-4","sessions":[{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":50,"label":"Zone 1 easy 40 min + sprints","detail":"40 min Zone 1 (RPE 3-4), then 20-second sprints (RPE 9-10) every minute on the minute for 10 min"},{"kind":"z4","min":30,"label":"Intervals: 3 min x 5","detail":"10 min easy warm-up, then 3 min at RPE 8 (70-85% max HR, 88-95% FTHR) / 1 min rest, 5 rounds"}]},{"week":10,"volume":170,"summary":"Zone 2-4","sessions":[{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":50,"label":"Zone 1 easy","detail":"RPE 3-4 · 50-60% max HR · 70-80% FTHR"},{"kind":"z4","min":30,"label":"Intervals: 3 min x 5","detail":"10 min easy warm-up, then 3 min at RPE 8 (70-85% max HR, 88-95% FTHR) / 1 min rest, 5 rounds"}]}],"options":{"mainSquat":["High Bar Back Squat","Low Bar Back Squat","Front Squat","Safety Bar Squat","2ct Paused Squat","Belt Squat Machine","Hack Squat","Leg Press"],"suppSquat":["2ct Paused Squat","3ct Paused Squat","Tempo Squat (3-0-3)","Pin Squat","Box Squat","Front Squat","Safety Bar Squat","Hatfield Squat","Pendulum Squat","Hack Squat"],"speedSquat":["Safety Bar Squat","High Bar Back Squat","Front Squat","Box Squat","Hang Power Clean","Power Clean"],"mainHinge":["Conventional Deadlift","Sumo Deadlift","Trap Bar Deadlift","2ct Paused Deadlift","2\" Deficit Deadlift","Mid-Shin Block Pull"],"speedHinge":["Trap Bar Deadlift","Conventional Deadlift","Sumo Deadlift","Mid-Shin Block Pull","Hang Power Clean","Power Clean","Power Snatch"],"suppHinge":["Hip Thrusts","Romanian Deadlift","Barbell Glute Bridge","Good Morning","Stiff-Legged Deadlift","Cable Pull Throughs","Back Extensions"],"suppHinge2":["Hip Thrusts","Barbell Glute Bridge","Cable Pull Throughs","Good Morning","Back Extensions","Romanian Deadlift"],"uniSquat":["Split Squat","Bulgarian Split Squat","Walking Lunges","Reverse Lunges","Box Step Ups","Single-Leg Leg Press"],"quadIso":["Box Step Ups","Leg Extensions","Walking Lunges","Goblet Squat","Split Squat","Sissy Squat"],"hamIso":["Lying Leg Curl","Seated Leg Curl","Single Leg Lying Leg Curl","Nordic Hamstring Curl","Razor Curl","Single-Leg RDL","Glute Ham Raises"],"mainHorizPress":["Flat Bench Press","1ct Paused Bench","Touch and Go Bench","Larsen Bench","Close Grip Bench Press","Swiss Bar Bench","Dumbbell Bench Press"],"mainVertPress":["Standing Barbell Overhead Press","Seated Barbell Overhead Press","Push Press","Dumbbell Overhead Press","Machine Shoulder Press"],"speedPress":["Floor Press","High Incline (45-60°) Barbell Press","Flat Bench Press","Close Grip Bench Press","Push Press","Pin Press"],"suppPress":["Close Grip Bench Press","High Incline Bench Press","Low Incline Bench Press","Larsen Bench","Dumbbell Incline Bench","JM Press","Dips"],"suppVertPress":["Dips","Standing Barbell Overhead Press","Dumbbell Overhead Press","High Incline Bench Press","Machine Shoulder Press","Push-Ups"],"mainHorizPull":["Chest-Supported Row","Pendlay Row","Bent Over Row","T-Bar Row","Seal Row","Seated Row","1-Arm DB Row"],"suppHorizPull":["Chest-Supported Row","1-Arm DB Row","Seated Row","Pendlay Row","T-Bar Row","Seal Row","1-Arm Cable Row"],"mainVertPull":["Pull-Up","Weighted Pull-Up","Chin-Up","Weighted Chin-Up","Neutral Grip Pull-Up","Lat Pull Down"],"suppVertPull":["High Handle Pull Down","Lat Pull Down","V-Grip Pulldown","Chin-Up","Pull-Up","Straight-Arm Pulldown"],"triceps":["Overhead Cable Triceps Extension","V-Grip Press Down","Rope Press Down","Lying Triceps Extension (EZ Bar)","Machine Overhead Triceps Extension","JM Press","Dips"],"biceps":["Preacher Curl","Concentration Curl","Incline Dumbbell Curl","Barbell Curl","EZ-Bar Curl","Hammer Curl","Spider Curl","Cable Curl"],"trunk1":["Leg Raises","Hanging Leg Raises","Cable Chop","Pallof Press","Ab Wheel Roll Out","Cable Crunch","V-Ups","Situps"],"trunk2":["Back Extensions","Glute Ham Raises","Good Morning","Cable Pull Throughs","Hip Extensions","Reverse Hyper"]}};
+const PROGRAM = {"blocks":{"I":{"label":"Block I","weeks":[1,2,3,4,5],"slots":[{"key":"mainSquat","day":"A","label":"Main Squat","sub":"Squat","family":"squat","name":"High Bar Back Squat","kind":"dp","reps":[4,6],"rpe":6,"cap":8,"sets":[1,2,2,2,2],"inc":10,"rest":"3+ min"},{"key":"mainHorizPress","day":"A","label":"Main Horizontal Press","sub":"Chest","family":"bench","name":"Flat Bench Press","kind":"dp","reps":[4,6],"rpe":6,"cap":8,"sets":[1,2,3,3,3],"inc":5,"rest":"3+ min"},{"key":"mainHorizPull","day":"A","label":"Main Horizontal Pull","sub":"Back","family":"row","name":"Chest-Supported Row","kind":"dp","reps":[6,10],"rpe":7,"cap":9,"sets":[1,2,3,3,3],"inc":5,"rest":"2-3 min"},{"key":"hamIso","day":"A","label":"Hamstring Isolation","sub":"Hamstrings","name":"Lying Leg Curl","kind":"dp","reps":[10,15],"rpe":8,"cap":10,"sets":[1,2,3,3,3],"inc":5,"rest":"1-2 min"},{"key":"triceps","day":"A","label":"Triceps","sub":"Arms","name":"Overhead Cable Triceps Extension","kind":"dp","reps":[10,15],"rpe":8,"cap":10,"sets":[1,3,3,3,3],"inc":5,"rest":"1-2 min","partials":true},{"key":"speedHinge","day":"B","label":"Speed Hinge","sub":"Power","family":"hinge","name":"Trap Bar Deadlift","kind":"power","emomReps":2,"emomMin":10,"pct":[null,50,53,56,59],"olyPct":[null,65,67,70,73],"olyReps":2,"rest":"EMOM"},{"key":"speedPress","day":"B","label":"Speed Press","sub":"Power","name":"Floor Press","kind":"power","emomReps":3,"emomMin":10,"pct":[null,60,63,66,69],"rest":"EMOM"},{"key":"suppVertPull","day":"B","label":"Supplemental Vertical Pull","sub":"Back","name":"High Handle Pull Down","kind":"dp","reps":[8,12],"rpe":6,"cap":8,"sets":[1,2,3,3,3],"inc":5,"rest":"2-3 min"},{"key":"uniSquat","day":"B","label":"Unilateral Squat","sub":"Quads","name":"Split Squat","kind":"dp","reps":[8,12],"rpe":7,"cap":9,"sets":[1,2,3,3,3],"inc":5,"rest":"2-3 min"},{"key":"trunk1","day":"B","label":"Trunk","sub":"Trunk","name":"Leg Raises","kind":"bw","reps":[10,15],"rpe":"7-8","sets":[2,3,3,3,3],"rest":"1-2 min"},{"key":"suppSquat","day":"C","label":"Supplemental Squat","sub":"Squat","name":"High Bar 2ct Paused Squat","kind":"dp","reps":[5,8],"rpe":6,"cap":8,"sets":[1,2,2,2,2],"inc":10,"rest":"3+ min","sourceName":"2ct Paused Squat"},{"key":"mainVertPress","day":"C","label":"Main Vertical Press","sub":"Shoulders","family":"ohp","name":"Standing Barbell Overhead Press","kind":"dp","reps":[4,6],"rpe":6,"cap":8,"sets":[1,2,3,3,3],"inc":5,"rest":"3+ min"},{"key":"mainVertPull","day":"C","label":"Main Vertical Pull","sub":"Back","family":"pull","name":"Pull-Up","kind":"dp","reps":[5,8],"rpe":6,"cap":8,"sets":[1,2,2,3,3],"inc":5,"rest":"2-3 min"},{"key":"quadIso","day":"C","label":"Quadriceps Isolation","sub":"Quads","name":"Box Step Ups","kind":"dp","reps":[10,15],"rpe":8,"cap":10,"sets":[1,2,3,3,3],"inc":5,"rest":"1-2 min"},{"key":"biceps","day":"C","label":"Biceps","sub":"Arms","name":"Preacher Curl","kind":"dp","reps":[10,15],"rpe":8,"cap":10,"sets":[1,3,3,3,3],"inc":5,"rest":"1-2 min","partials":true},{"key":"mainHinge","day":"D","label":"Main Hinge","sub":"Deadlift","family":"deadlift","name":"Conventional Deadlift","kind":"dp","reps":[4,6],"rpe":6,"cap":8,"sets":[1,2,2,2,1],"inc":10,"rest":"3+ min","repsByWeek":[[4,6],[4,6],[4,6],[4,6],[3,5]]},{"key":"suppVertPress","day":"D","label":"Supplemental Vertical Press","sub":"Chest","name":"Dips","kind":"dp","reps":[8,12],"rpe":6,"cap":8,"sets":[1,2,2,2,2],"inc":5,"rest":"2-3 min"},{"key":"suppHorizPull","day":"D","label":"Supplemental Horizontal Pull","sub":"Back","name":"Chest-Supported Row","kind":"dp","reps":[6,10],"rpe":7,"cap":9,"sets":[1,2,3,3,3],"inc":5,"rest":"2-3 min"},{"key":"suppHinge","day":"D","label":"Supplemental Hinge","sub":"Glutes","name":"Hip Thrusts","kind":"dp","reps":[6,10],"rpe":7,"cap":9,"sets":[1,2,3,3,3],"inc":10,"rest":"2-3 min"},{"key":"trunk2","day":"D","label":"Trunk","sub":"Trunk","name":"Back Extensions","kind":"bw","reps":[10,15],"rpe":"7-8","sets":[2,3,3,3,3],"rest":"1-2 min"}]},"II":{"label":"Block II","weeks":[6,7,8,9,10],"slots":[{"key":"mainSquat","day":"A","label":"Main Squat","sub":"Squat","family":"squat","name":"High Bar Back Squat","kind":"dp","reps":[3,5],"rpe":6,"cap":8,"sets":[1,2,2,2,2],"inc":10,"rest":"3+ min"},{"key":"mainHorizPress","day":"A","label":"Main Horizontal Press","sub":"Chest","family":"bench","name":"Flat Bench Press","kind":"dp","reps":[3,5],"rpe":6,"cap":8,"sets":[1,2,3,3,3],"inc":5,"rest":"3+ min"},{"key":"mainHorizPull","day":"A","label":"Main Horizontal Pull","sub":"Back","family":"row","name":"Pendlay Row","kind":"dp","reps":[5,8],"rpe":6,"cap":8,"sets":[1,2,2,3,3],"inc":5,"rest":"2-3 min"},{"key":"hamIso","day":"A","label":"Hamstring Isolation","sub":"Hamstrings","name":"Single Leg Lying Leg Curl","kind":"dp","reps":[8,12],"rpe":6,"cap":10,"sets":[1,2,3,3,3],"inc":5,"rest":"1-2 min"},{"key":"triceps","day":"A","label":"Triceps","sub":"Arms","name":"V-Grip Press Down","kind":"dp","reps":[8,12],"rpe":6,"cap":10,"sets":[1,3,3,3,3],"inc":5,"rest":"1-2 min","partials":true},{"key":"speedSquat","day":"B","label":"Speed Squat","sub":"Power","name":"Safety Bar Squat","kind":"power","emomReps":2,"emomMin":10,"pct":[null,55,58,60,63],"olyPct":[null,70,73,75,77],"olyReps":2,"rest":"EMOM"},{"key":"speedPress","day":"B","label":"Speed Press","sub":"Power","name":"High Incline (45-60°) Barbell Press","kind":"power","emomReps":3,"emomMin":10,"pct":[null,60,63,66,69],"rest":"EMOM"},{"key":"suppVertPull","day":"B","label":"Supplemental Vertical Pull","sub":"Back","name":"Lat Pull Down","kind":"dp","reps":[6,10],"rpe":7,"cap":9,"sets":[1,2,3,3,3],"inc":5,"rest":"2-3 min"},{"key":"uniSquat","day":"B","label":"Unilateral Squat","sub":"Quads","name":"Bulgarian Split Squat","kind":"dp","reps":[6,10],"rpe":7,"cap":9,"sets":[1,2,2,2,2],"inc":5,"rest":"2-3 min"},{"key":"trunk1","day":"B","label":"Trunk","sub":"Trunk","name":"Cable Chop","kind":"bw","reps":[10,15],"rpe":"7-8","sets":[2,4,4,4,4],"rest":"1-2 min"},{"key":"suppHinge","day":"C","label":"Supplemental Hinge","sub":"Hamstrings","name":"Romanian Deadlift","kind":"dp","reps":[5,8],"rpe":6,"cap":8,"sets":[1,2,2,2,2],"inc":10,"rest":"3+ min"},{"key":"mainVertPress","day":"C","label":"Main Vertical Press","sub":"Shoulders","family":"ohp","name":"Standing Barbell Overhead Press","kind":"dp","reps":[3,5],"rpe":6,"cap":8,"sets":[1,2,3,3,3],"inc":5,"rest":"3+ min"},{"key":"mainVertPull","day":"C","label":"Main Vertical Pull","sub":"Back","family":"pull","name":"Chin-Up","kind":"dp","reps":[4,6],"rpe":6,"cap":8,"sets":[1,2,3,3,3],"inc":5,"rest":"2-3 min"},{"key":"quadIso","day":"C","label":"Quadriceps Isolation","sub":"Quads","name":"Leg Extensions","kind":"dp","reps":[8,12],"rpe":6,"cap":10,"sets":[1,2,3,3,3],"inc":5,"rest":"1-2 min"},{"key":"biceps","day":"C","label":"Biceps","sub":"Arms","name":"Concentration Curl","kind":"dp","reps":[8,12],"rpe":6,"cap":10,"sets":[1,3,3,3,3],"inc":5,"rest":"1-2 min","partials":true},{"key":"mainHinge","day":"D","label":"Main Hinge","sub":"Deadlift","family":"deadlift","name":"Conventional Deadlift","kind":"dp","reps":[3,5],"rpe":6,"cap":8,"sets":[2,2,2,2,2],"inc":10,"rest":"3+ min"},{"key":"suppPress","day":"D","label":"Supplemental Press","sub":"Chest","name":"Close Grip Bench Press","kind":"dp","reps":[6,10],"rpe":7,"cap":9,"sets":[1,2,2,2,2],"inc":5,"rest":"2-3 min"},{"key":"suppHorizPull","day":"D","label":"Supplemental Horizontal Pull","sub":"Back","name":"1-Arm DB Row","kind":"dp","reps":[8,12],"rpe":6,"cap":8,"sets":[1,2,3,3,3],"inc":5,"rest":"2-3 min"},{"key":"suppHinge2","day":"D","label":"Supplemental Hinge","sub":"Glutes","name":"Hip Thrusts","kind":"dp","reps":[5,8],"rpe":6,"cap":8,"sets":[1,2,2,2,2],"inc":10,"rest":"2-3 min"},{"key":"trunk2","day":"D","label":"Trunk","sub":"Trunk","name":"Glute Ham Raises","kind":"bw","reps":[10,15],"rpe":"7-8","sets":[2,4,4,4,4],"rest":"1-2 min"}]}},"conditioning":[{"week":1,"volume":120,"summary":"Zone 1 and Zone 2 + threshold test","sessions":[{"kind":"test","min":20,"label":"20-min threshold test","detail":"10-15 min easy warm-up (RPE 3-4), then 20 min at the hardest pace you can hold. Start the first 5 min around RPE 7, then every 5 min decide whether you can go faster without slowing down later. Average HR over the 20 min x 0.95 = your FTHR."},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":40,"label":"Zone 1 easy","detail":"RPE 3-4 · 50-60% max HR · 70-80% FTHR"}]},{"week":2,"volume":120,"summary":"Zone 1 and Zone 2","sessions":[{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":30,"label":"Zone 1 easy","detail":"RPE 3-4 · 50-60% max HR · 70-80% FTHR"}]},{"week":3,"volume":140,"summary":"Zone 1 and Zone 2","sessions":[{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":50,"label":"Zone 1 easy","detail":"RPE 3-4 · 50-60% max HR · 70-80% FTHR"}]},{"week":4,"volume":140,"summary":"Zone 1 and Zone 2","sessions":[{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":50,"label":"Zone 1 easy","detail":"RPE 3-4 · 50-60% max HR · 70-80% FTHR"}]},{"week":5,"volume":140,"summary":"Zone 1 and Zone 2 + sprints","sessions":[{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":50,"label":"Zone 1 easy 40 min + sprints","detail":"40 min Zone 1 (RPE 3-4), then 20-second sprints (RPE 9-10) every minute on the minute for 10 min"}]},{"week":6,"volume":160,"summary":"Zone 1 and Zone 2 + threshold test","sessions":[{"kind":"test","min":20,"label":"20-min threshold test","detail":"10-15 min easy warm-up (RPE 3-4), then 20 min at the hardest pace you can hold. Start the first 5 min around RPE 7, then every 5 min decide whether you can go faster without slowing down later. Average HR over the 20 min x 0.95 = your FTHR."},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":50,"label":"Zone 1 easy","detail":"RPE 3-4 · 50-60% max HR · 70-80% FTHR"}]},{"week":7,"volume":165,"summary":"Zone 2-4","sessions":[{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":50,"label":"Zone 1 easy 40 min + sprints","detail":"40 min Zone 1 (RPE 3-4), then 20-second sprints (RPE 9-10) every minute on the minute for 10 min"},{"kind":"z4","min":25,"label":"Intervals: 2 min x 5","detail":"10 min easy warm-up, then 2 min at RPE 8 (70-85% max HR, 88-95% FTHR) / 1 min rest, 5 rounds"}]},{"week":8,"volume":165,"summary":"Zone 2-4","sessions":[{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":50,"label":"Zone 1 easy","detail":"RPE 3-4 · 50-60% max HR · 70-80% FTHR"},{"kind":"z4","min":25,"label":"Intervals: 2 min x 5","detail":"10 min easy warm-up, then 2 min at RPE 8 (70-85% max HR, 88-95% FTHR) / 1 min rest, 5 rounds"}]},{"week":9,"volume":170,"summary":"Zone 2-4","sessions":[{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":50,"label":"Zone 1 easy 40 min + sprints","detail":"40 min Zone 1 (RPE 3-4), then 20-second sprints (RPE 9-10) every minute on the minute for 10 min"},{"kind":"z4","min":30,"label":"Intervals: 3 min x 5","detail":"10 min easy warm-up, then 3 min at RPE 8 (70-85% max HR, 88-95% FTHR) / 1 min rest, 5 rounds"}]},{"week":10,"volume":170,"summary":"Zone 2-4","sessions":[{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z2","min":30,"label":"Zone 2 steady","detail":"RPE 4-6 · 60-70% max HR · 80-88% FTHR"},{"kind":"z1","min":50,"label":"Zone 1 easy","detail":"RPE 3-4 · 50-60% max HR · 70-80% FTHR"},{"kind":"z4","min":30,"label":"Intervals: 3 min x 5","detail":"10 min easy warm-up, then 3 min at RPE 8 (70-85% max HR, 88-95% FTHR) / 1 min rest, 5 rounds"}]}],"options":{"mainSquat":["High Bar Back Squat","Low Bar Back Squat","Front Squat","Safety Bar Squat","2ct Paused Squat","Belt Squat Machine","Hack Squat","Leg Press","High Bar 2ct Paused Squat","3ct Paused Squat","1ct Paused Squat","Tempo Squat (3-0-3)","Tempo Squat (5-0-1)","Pin Squat"],"suppSquat":["2ct Paused Squat","3ct Paused Squat","Tempo Squat (3-0-3)","Pin Squat","Box Squat","Front Squat","Safety Bar Squat","Hatfield Squat","Pendulum Squat","Hack Squat","High Bar 2ct Paused Squat","High Bar 3ct Paused Squat","Low Bar 2ct Paused Squat","1ct Paused Squat","Paused Front Squat","Tempo Squat (5-0-1)"],"speedSquat":["Safety Bar Squat","High Bar Back Squat","Front Squat","Box Squat","Hang Power Clean","Power Clean","2ct Paused Squat","High Bar 2ct Paused Squat","Paused Safety Bar Squat","Pin Squat"],"mainHinge":["Conventional Deadlift","Sumo Deadlift","Trap Bar Deadlift","2ct Paused Deadlift","2\" Deficit Deadlift","Mid-Shin Block Pull","Paused Deadlift (below knee)","Paused Deadlift (mid-shin)","Tempo Deadlift (3s eccentric)"],"speedHinge":["Trap Bar Deadlift","Conventional Deadlift","Sumo Deadlift","Mid-Shin Block Pull","Hang Power Clean","Power Clean","Power Snatch","2ct Paused Deadlift","Paused Trap Bar Deadlift"],"suppHinge":["Hip Thrusts","Romanian Deadlift","Barbell Glute Bridge","Good Morning","Stiff-Legged Deadlift","Cable Pull Throughs","Back Extensions","2ct Paused Romanian Deadlift","Paused Hip Thrust (2ct at top)","Tempo RDL (4-0-1)"],"suppHinge2":["Hip Thrusts","Barbell Glute Bridge","Cable Pull Throughs","Good Morning","Back Extensions","Romanian Deadlift","Paused Hip Thrust (2ct at top)","Tempo Hip Thrust (3-0-1)"],"uniSquat":["Split Squat","Bulgarian Split Squat","Walking Lunges","Reverse Lunges","Box Step Ups","Single-Leg Leg Press","2ct Paused Split Squat","2ct Paused Bulgarian Split Squat","Tempo Split Squat (3-0-1)"],"quadIso":["Box Step Ups","Leg Extensions","Walking Lunges","Goblet Squat","Split Squat","Sissy Squat","Tempo Leg Extension (1-2-3)","2ct Paused Leg Extension","2ct Paused Box Step Up"],"hamIso":["Lying Leg Curl","Seated Leg Curl","Single Leg Lying Leg Curl","Nordic Hamstring Curl","Razor Curl","Single-Leg RDL","Glute Ham Raises","Tempo Leg Curl (1-2-3)","2ct Paused Leg Curl"],"mainHorizPress":["Flat Bench Press","1ct Paused Bench","Touch and Go Bench","Larsen Bench","Close Grip Bench Press","Swiss Bar Bench","Dumbbell Bench Press","2ct Paused Bench","3ct Paused Bench","Tempo Bench (3-0-3)","Pin Press"],"mainVertPress":["Standing Barbell Overhead Press","Seated Barbell Overhead Press","Push Press","Dumbbell Overhead Press","Machine Shoulder Press","2ct Paused Overhead Press","Paused Push Press","Tempo Overhead Press (3-0-1)","Pin Press"],"speedPress":["Floor Press","High Incline (45-60°) Barbell Press","Flat Bench Press","Close Grip Bench Press","Push Press","Pin Press","1ct Paused Bench","2ct Paused Bench","Paused Floor Press","Paused High Incline Press"],"suppPress":["Close Grip Bench Press","High Incline Bench Press","Low Incline Bench Press","Larsen Bench","Dumbbell Incline Bench","JM Press","Dips","2ct Paused Close Grip Bench","Paused Incline Bench","Tempo Close Grip Bench (3-0-1)"],"suppVertPress":["Dips","Standing Barbell Overhead Press","Dumbbell Overhead Press","High Incline Bench Press","Machine Shoulder Press","Push-Ups","2ct Paused Dip","Tempo Dip (3-0-1)","Paused Overhead Press"],"mainHorizPull":["Chest-Supported Row","Pendlay Row","Bent Over Row","T-Bar Row","Seal Row","Seated Row","1-Arm DB Row","2ct Paused Row (hold at chest)","Tempo Row (1-2-1)","Dead-Stop Row"],"suppHorizPull":["Chest-Supported Row","1-Arm DB Row","Seated Row","Pendlay Row","T-Bar Row","Seal Row","1-Arm Cable Row","2ct Paused Row (hold at chest)","Dead-Stop Row","Tempo 1-Arm DB Row (1-2-1)"],"mainVertPull":["Pull-Up","Weighted Pull-Up","Chin-Up","Weighted Chin-Up","Neutral Grip Pull-Up","Lat Pull Down","2ct Paused Chin-Up (hold at top)","Tempo Pull-Up (1-0-3)","Dead-Hang Pull-Up"],"suppVertPull":["High Handle Pull Down","Lat Pull Down","V-Grip Pulldown","Chin-Up","Pull-Up","Straight-Arm Pulldown","2ct Paused Pull Down","Tempo Lat Pull Down (1-2-1)"],"triceps":["Overhead Cable Triceps Extension","V-Grip Press Down","Rope Press Down","Lying Triceps Extension (EZ Bar)","Machine Overhead Triceps Extension","JM Press","Dips"],"biceps":["Preacher Curl","Concentration Curl","Incline Dumbbell Curl","Barbell Curl","EZ-Bar Curl","Hammer Curl","Spider Curl","Cable Curl"],"trunk1":["Leg Raises","Hanging Leg Raises","Cable Chop","Pallof Press","Ab Wheel Roll Out","Cable Crunch","V-Ups","Situps"],"trunk2":["Back Extensions","Glute Ham Raises","Good Morning","Cable Pull Throughs","Hip Extensions","Reverse Hyper"]}};
 const RPE_PCT = {"6.0":[0.864,0.837,0.811,0.787,0.762,0.74,0.707,0.681,0.654,0.627],"6.5":[0.878,0.85,0.824,0.799,0.774,0.751,0.723,0.694,0.667,0.64],"7.0":[0.892,0.863,0.837,0.811,0.786,0.762,0.739,0.707,0.68,0.653],"7.5":[0.907,0.878,0.85,0.824,0.799,0.774,0.751,0.723,0.694,0.667],"8.0":[0.922,0.892,0.863,0.837,0.811,0.786,0.762,0.739,0.707,0.68],"8.5":[0.939,0.907,0.878,0.85,0.824,0.799,0.774,0.751,0.723,0.694],"9.0":[0.955,0.922,0.892,0.863,0.837,0.811,0.786,0.762,0.739,0.707],"9.5":[0.978,0.939,0.907,0.878,0.85,0.824,0.799,0.774,0.751,0.723],"10.0":[1,0.955,0.922,0.892,0.863,0.837,0.811,0.786,0.762,0.739]};
 </script>
 
@@ -408,6 +441,7 @@ function defaultState(){
     logs:{},            // "<week>_<slotKey>" -> {sets:[{w,r,p}], time, srpe}
     conditioningLogs:[],// [{week,date,zone,duration,dist,hr,notes}]
     condDone:{},        // "<week>_<sessionIndex>" -> true
+    daysDone:{},        // "<week>_<day>" -> ISO timestamp the day was ticked off
     ui:{ day:'A' },
     currentWeek: 1
   };
@@ -424,6 +458,7 @@ function normalizeState(parsed){
   if(!st.meta.overrides || typeof st.meta.overrides !== 'object') st.meta.overrides = {};
   if(!st.logs || typeof st.logs !== 'object') st.logs = {};
   if(!st.condDone || typeof st.condDone !== 'object') st.condDone = {};
+  if(!st.daysDone || typeof st.daysDone !== 'object') st.daysDone = {};
   if(!Array.isArray(st.conditioningLogs)) st.conditioningLogs = [];
   if(!Array.isArray(st.meta.trainDays) || st.meta.trainDays.length!==4) st.meta.trainDays = [1,2,4,5];
   if(!Array.isArray(st.meta.dayOrder) || [...st.meta.dayOrder].sort().join('')!=='ABCD') st.meta.dayOrder = ['A','B','C','D'];
@@ -735,7 +770,7 @@ function jumpTo(tabName){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+tabName).classList.add('active');
   document.querySelectorAll('.bottom-nav button').forEach(b=>b.classList.toggle('active', b.dataset.tab===tabName));
-  const renderers = {today:renderToday, conditioning:renderConditioning, progress:renderProgress, settings:renderSettings};
+  const renderers = {today:renderToday, conditioning:renderConditioning, done:renderDone, progress:renderProgress, settings:renderSettings};
   if(renderers[tabName]) renderers[tabName]();
   window.scrollTo(0,0);
 }
@@ -833,8 +868,15 @@ document.addEventListener('input', e=>{
     }
   }
   if(el.matches('[data-sessionmeta]')){
-    getLog(el.dataset.sessionmeta)[el.dataset.field] = el.value;
+    const k = el.dataset.sessionmeta;
+    getLog(k)[el.dataset.field] = el.value;
     save();
+    if(el.dataset.field === 'start' || el.dataset.field === 'end'){
+      const out = document.getElementById('dur-'+k);
+      if(out) out.innerHTML = durationText(getLog(k));
+      const stamp = document.getElementById('stamp-'+k);
+      if(stamp) stamp.innerHTML = stampBtnHtml(k, getLog(k));
+    }
   }
 });
 
@@ -865,10 +907,23 @@ function renderToday(){
   + '<div class="tiny dim" style="margin-top:9px;">Every day is full body and opens with a multi-joint lower body lift.</div>'
   + '</div>'
   + slots.map((s,i)=>exerciseBlock(s, week, i===0)).join('')
-  + '<div class="card"><h2>Session</h2><div class="grid2">'
-  +   '<div class="field" style="margin-bottom:0;"><label>Time (min)</label><input type="number" data-sessionmeta="'+sessionKey+'" data-field="time" value="'+esc(sessLog.time)+'"></div>'
+  + '<div class="card"><h2>Session</h2>'
+  + '<div class="grid2">'
+  +   '<div class="field" style="margin-bottom:0;"><label>Start</label>'
+  +     '<input type="time" data-sessionmeta="'+sessionKey+'" data-field="start" value="'+esc(sessLog.start||'')+'"></div>'
+  +   '<div class="field" style="margin-bottom:0;"><label>End</label>'
+  +     '<input type="time" data-sessionmeta="'+sessionKey+'" data-field="end" value="'+esc(sessLog.end||'')+'"></div>'
+  + '</div>'
+  + '<div id="stamp-'+sessionKey+'" style="margin-top:10px;">'+stampBtnHtml(sessionKey, sessLog)+'</div>'
+  + '<div class="grid2" style="margin-top:10px;">'
+  +   '<div class="field" style="margin-bottom:0;"><label>Duration</label>'
+  +     '<div class="readout" id="dur-'+sessionKey+'">'+durationText(sessLog)+'</div></div>'
   +   '<div class="field" style="margin-bottom:0;"><label>Session RPE</label><input type="number" step="0.5" data-sessionmeta="'+sessionKey+'" data-field="srpe" value="'+esc(sessLog.srpe)+'"></div>'
-  + '</div><div class="tiny dim" style="margin-top:8px;">5 = easy · 8 = tough but repeatable · 10 = maximal</div></div>';
+  + '</div>'
+  + '<div class="tiny dim" style="margin-top:8px;">5 = easy · 8 = tough but repeatable · 10 = maximal</div>'
+  + '<div class="divider"></div>'
+  + dayDoneHtml(week, day, slots)
+  + '</div>';
 
   const strip = document.getElementById('weekstrip');
   const act = strip && strip.querySelector('.active');
@@ -897,6 +952,59 @@ function exerciseBlock(slot, week, isLead){
 }
 function setWeek(n){ STATE.currentWeek=n; save(); renderToday(); }
 function setDay(d){ STATE.ui.day=d; save(); renderToday(); }
+
+/* Duration comes off the clock times; a session running past midnight still
+   reads as a positive length rather than a negative one. */
+function minutesBetween(start, end){
+  if(!start || !end) return null;
+  const [sh,sm] = start.split(':').map(Number);
+  const [eh,em] = end.split(':').map(Number);
+  if([sh,sm,eh,em].some(n=>isNaN(n))) return null;
+  let mins = (eh*60+em) - (sh*60+sm);
+  if(mins < 0) mins += 24*60;
+  return mins;
+}
+function sessionMinutes(log){
+  const m = minutesBetween(log.start, log.end);
+  if(m != null) return m;
+  const legacy = parseFloat(log.time);       // sessions logged before clock times existed
+  return legacy > 0 ? legacy : null;
+}
+function durationText(log){
+  const m = sessionMinutes(log);
+  if(m == null) return '<span class="dim">—</span>';
+  const h = Math.floor(m/60), mm = m%60;
+  return '<b>'+m+'</b> min' + (h ? ' <span class="dim">· '+h+'h '+mm+'m</span>' : '');
+}
+/* One tap when you start, one when you rack the last bar. */
+function stampBtnHtml(key, log){
+  if(!log.start) return '<button class="btn block" onclick="stampNow(\''+key+'\',\'start\')">Start now</button>';
+  if(!log.end)   return '<button class="btn block primary" onclick="stampNow(\''+key+'\',\'end\')">Finish now</button>';
+  return '<button class="btn block" onclick="clearTimes(\''+key+'\')">Clear times</button>';
+}
+function refreshSessionTimes(key){
+  const log = getLog(key, 1);
+  ['start','end'].forEach(f=>{
+    const el = document.querySelector('[data-sessionmeta="'+key+'"][data-field="'+f+'"]');
+    if(el) el.value = log[f] || '';
+  });
+  const out = document.getElementById('dur-'+key);
+  if(out) out.innerHTML = durationText(log);
+  const stamp = document.getElementById('stamp-'+key);
+  if(stamp) stamp.innerHTML = stampBtnHtml(key, log);   // patched in place: no scroll jump
+}
+function stampNow(key, field){
+  const d = new Date();
+  getLog(key, 1)[field] = String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  save();
+  refreshSessionTimes(key);
+}
+function clearTimes(key){
+  const log = getLog(key, 1);
+  log.start = ''; log.end = ''; log.time = '';
+  save();
+  refreshSessionTimes(key);
+}
 
 /* ---------- Conditioning tab ---------- */
 function condWeek(week){ return PROGRAM.conditioning[week-1]; }
@@ -1021,6 +1129,119 @@ function addCondLog(){
   renderConditioning();
 }
 function delCondLog(i){ STATE.conditioningLogs.splice(i,1); save(); renderConditioning(); }
+
+/* ---------- Completion ----------
+   A day counts as done when you say so. Logging every exercise marks it
+   automatically, but plenty of sessions end with something unlogged — a
+   bodyweight set, a lift you swapped out — so the explicit tick wins. */
+function dayStatus(week, day){
+  const slots = slotsFor(week).filter(s=>s.day===day);
+  const logged = slots.filter(s=>exerciseStats(logKey(week,s.key)).hasData).length;
+  const marked = !!STATE.daysDone[week+'_'+day];
+  return {logged, total:slots.length, marked, done: marked || logged===slots.length};
+}
+function toggleDayDone(week, day){
+  const k = week+'_'+day;
+  if(STATE.daysDone[k]) delete STATE.daysDone[k]; else STATE.daysDone[k] = new Date().toISOString();
+  save();
+  if(document.body.dataset.tab === 'done') renderDone();
+  else renderToday();
+}
+function dayDoneHtml(week, day, slots){
+  const st = dayStatus(week, day);
+  return '<div class="donerow">'
+    + '<button class="donebtn'+(st.done?' on':'')+'" onclick="toggleDayDone('+week+',\''+day+'\')">'
+    +   (st.done ? '✓ Day '+day+' complete' : 'Mark day '+day+' complete')
+    + '</button></div>'
+    + '<div class="tiny dim" style="margin-top:7px;">'
+    +   st.logged+' of '+st.total+' exercises logged'
+    +   (st.done && !st.marked ? ' — counted complete automatically' : '')
+    + '</div>';
+}
+
+/* ---------- Completion tab ---------- */
+function renderDone(){
+  const ti = todayInfo();
+  const here = (ti && (ti.status==='train'||ti.status==='rest')) ? ti : null;
+
+  let doneDays = 0, totalDays = 40;
+  const rows = [];
+  for(let wk=1; wk<=10; wk++){
+    let cells = '<div class="cwk'+(here && here.week===wk?' now':'')+'">wk '+wk+'</div>';
+    for(const d of ['A','B','C','D']){
+      const st = dayStatus(wk, d);
+      if(st.done) doneDays++;
+      const pct = Math.round(st.logged/st.total*100);
+      const cls = st.done ? 'done' : (st.logged ? 'part' : '');
+      const isToday = here && here.week===wk && here.status==='train' && here.day===d;
+      cells += '<button class="cell '+cls+(isToday?' today':'')+'" '
+             + 'onclick="jumpToDay('+wk+',\''+d+'\')" '
+             + 'aria-label="Week '+wk+' day '+d+', '+st.logged+' of '+st.total+' logged">'
+             + (st.done ? '' : '<i class="fill" style="height:'+pct+'%"></i>')
+             + '<span>'+(st.done ? '✓' : (st.logged ? st.logged+'/'+st.total : d))+'</span>'
+             + '</button>';
+    }
+    rows.push(cells);
+  }
+
+  // conditioning: a week counts done once its ticked sessions cover the prescription
+  let condDone = 0;
+  const condRows = PROGRAM.conditioning.map(c=>{
+    const ticked = c.sessions.filter((_,i)=>STATE.condDone[c.week+'_'+i]).length;
+    const full = ticked === c.sessions.length;
+    if(full) condDone++;
+    return '<button class="cell '+(full?'done':(ticked?'part':''))+'" onclick="jumpToCond('+c.week+')" '
+         + 'aria-label="Week '+c.week+' conditioning, '+ticked+' of '+c.sessions.length+'">'
+         + (full?'':'<i class="fill" style="height:'+Math.round(ticked/c.sessions.length*100)+'%"></i>')
+         + '<span>'+(full?'✓':ticked+'/'+c.sessions.length)+'</span></button>';
+  });
+
+  // current streak: consecutive completed training days counting back from the last one done
+  const flat = [];
+  for(let wk=1; wk<=10; wk++) for(const d of ['A','B','C','D']) flat.push(dayStatus(wk,d).done);
+  let lastDone = flat.lastIndexOf(true), streak = 0;
+  for(let i=lastDone; i>=0 && flat[i]; i--) streak++;
+
+  document.getElementById('tab-done').innerHTML =
+  '<div class="card">'
+  + '<h2>Completion</h2>'
+  + '<div class="hero-row" style="margin-top:10px;">'
+  +   '<div><div class="streak">'+doneDays+'<span class="dim" style="font-size:17px;font-weight:600;"> / '+totalDays+'</span></div>'
+  +   '<div class="tiny dim" style="margin-top:3px;">training days complete</div></div>'
+  +   '<div style="text-align:right;"><div class="streak">'+streak+'</div>'
+  +   '<div class="tiny dim" style="margin-top:3px;">in a row</div></div>'
+  + '</div>'
+  + '<div class="progressbar wide" style="margin-top:12px;"><i style="width:'+Math.round(doneDays/totalDays*100)+'%"></i></div>'
+  + '</div>'
+
+  + '<div class="card"><h2>Lifting <span class="dim" style="font-weight:500;">· tap any day to open it</span></h2>'
+  + '<div class="cgrid">'
+  +   '<div></div>'+['A','B','C','D'].map(d=>'<div class="chead">'+d+'</div>').join('')
+  +   rows.join('')
+  + '</div>'
+  + '<div class="clegend">'
+  +   '<span><i style="background:var(--good)"></i>complete</span>'
+  +   '<span><i style="background:var(--accent);opacity:.35"></i>part-logged</span>'
+  +   '<span><i style="background:var(--surface2)"></i>not started</span>'
+  + '</div></div>'
+
+  + '<div class="card"><h2>Conditioning <span class="dim" style="font-weight:500;">· sessions ticked off</span></h2>'
+  + '<div class="cgrid" style="grid-template-columns:auto repeat(5,1fr);">'
+  +   '<div></div>'+[1,2,3,4,5].map(n=>'<div class="chead">'+n+'</div>').join('')
+  +   '<div class="cwk">wk 1-5</div>'+condRows.slice(0,5).join('')
+  +   '<div class="cwk">wk 6-10</div>'+condRows.slice(5).join('')
+  + '</div>'
+  + '<div class="tiny dim" style="margin-top:11px;">'+condDone+' of 10 weeks fully ticked off.</div>'
+  + '</div>';
+}
+function jumpToDay(week, day){
+  STATE.currentWeek = week; STATE.ui.day = day; save();
+  jumpTo('today');
+}
+function jumpToCond(week){
+  STATE.currentWeek = week; save();
+  jumpTo('conditioning');
+}
 
 /* ---------- Progress tab ---------- */
 function renderProgress(){
