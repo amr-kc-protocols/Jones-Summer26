@@ -71,6 +71,11 @@ const deviates = (week, exercise) =>
   DEVIATIONS.some(d => norm(d.exercise) === norm(exercise) && d.weeks.includes(week));
 const hit = new Set();
 
+/* A slot may name a more specific variant than the sheet does (the day C lead is
+   an explicit high-bar pause, where the sheet just says "2ct Paused Squat").
+   sourceName keeps it pointed at the row it still implements. */
+const srcName = slot => slot.sourceName || slot.name;
+
 /* What the app prescribes for one slot in one week, in the fixture's shape. */
 function appRx(slot, weekIdx) {
   if (slot.kind === 'power') {
@@ -85,9 +90,9 @@ let compared = 0, missing = [];
 for (const [bk, block] of Object.entries(PROGRAM.blocks)) {
   block.weeks.forEach((week, weekIdx) => {
     for (const slot of block.slots) {
-      if (deviates(week, slot.name)) { hit.add(key(week, slot.name)); continue; }
-      const src = source.get(key(week, slot.name));
-      if (!src) { missing.push(`wk ${week} ${slot.name}`); continue; }
+      if (deviates(week, srcName(slot))) { hit.add(key(week, srcName(slot))); continue; }
+      const src = source.get(key(week, srcName(slot)));
+      if (!src) { missing.push(`wk ${week} ${srcName(slot)}`); continue; }
       const got = appRx(slot, weekIdx);
       const want = { ...src };
       delete want.week; delete want.exercise;
@@ -105,6 +110,20 @@ for (const d of DEVIATIONS) {
   for (const w of d.weeks) {
     ok(`deviation still applies: wk ${w} ${d.exercise}`, hit.has(key(w, d.exercise)),
        'no longer diverges from the sheet — drop it from DEVIATIONS and the README');
+  }
+}
+
+/* Any slot renamed away from the sheet must say which row it still implements,
+   and that row must exist — otherwise the prescription is being checked against
+   nothing at all. */
+for (const [bk, block] of Object.entries(PROGRAM.blocks)) {
+  for (const slot of block.slots) {
+    if (!slot.sourceName) continue;
+    ok(`${bk} ${slot.key}: renamed default declares its source`,
+       slot.sourceName !== slot.name, `${slot.name} == ${slot.sourceName}`);
+    ok(`${bk} ${slot.key}: "${slot.sourceName}" is a real row in the sheet`,
+       block.weeks.every(w => source.has(key(w, slot.sourceName))),
+       `no fixture row for ${slot.sourceName}`);
   }
 }
 
@@ -180,6 +199,11 @@ for (const [bk, block] of Object.entries(PROGRAM.blocks)) {
     ok(`${bk} ${slot.key}: has swap options`, Array.isArray(opts) && opts.length >= 4);
     if (opts) ok(`${bk} ${slot.key}: its default is among them`, opts.includes(slot.name),
                  `${slot.name} missing from [${opts.slice(0, 3)}...]`);
+    /* Pauses are the point of several swaps — make sure the barbell lifts offer some. */
+    if (opts && ['mainSquat','suppSquat','mainHinge','mainHorizPress','mainVertPress'].includes(slot.key)) {
+      ok(`${bk} ${slot.key}: offers a paused variant`,
+         opts.some(o => /paus|tempo/i.test(o)), opts.join(', ').slice(0, 80));
+    }
   }
 }
 
