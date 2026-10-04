@@ -436,6 +436,63 @@ export function makeOccurrence(ev, day, exc) {
   return o;
 }
 
+/* How far either side of a range to look for occurrences that end up
+   inside it anyway: a multi-day all-day event that started earlier, or a
+   single day of a series moved from a date outside the range. The day map
+   caps a span at 60 days, so that is the furthest back one can reach. */
+const LOOK_BACK = 62, LOOK_AHEAD = 62;
+
+/* Every day an event should be drawn on within [from, to], as
+   { key, o } pairs. `excFor(key)` returns that day's exception row, if any.
+
+   An occurrence is filed under the day it actually happens, not the day
+   the series put it on — "this day only" can move a Tuesday class to
+   Thursday, and it belongs on Thursday. A multi-day all-day event is
+   filed under each day it covers that falls in range, including when it
+   started before the range began. */
+export function placeOccurrences(ev, from, to, excFor = () => null) {
+  const out = [];
+  const lo = startOfDay(from), hi = startOfDay(to);
+  for (const day of occurrenceDays(ev, addDays(lo, -LOOK_BACK), addDays(hi, LOOK_AHEAD))) {
+    const exc = excFor(ymd(day));
+    if (exc && exc.action === 'skip') continue;
+    const o = makeOccurrence(ev, day, exc);
+    const first = startOfDay(o.start);
+    const span = (o.allDay && o.end && o.end > o.start)
+      ? Math.min(daysBetween(first, o.end), 60) : 0;
+    for (let i = 0; i <= span; i++) {
+      const d = addDays(first, i);
+      if (d >= lo && d <= hi) out.push({ key: ymd(d), o });
+    }
+  }
+  return out;
+}
+
+/* The start and end a whole series should get when it is edited from one
+   of its later days.
+
+   The editor shows the date of the day you tapped, so writing its fields
+   straight onto the series would move the series' first day up to that
+   date and silently delete every earlier occurrence. Instead the series
+   keeps its own first day, shifted by however many days you moved the
+   one you were looking at, and takes the new time of day and duration. */
+export function seriesTimes(ev, occDay, form) {
+  const shift = daysBetween(occDay, new Date(form.starts_at));
+  const baseDay = addDays(startOfDay(new Date(ev.starts_at)), shift);
+  const newStart = new Date(form.starts_at);
+  let starts;
+  if (form.all_day) starts = baseDay;
+  else starts = new Date(baseDay.getFullYear(), baseDay.getMonth(), baseDay.getDate(),
+                         newStart.getHours(), newStart.getMinutes());
+  let ends = null;
+  if (form.ends_at) {
+    ends = form.all_day
+      ? addDays(starts, daysBetween(newStart, new Date(form.ends_at)))
+      : new Date(starts.getTime() + (new Date(form.ends_at) - newStart));
+  }
+  return { starts_at: starts.toISOString(), ends_at: ends ? ends.toISOString() : null };
+}
+
 /* ══ spending ═══════════════════════════════════════════
    A want list with a cooling-off period, and a budget to burn down.
 

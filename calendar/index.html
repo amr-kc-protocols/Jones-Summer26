@@ -27,13 +27,16 @@
   --line:#d8c8a6; --line2:#e6dbc2;
 
   /* ink */
-  --ink:#1a2338; --dim:#6b6650; --faint:#8d8468;
+  /* --faint and --gold-ink are dark enough for small text on parchment
+     (WCAG AA, ≥4.5:1 on the surface); --gold stays the lighter old gold
+     for rings, coins and markers, where it isn't carrying words */
+  --ink:#1a2338; --dim:#6b6650; --faint:#746d55;
 
   /* the two house colours */
   --accent:#27478f;              /* Delft cobalt */
   --accent-ink:#fdfbf5;
   --today:#a3242c;               /* the hallway crimson */
-  --danger:#a3242c; --good:#3f7350; --gold:#b08a48;
+  --danger:#a3242c; --good:#3f7350; --gold:#b08a48; --gold-ink:#8a6c34;
 
   --sheet:#fdfbf5;
   --shadow:0 14px 44px rgba(48,36,14,.24);
@@ -67,9 +70,9 @@
     /* night is a deep Delft navy, not neutral charcoal */
     --bg:#111a2b; --surface:#1a2436; --surface2:#232f45;
     --line:#3a4560; --line2:#2a3549;
-    --ink:#f0e8d8; --dim:#b3a893; --faint:#8a8474;
+    --ink:#f0e8d8; --dim:#b3a893; --faint:#9c9683;
     --accent:#8fb0e8; --accent-ink:#101a2c;
-    --today:#e0707a; --danger:#e8737d; --good:#6bbf8c; --gold:#c9a563;
+    --today:#e0707a; --danger:#e8737d; --good:#6bbf8c; --gold:#c9a563; --gold-ink:#c9a563;
     --sheet:#1a2436;
     --shadow:0 14px 44px rgba(0,0,0,.55);
     --orn:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Cg fill='none' stroke='%238fb0e8' stroke-width='1.3' stroke-linecap='round'%3E%3Cpath d='M3 3L10.5 10.5'/%3E%3Cpath d='M11.4 3.4C14.9 3.4 15.6 8 12.1 8.4 9.7 8.6 9.4 5.3 11.8 5.5'/%3E%3Cpath d='M3.4 11.4C3.4 14.9 8 15.6 8.4 12.1 8.6 9.7 5.3 9.4 5.5 11.8'/%3E%3Cpath d='M13.8 13.8L16.4 16.4'/%3E%3C/g%3E%3C/svg%3E");
@@ -162,7 +165,7 @@ header::after{content:'';display:block;height:5px;background-image:var(--stripe)
   display:block;font-family:var(--sans);font-size:10px;font-weight:600;
   color:var(--faint);letter-spacing:.4px;margin-top:1px;
 }
-.nav-btn{width:36px;height:36px;border-radius:50%;font-size:23px;color:var(--gold);display:grid;place-items:center;}
+.nav-btn{width:36px;height:36px;border-radius:50%;font-size:23px;color:var(--gold-ink);display:grid;place-items:center;}
 .nav-btn:active{background:var(--surface2);}
 .today-btn{
   font-family:var(--serif);font-size:13px;padding:6px 13px;border-radius:999px;
@@ -195,13 +198,15 @@ main{padding-bottom:calc(96px + var(--safe-b));}
 .dow{display:grid;grid-template-columns:repeat(7,1fr);padding:8px 0 6px;background:var(--surface);}
 .dow span{
   text-align:center;font-family:var(--serif);font-size:11px;
-  color:var(--gold);letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--gold-ink);letter-spacing:1.2px;text-transform:uppercase;
 }
 .grid{display:grid;grid-template-columns:repeat(7,1fr);background:var(--line2);gap:1px;border-top:1px solid var(--line);}
 .cell{
   background:var(--surface);min-height:62px;padding:4px 3px 5px;
   display:flex;flex-direction:column;align-items:center;gap:2px;
 }
+.cell{cursor:pointer;}
+.cell:active{background:var(--surface2);}
 .cell.out{background:var(--bg);}
 .cell.out .num{color:var(--faint);}
 .cell .num{
@@ -225,11 +230,16 @@ main{padding-bottom:calc(96px + var(--safe-b));}
   mask:radial-gradient(circle at 50% 100%,#000 0 8.5px,transparent 8.6px) 0 0/20px 9px repeat-x;
 }
 .day-head{
-  padding:12px 16px 8px;font-family:var(--serif);font-size:13.5px;color:var(--gold);
+  padding:12px 16px 8px;font-family:var(--serif);font-size:13.5px;color:var(--gold-ink);
   letter-spacing:1.1px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;
 }
-.day-head .add{font-family:var(--sans);font-size:12.5px;font-weight:700;color:var(--accent);text-transform:none;letter-spacing:0;}
-.day-acts{display:flex;gap:14px;align-items:center;flex:0 0 auto;}
+.day-head .add,.dg-head .add{
+  font-family:var(--sans);font-size:13px;font-weight:700;color:var(--accent);text-transform:none;letter-spacing:0;
+  padding:7px 11px;margin:-7px -4px;border-radius:999px;
+}
+.day-head .add:active,.dg-head .add:active{background:var(--surface2);}
+.dg-head .add{margin-left:auto;margin-right:-11px;}
+.day-acts{display:flex;gap:6px;align-items:center;flex:0 0 auto;}
 
 /* ══ event rows ══ */
 .ev{
@@ -249,6 +259,9 @@ main{padding-bottom:calc(96px + var(--safe-b));}
 .who i{width:7px;height:7px;border-radius:50%;}
 .rep{font-size:10.5px;opacity:.8;}
 .empty{padding:20px 16px 26px;text-align:center;color:var(--faint);font-size:13.5px;}
+/* an empty day in the week view: a quiet line, not a whole empty state */
+.empty.slim{padding:2px 16px 12px;text-align:left;}
+.empty.slim::before{display:none;}
 .empty::before{
   content:'';display:block;width:24px;height:24px;margin:0 auto 8px;
   background-image:var(--orn);background-size:contain;background-repeat:no-repeat;opacity:.5;
@@ -258,7 +271,7 @@ main{padding-bottom:calc(96px + var(--safe-b));}
 .daygroup{background:var(--surface);margin-bottom:9px;border-top:1px solid var(--line);}
 .daygroup.is-today .dg-head{color:var(--today);}
 .dg-head{
-  padding:10px 16px 7px;font-family:var(--serif);font-size:13px;color:var(--gold);
+  padding:10px 16px 7px;font-family:var(--serif);font-size:13px;color:var(--gold-ink);
   letter-spacing:1.1px;text-transform:uppercase;display:flex;gap:8px;align-items:baseline;
 }
 .dg-head .hol-tag{font-family:var(--sans);font-size:11px;font-weight:600;color:var(--faint);text-transform:none;letter-spacing:0;}
@@ -296,7 +309,7 @@ main{padding-bottom:calc(96px + var(--safe-b));}
 .sheet-body{overflow-y:auto;padding:14px 16px calc(24px + var(--safe-b));-webkit-overflow-scrolling:touch;}
 
 .field{margin-bottom:15px;}
-.field label{display:block;font-size:11px;font-weight:700;color:var(--gold);
+.field label{display:block;font-size:11px;font-weight:700;color:var(--gold-ink);
   letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px;}
 .field input[type=text],.field input[type=date],.field input[type=time],.field textarea,.field select{
   width:100%;background:var(--surface2);border:1px solid var(--line);border-radius:var(--r-sm);
@@ -305,6 +318,7 @@ main{padding-bottom:calc(96px + var(--safe-b));}
 .field input:focus,.field textarea:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:-1px;}
 .field textarea{min-height:70px;resize:vertical;}
 #evTitle{font-family:var(--serif);font-size:18px;}
+#evTitle.invalid{outline:2px solid var(--danger);outline-offset:-1px;}
 .row{display:flex;gap:9px;}
 .row>*{flex:1;min-width:0;}
 .who-pick{display:flex;flex-wrap:wrap;gap:7px;}
@@ -334,7 +348,7 @@ main{padding-bottom:calc(96px + var(--safe-b));}
    An ask that hasn't been answered is deliberately tentative: hollow
    markers in the grid, a dashed bar in the day list. Nothing about it
    should read as settled until someone says yes. */
-#inbox{display:flex;flex-direction:column;gap:6px;padding:0 12px 10px;}
+#inbox{display:flex;flex-direction:column;gap:6px;padding:10px 12px;}
 .inbox-card{
   display:flex;align-items:center;gap:10px;width:100%;text-align:left;
   padding:9px 12px;border-radius:var(--r-sm);
@@ -342,7 +356,7 @@ main{padding-bottom:calc(96px + var(--safe-b));}
 }
 .inbox-card.answered{border-color:var(--good);}
 .inbox-card.decide{border-color:var(--gold);}
-.inbox-card.decide .ic-go{color:var(--gold);}
+.inbox-card.decide .ic-go{color:var(--gold-ink);}
 .inbox-card .ic-body{flex:1;min-width:0;}
 .inbox-card .ic-title{font-family:var(--serif);font-size:14.5px;line-height:1.25;}
 .inbox-card .ic-sub{font-size:11.5px;color:var(--dim);margin-top:1px;}
@@ -400,7 +414,7 @@ main{padding-bottom:calc(96px + var(--safe-b));}
 .person-main{display:flex;align-items:center;gap:10px;}
 .person-bday{display:flex;align-items:center;gap:8px;margin-top:8px;padding-left:8px;}
 .bday-label{
-  font-size:11px;font-weight:700;color:var(--gold);
+  font-size:11px;font-weight:700;color:var(--gold-ink);
   letter-spacing:1.1px;text-transform:uppercase;flex:0 0 auto;
 }
 .annual{display:flex;gap:6px;flex:1;min-width:0;}
@@ -468,7 +482,7 @@ main{padding-bottom:calc(96px + var(--safe-b));}
 .burn+.burn{margin-top:-9px;}
 .burn-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
 .burn-head .bh-label{
-  font-family:var(--serif);font-size:13px;color:var(--gold);
+  font-family:var(--serif);font-size:13px;color:var(--gold-ink);
   letter-spacing:1.1px;text-transform:uppercase;
 }
 .burn-head .bh-num{font-family:var(--serif);font-size:19px;font-variant-numeric:tabular-nums;}
@@ -497,7 +511,7 @@ main{padding-bottom:calc(96px + var(--safe-b));}
 .sp-price{
   font-family:var(--serif);font-size:16px;font-variant-numeric:tabular-nums;flex:0 0 auto;
 }
-.sp-price.let-go{color:var(--gold);}
+.sp-price.let-go{color:var(--gold-ink);}
 .sp-tag{
   font-size:9.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;
   padding:2px 6px;border-radius:999px;border:1px solid currentColor;color:var(--faint);
@@ -510,7 +524,7 @@ main{padding-bottom:calc(96px + var(--safe-b));}
   background:transparent!important;box-shadow:inset 0 0 0 2px var(--gold);
   width:7px;height:7px;
 }
-.ev.is-spend .ev-time{color:var(--gold);font-weight:700;font-family:var(--serif);font-size:13.5px;}
+.ev.is-spend .ev-time{color:var(--gold-ink);font-weight:700;font-family:var(--serif);font-size:13.5px;}
 
 /* needed / wanted, and the amount field */
 .seg{display:flex;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;}
@@ -611,6 +625,27 @@ main{padding-bottom:calc(96px + var(--safe-b));}
 .bweek b{color:var(--ink);font-weight:700;}
 .bweek b.over{color:var(--danger);}
 
+/* while a sheet is up, the page behind it stays put */
+body.sheet-open{overflow:hidden;}
+
+/* keyboard focus is visible; a tap's isn't */
+button:focus-visible,.cell:focus-visible,.ev:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+
+/* "Saved", "Deleted · Undo" */
+#toast{
+  position:fixed;left:16px;right:16px;bottom:calc(88px + var(--safe-b));z-index:240;
+  width:fit-content;margin:0 auto;
+  display:flex;align-items:center;gap:14px;
+  padding:11px 16px;border-radius:999px;background:var(--ink);color:var(--bg);
+  font-size:14px;font-weight:600;box-shadow:var(--shadow);
+  opacity:0;pointer-events:none;transform:translateY(10px);
+  transition:opacity .2s,transform .2s;
+}
+#toast.on{opacity:1;pointer-events:auto;transform:none;}
+#toast button{color:var(--gold);font-weight:800;padding:2px 0;flex:0 0 auto;}
+@media (prefers-color-scheme: dark){ #toast button{color:#27478f;} }
+@media (prefers-reduced-motion: reduce){ #toast{transition:none;} }
+
 /* choice dialog */
 #choice{
   position:fixed;left:16px;right:16px;bottom:calc(16px + var(--safe-b));z-index:230;
@@ -664,8 +699,10 @@ main{padding-bottom:calc(96px + var(--safe-b));}
       <button data-view="money">Money</button>
     </div>
     <div class="filters" id="filters"></div>
-    <div id="inbox" hidden></div>
   </header>
+  <!-- Outside the sticky header on purpose: two or three cards pinned to
+       the top would eat half a phone screen on every scroll. -->
+  <div id="inbox" hidden></div>
   <main id="view"></main>
   <button id="fab" aria-label="Add event">+</button>
 </div>
@@ -775,7 +812,8 @@ main{padding-bottom:calc(96px + var(--safe-b));}
       <label>This phone belongs to</label>
       <select id="deviceOwner"></select>
       <div class="hint" style="margin-top:7px">
-        Only used to note who added an event. You both share one login.
+        You both share one login, so this is how the calendar knows whose
+        asks are whose — and who added an event.
       </div>
     </div>
     <div class="field">
@@ -1017,6 +1055,8 @@ main{padding-bottom:calc(96px + var(--safe-b));}
     <div class="bweek" id="batchWeek"></div>
   </div>
 </div>
+
+<div id="toast" role="status" aria-live="polite"></div>
 
 <!-- ══ this-or-all choice ══ -->
 <div id="choice">

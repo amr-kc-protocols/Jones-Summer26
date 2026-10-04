@@ -15,7 +15,7 @@ import {
 import {
   DAY_MS, startOfDay, addDays, addMonths, daysBetween, ymd, fromYmd, hm, pad2, sameDay, startOfWeek,
   MONTHS, MON_SHORT, DOW_SHORT, DOW_MIN, DAYCODE,
-  fmtTime, holidays, celebrations, parseAnnual, parseRRule, occurrenceDays, makeOccurrence,
+  fmtTime, holidays, celebrations, parseAnnual, parseRRule, placeOccurrences, seriesTimes,
   proposalOptions, fmtOption, inbox, proposalMarkers, eventFromProposal,
   COOL_OFF, coolOffDays, decideOn, money, burnDown, totalSaved,
   dueItems, waitingItems, spendMarkers,
@@ -89,21 +89,9 @@ function buildDayMap(from, to) {
     map.get(key).push(o);
   };
   for (const ev of state.events) {
-    for (const day of occurrenceDays(ev, from, to)) {
-      const key = ymd(day);
-      const exc = state.exceptions.get(`${ev.id}|${key}`);
-      if (exc && exc.action === 'skip') continue;
-      const o = makeOccurrence(ev, day, exc);
-      if (!visible(o)) continue;
-      if (o.allDay && o.end && o.end > o.start) {
-        const span = Math.min(daysBetween(o.start, o.end), 60);
-        for (let i = 0; i <= span; i++) {
-          const d = addDays(o.start, i);
-          if (d >= from && d <= to) push(ymd(d), o);
-        }
-      } else {
-        push(key, o);
-      }
+    const excFor = key => state.exceptions.get(`${ev.id}|${key}`) || null;
+    for (const { key, o } of placeOccurrences(ev, from, to, excFor)) {
+      if (visible(o)) push(key, o);
     }
   }
   /* Unanswered asks show as tentative, so a proposed time is visible
@@ -142,8 +130,10 @@ function render() {
      have nothing to do there. */
   const isMoney = state.view === 'money';
   $('#fab').hidden = isMoney;
-  $('#prev').hidden = $('#next').hidden = $('#todayBtn').hidden = isMoney;
-  $('#filters').hidden = isMoney;
+  // Agenda always starts today, so it has nowhere to step to either.
+  $('#prev').hidden = $('#next').hidden = isMoney || state.view === 'agenda';
+  $('#todayBtn').hidden = isMoney;
+  $('#filters').hidden = isMoney || state.people.length < 2;
 
   if (state.view === 'month') renderMonth();
   else if (state.view === 'week') renderWeek();
@@ -220,7 +210,12 @@ function renderMonth() {
       if (list.length > 6) cell.append(el('div', 'more', `+${list.length - 6}`));
     }
 
+    cell.setAttribute('role', 'button');
+    cell.tabIndex = 0;
+    cell.setAttribute('aria-label', `${DOW_SHORT[d.getDay()]} ${MON_SHORT[d.getMonth()]} ${d.getDate()}`
+      + (hol ? `, ${hol.name}` : '') + (list.length ? `, ${list.length} on` : ''));
     cell.onclick = () => { state.selected = d; render(); };
+    cell.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cell.click(); } };
     grid.append(cell);
   }
 
@@ -276,13 +271,19 @@ function dayGroup(d, map, showEmpty) {
     `${DOW_SHORT[d.getDay()]} ${MON_SHORT[d.getMonth()]} ${d.getDate()}${today ? ' · Today' : ''}`));
   const hol = holidayOn(d);
   if (hol) head.append(el('span', 'hol-tag', hol.name));
+  // The week view's days have no grid to tap, so each heading carries
+  // its own way to add to that day.
+  if (showEmpty) {
+    const add = el('button', 'add', '+ Add');
+    add.setAttribute('aria-label', `Add to ${DOW_SHORT[d.getDay()]} ${MON_SHORT[d.getMonth()]} ${d.getDate()}`);
+    add.onclick = () => openEditor(null, d);
+    head.append(add);
+  }
   g.append(head);
 
   if (list.length) list.forEach(o => g.append(eventRow(o)));
   else if (showEmpty) {
-    const e = el('div', 'empty', '—');
-    e.style.padding = '8px 16px 12px';
-    g.append(e);
+    g.append(el('div', 'empty slim', 'Nothing on'));
   }
   return g;
 }
@@ -327,7 +328,7 @@ function eventRow(o) {
   if (o.proposed) {
     meta.append(el('span', 'rep',
       o.askedBy === state.deviceOwner
-        ? 'waiting for an answer'
+        ? 'waiting for an answer · tap to take back'
         : `${o.askedBy || 'Someone'} asked · tap to answer`));
   }
   if (o.location) meta.append(el('span', null, o.location));
@@ -340,8 +341,9 @@ function eventRow(o) {
   row.onclick = () => {
     if (o.spendItem) openDecide(o.spendItem);
     else if (o.proposed) {
-      // Only the other phone can answer; the asker just sees it pending.
+      // Only the other phone can answer; the asker can take it back.
       if (o.askedBy !== state.deviceOwner) openAnswer(o.proposal);
+      else withdrawAsk(o.proposal);
     } else if (o.celebration) openSettings();
     else openEditor(o, o.day);
   };
@@ -356,14 +358,44 @@ function showSheet(node) {
   openSheet = node;
   node.classList.add('on');
   scrim.classList.add('on');
+  // Stops the page behind from scrolling under your thumb on iOS.
+  document.body.classList.add('sheet-open');
 }
 function hideSheets() {
   document.querySelectorAll('.sheet').forEach(s => s.classList.remove('on'));
   $('#choice').classList.remove('on');
   scrim.classList.remove('on');
+  document.body.classList.remove('sheet-open');
+  // The batch sheet's screenshot is a live object URL; however the sheet
+  // closes, it goes with it.
+  if (openSheet && openSheet.id === 'batchSheet') clearShot();
   openSheet = null;
 }
 scrim.onclick = () => { if (!choicePending) hideSheets(); };
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (choicePending) choicePending(null);
+  else if (openSheet) hideSheets();
+});
+
+/* A short note at the bottom of the screen — "Saved", "Deleted · Undo".
+   One at a time; a new one replaces the last. */
+let toastTimer = null;
+function toast(text, action) {
+  const box = $('#toast');
+  box.replaceChildren(el('span', null, text));
+  if (action) {
+    const b = el('button', null, action.label);
+    b.onclick = async () => {
+      box.classList.remove('on');
+      try { await action.run(); } catch (e) { alert('Could not undo: ' + e.message); }
+    };
+    box.append(b);
+  }
+  box.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => box.classList.remove('on'), action ? 6000 : 2200);
+}
 
 /* this-day-only vs whole-series prompt */
 let choicePending = null;
@@ -412,6 +444,8 @@ function openEditor(occ, forDate) {
   $('#evStart').value = hm(start);
   $('#evEndDate').value = ymd(end || start);
   $('#evEnd').value = hm(end || new Date(start.getTime() + 3600000));
+  rememberStart();
+  $('#evTitle').classList.remove('invalid');
 
   const rule = parseRRule(occ?.ev?.rrule);
   $('#evRepeat').value = ruleToOption(rule);
@@ -498,6 +532,30 @@ function renderByday() {
 function setToggle(node, on) { node.classList.toggle('on', !!on); }
 const isOn = node => node.classList.contains('on');
 
+/* Moving the start carries the end with it, keeping the length — the way
+   every calendar app behaves, and what stops a moved event quietly ending
+   before it begins. */
+let lastStart = null;
+function rememberStart() {
+  lastStart = { date: $('#evDate').value, time: $('#evStart').value };
+}
+function followStart() {
+  if (!lastStart || !lastStart.date || !$('#evDate').value) { rememberStart(); return; }
+  const at = (d, t) => { const x = fromYmd(d); const [h, m] = (t || '00:00').split(':').map(Number);
+                         return new Date(x.getFullYear(), x.getMonth(), x.getDate(), h, m); };
+  const was = at(lastStart.date, lastStart.time);
+  const now = at($('#evDate').value, $('#evStart').value);
+  const endDate = $('#evEndDate').value || lastStart.date;
+  const end = at(endDate, $('#evEnd').value || lastStart.time);
+  const moved = new Date(end.getTime() + (now - was));
+  $('#evEndDate').value = ymd(moved);
+  if ($('#evEnd').value) $('#evEnd').value = hm(moved);
+  rememberStart();
+}
+$('#evDate').onchange = followStart;
+$('#evStart').onchange = followStart;
+$('#evTitle').oninput = () => $('#evTitle').classList.remove('invalid');
+
 function syncEditorRows() {
   const allDay = isOn($('#evAllDay'));
   $('#evStart').hidden = allDay;
@@ -512,7 +570,19 @@ $('#evAllDay').onclick = () => { setToggle($('#evAllDay'), !isOn($('#evAllDay'))
 $('#evAllDayRow').onclick = e => { if (e.target.id !== 'evAllDay') $('#evAllDay').click(); };
 $('#evRepeat').onchange = syncEditorRows;
 $('#evCancel').onclick = hideSheets;
-$('#fab').onclick = () => openEditor(null, state.view === 'month' ? state.selected : startOfDay(new Date()));
+$('#fab').onclick = () => openEditor(null, fabDay());
+
+/* The day a new event starts on: the one you picked in Month; today in
+   Week if it's the week on screen, otherwise that week's first day. */
+function fabDay() {
+  const today = startOfDay(new Date());
+  if (state.view === 'month') return state.selected;
+  if (state.view === 'week') {
+    const from = startOfWeek(state.cursor, state.weekStart);
+    return (today >= from && today <= addDays(from, 6)) ? today : from;
+  }
+  return today;
+}
 
 /* Collect the form into the shape the database wants. */
 function readForm() {
@@ -550,6 +620,13 @@ function readForm() {
 }
 
 $('#evSave').onclick = async () => {
+  // An "Untitled" square on the wall calendar helps nobody; ask instead.
+  if (!$('#evTitle').value.trim()) {
+    const t = $('#evTitle');
+    t.classList.add('invalid'); t.focus();
+    toast('Give it a name first');
+    return;
+  }
   const form = readForm();
   const btn = $('#evSave');
   btn.disabled = true;
@@ -560,7 +637,10 @@ $('#evSave').onclick = async () => {
       const scope = await askScope('edit');
       if (!scope) { btn.disabled = false; return; }
       if (scope === 'all') {
-        await run(sb.from('events').update(form).eq('id', editing.eventId));
+        // Keep the series' own first day; see seriesTimes() in lib.js.
+        const row = { ...form, ...seriesTimes(editing.ev, editing.day, form) };
+        delete row.created_by;
+        await run(sb.from('events').update(row).eq('id', editing.eventId));
       } else {
         await run(sb.from('event_exceptions').upsert({
           event_id: editing.eventId,
@@ -574,10 +654,16 @@ $('#evSave').onclick = async () => {
         }, { onConflict: 'event_id,occurrence_date' }));
       }
     } else {
-      await run(sb.from('events').update(form).eq('id', editing.eventId));
+      // Editing doesn't change who added it — and the import tags live in
+      // created_by, so overwriting it would orphan a seeded event from its
+      // re-import.
+      const row = { ...form };
+      delete row.created_by;
+      await run(sb.from('events').update(row).eq('id', editing.eventId));
     }
     hideSheets();
     await refresh();
+    toast(editing ? 'Saved' : 'Added');
   } catch (e) {
     alert('Could not save: ' + e.message);
   } finally {
@@ -602,8 +688,17 @@ $('#evDelete').onclick = async () => {
         }, { onConflict: 'event_id,occurrence_date' }));
       }
     } else {
-      if (!confirm(`Delete "${editing.title}"?`)) return;
+      // No "are you sure" — an undo is kinder than a question, and it
+      // covers the slip a confirm box gets tapped through anyway.
+      const row = state.events.find(e => e.id === editing.eventId);
       await run(sb.from('events').delete().eq('id', editing.eventId));
+      hideSheets();
+      await refresh();
+      toast(`Deleted “${editing.title}”`, row && {
+        label: 'Undo',
+        run: async () => { await run(sb.from('events').insert(row)); await refresh(); }
+      });
+      return;
     }
     hideSheets();
     await refresh();
@@ -612,9 +707,12 @@ $('#evDelete').onclick = async () => {
   }
 };
 
+/* Throws on a database error, and otherwise hands back the rows — accept()
+   needs the id of the event it just created. */
 async function run(query) {
-  const { error } = await query;
+  const { data, error } = await query;
   if (error) throw error;
+  return data;
 }
 
 /* ══ settings ═══════════════════════════════════════════ */
@@ -855,10 +953,22 @@ function setSync(text, bad) {
   n.classList.toggle('bad', !!bad);
 }
 
-let refreshing = false;
-async function refresh() {
-  if (refreshing) return;
-  refreshing = true;
+/* One fetch at a time — but a refresh asked for while one is running is
+   queued, not dropped. Otherwise saving while a realtime refresh was in
+   flight would `await refresh()`, get the stale in-flight result, and the
+   thing you just saved wouldn't appear until something else synced. */
+let inflight = null, again = false;
+function refresh() {
+  if (inflight) { again = true; return inflight; }
+  inflight = (async () => {
+    try {
+      do { again = false; await fetchAll(); } while (again);
+    } finally { inflight = null; }
+  })();
+  return inflight;
+}
+
+async function fetchAll() {
   try {
     const [people, events, excs, settings, proposals, items, spends] = await Promise.all([
       sb.from('people').select('*').order('sort_order'),
@@ -877,6 +987,9 @@ async function refresh() {
     for (const r of [people, events, excs]) if (r.error) throw r.error;
 
     state.people = people.data || [];
+    // A filter on someone who has since been removed would hide everything
+    // but whole-family events, with no chip left to turn it off.
+    for (const id of state.filter) if (!personById(id)) state.filter.delete(id);
     state.events = events.data || [];
     state.exceptions = new Map((excs.data || [])
       .map(e => [`${e.event_id}|${e.occurrence_date}`, e]));
@@ -902,8 +1015,6 @@ async function refresh() {
     render();
   } catch (e) {
     setSync(navigator.onLine ? `Sync failed — ${e.message}` : 'Offline — showing last synced', true);
-  } finally {
-    refreshing = false;
   }
 }
 
@@ -936,8 +1047,10 @@ function buildPad() {
   const keys = ['1','2','3','4','5','6','7','8','9','clear','0','go'];
   for (const k of keys) {
     if (k === 'clear') {
-      const b = el('button', 'fn', 'Clear');
-      b.onclick = () => { pin = ''; renderDots(); };
+      // One wrong digit shouldn't cost the whole PIN.
+      const b = el('button', 'fn', '⌫');
+      b.setAttribute('aria-label', 'Delete last digit');
+      b.onclick = () => { if (!unlocking) { pin = pin.slice(0, -1); renderDots(); } };
       pad.append(b);
     } else if (k === 'go') {
       const b = el('button', 'fn', 'Enter');
@@ -983,7 +1096,7 @@ function hint(text, bad) {
 }
 
 document.addEventListener('keydown', e => {
-  if ($('#lock').hidden) return;
+  if ($('#lock').hidden || unlocking) return;
   if (/^\d$/.test(e.key) && pin.length < 10) { pin += e.key; renderDots(); }
   else if (e.key === 'Backspace') { pin = pin.slice(0, -1); renderDots(); }
   else if (e.key === 'Enter') submitPin();
@@ -1029,8 +1142,34 @@ $('#todayBtn').onclick = () => {
   render();
 };
 document.querySelectorAll('.views button').forEach(b => {
-  b.onclick = () => { state.view = b.dataset.view; render(); };
+  b.onclick = () => {
+    state.view = b.dataset.view;
+    // Stepping through weeks moves the cursor without moving the selected
+    // day, so coming back to Month could otherwise show one month's grid
+    // with another month's day listed under it.
+    clampSelectionToCursor();
+    render();
+    window.scrollTo(0, 0);
+  };
 });
+
+/* Swipe sideways on the month grid or the week list to step, the way a
+   paper calendar's pages turn. Only a clearly horizontal flick counts, so
+   scrolling down the day list never changes month by accident. */
+{
+  let x0 = null, y0 = null, t0 = 0;
+  view.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) { x0 = null; return; }
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  view.addEventListener('touchend', e => {
+    if (x0 == null || (state.view !== 'month' && state.view !== 'week')) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    x0 = null;
+    if (Date.now() - t0 > 600 || Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.8) return;
+    step(dx < 0 ? 1 : -1);
+  }, { passive: true });
+}
 
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && !$('#app').hidden) refresh();
@@ -1092,9 +1231,21 @@ function renderInbox() {
       `${p.answered_by || 'They'} said ${yes ? 'yes' : 'no'} to ${p.title}`,
       yes ? when : (p.reply_note || 'No time given'),
       'OK', true, async () => {
-        await run(sb.from('proposals').update({ seen_by_asker: true }).eq('id', p.id));
-        await refresh();
+        try {
+          await run(sb.from('proposals').update({ seen_by_asker: true }).eq('id', p.id));
+          await refresh();
+        } catch (e) {
+          alert('Could not clear that: ' + e.message);
+        }
       }));
+  }
+
+  /* Asks are routed by "This phone belongs to". Unset, this phone can't
+     tell its own asks from the other one's, so say so once, up top. */
+  if (!state.deviceOwner && state.people.length) {
+    box.hidden = false;
+    box.append(inboxCard('Whose phone is this?',
+      'Set it so asks go to the right person', 'Set', false, openSettings));
   }
 }
 
@@ -1212,6 +1363,19 @@ $('#askSend').onclick = async () => {
     btn.disabled = false;
   }
 };
+
+/* Your own ask, still unanswered — changed your mind, or sorted it out in
+   person. Nothing was ever booked, so taking it back is just deleting it. */
+async function withdrawAsk(p) {
+  if (!confirm(`Take back your ask about “${p.title}”?`)) return;
+  try {
+    await run(sb.from('proposals').delete().eq('id', p.id));
+    await refresh();
+    toast('Ask taken back');
+  } catch (e) {
+    alert('Could not take that back: ' + e.message);
+  }
+}
 
 /* ── answering one ── */
 function openAnswer(p) {
@@ -1629,6 +1793,10 @@ async function deleteSpend(sp) {
   try {
     await run(sb.from('spends').delete().eq('id', sp.id));
     await refresh();
+    toast(`Removed ${money(sp.amount, true)}`, {
+      label: 'Undo',
+      run: async () => { await run(sb.from('spends').insert(sp)); await refresh(); }
+    });
   } catch (e) {
     alert('Could not remove that: ' + e.message);
   }
@@ -1875,7 +2043,7 @@ $('#batchAddRow').onclick = () => {
   batchDraft.push(blankRow());
   renderBatchRows();
 };
-$('#batchCancel').onclick = () => { clearShot(); hideSheets(); };
+$('#batchCancel').onclick = hideSheets;
 
 $('#batchSave').onclick = async () => {
   const btn = $('#batchSave');
@@ -1887,8 +2055,8 @@ $('#batchSave').onclick = async () => {
   try {
     await run(sb.from('spends').insert(
       batchToSpends(batchDraft, on, state.deviceOwner || null)));
-    clearShot();
     hideSheets();
+    toast(`Logged ${keep.length} purchase${keep.length === 1 ? '' : 's'}`);
     await refresh();
   } catch (e) {
     alert('Could not save those: ' + e.message);

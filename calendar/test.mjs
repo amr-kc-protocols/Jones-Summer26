@@ -5,7 +5,7 @@ import {
   ymd, fromYmd, addDays, startOfWeek, daysBetween, fmtTime,
   holidays, easter, parseAnnual, annualDate, celebrations,
   proposalOptions, fmtOption, proposalRole, inbox, proposalMarkers, eventFromProposal,
-  parseRRule, occurrenceDays, makeOccurrence,
+  parseRRule, occurrenceDays, makeOccurrence, placeOccurrences, seriesTimes,
   coolOffDays, decideOn, money, sumSpends, weeklyAllowance, burnDown,
   bankedMonths, totalSaved, dueItems, waitingItems, spendMarkers,
   parseAmount, batchRows, batchSummary, batchToSpends,
@@ -699,6 +699,63 @@ check('a deliberate zero survives', parseAmount('0'), 0);
     batchToSpends([{ amount: '5', kind: undefined }], '2026-08-26', null)[0].kind, 'wanted');
   check('no owner set is null, not the string "null"',
     batchToSpends([{ amount: '5', kind: 'needed' }], '2026-08-26', '')[0].owner, null);
+}
+
+/* ── placing occurrences on the days they happen ─────── */
+{
+  const keys = (e, from, to, excs = {}) =>
+    placeOccurrences(e, fromYmd(from), fromYmd(to), k => excs[k] || null).map(p => p.key);
+
+  // A three-day all-day event that began before the week on screen.
+  const camp = ev('2026-08-29', { allDay: true, end: '2026-09-01' });
+  check('a multi-day event that started last week still shows this week',
+    keys(camp, '2026-08-30', '2026-09-05'), ['2026-08-30', '2026-08-31', '2026-09-01']);
+  check('…and on every day it covers when the whole span is in range',
+    keys(camp, '2026-08-01', '2026-08-31'), ['2026-08-29', '2026-08-30', '2026-08-31']);
+
+  // Tuesday karate; one week moved to Thursday with "this day only".
+  const karate = ev('2026-09-01 17:00', { rrule: 'FREQ=WEEKLY;INTERVAL=1', end: '2026-09-01 18:00' });
+  const moved = { '2026-09-08': { action: 'override',
+    overrides: { starts_at: new Date(2026, 8, 10, 17, 0).toISOString(),
+                 ends_at: new Date(2026, 8, 10, 18, 0).toISOString() } } };
+  check('a single day moved to another date is filed under the new date',
+    keys(karate, '2026-09-06', '2026-09-12', moved), ['2026-09-10']);
+  check('a day moved out of the range is not left behind on the old date',
+    keys(karate, '2026-09-08', '2026-09-08', moved), []);
+  check('a day moved into the range from outside it is found',
+    keys(karate, '2026-09-10', '2026-09-10', moved), ['2026-09-10']);
+  check('a skipped day is skipped',
+    keys(karate, '2026-09-06', '2026-09-12', { '2026-09-08': { action: 'skip' } }), []);
+  check('nothing outside the range leaks in',
+    keys(karate, '2026-09-01', '2026-09-14'), ['2026-09-01', '2026-09-08']);
+}
+
+/* ── editing a whole series from one of its later days ── */
+{
+  const karate = ev('2026-09-01 17:00', { rrule: 'FREQ=WEEKLY;INTERVAL=1', end: '2026-09-01 18:00' });
+  const occDay = fromYmd('2026-10-13');
+  const iso = s => fromYmdHm(s).toISOString();
+
+  const t = seriesTimes(karate, occDay,
+    { starts_at: iso('2026-10-13 17:30'), ends_at: iso('2026-10-13 19:00'), all_day: false });
+  check('a new time from a later day keeps the series starting on its first day',
+    [new Date(t.starts_at).toString(), new Date(t.ends_at).toString()],
+    [fromYmdHm('2026-09-01 17:30').toString(), fromYmdHm('2026-09-01 19:00').toString()]);
+
+  const moved = seriesTimes(karate, occDay,
+    { starts_at: iso('2026-10-15 17:00'), ends_at: iso('2026-10-15 18:00'), all_day: false });
+  check('moving that day by two days moves the series by two days',
+    new Date(moved.starts_at).toString(), fromYmdHm('2026-09-03 17:00').toString());
+
+  const noEnd = seriesTimes(karate, occDay,
+    { starts_at: iso('2026-10-13 17:00'), ends_at: null, all_day: false });
+  check('no end stays no end', noEnd.ends_at, null);
+
+  const camp = ev('2026-07-06', { allDay: true, end: '2026-07-08', rrule: 'FREQ=YEARLY;INTERVAL=1' });
+  const c = seriesTimes(camp, fromYmd('2027-07-06'),
+    { starts_at: iso('2027-07-06'), ends_at: iso('2027-07-09'), all_day: true });
+  check('an all-day series keeps its first year and takes the new length',
+    [ymd(new Date(c.starts_at)), ymd(new Date(c.ends_at))], ['2026-07-06', '2026-07-09']);
 }
 
 /* ── report ──────────────────────────────────────────── */
