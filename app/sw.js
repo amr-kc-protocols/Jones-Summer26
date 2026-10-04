@@ -33,8 +33,12 @@ self.addEventListener('fetch', e => {
     // Page loads: try network so app updates land, fall back to cache offline
     e.respondWith(
       fetch(req).then(res => {
-        const copy = res.clone();
-        caches.open(CACHE).then(c => c.put('./index.html', copy));
+        // Only a good page replaces the offline copy — a 404 or 500 caught
+        // mid-deploy would otherwise be what opens with no signal.
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put('./index.html', copy));
+        }
         return res;
       }).catch(() => caches.match('./index.html'))
     );
@@ -42,8 +46,10 @@ self.addEventListener('fetch', e => {
     // Static assets: cache-first
     e.respondWith(
       caches.match(req).then(hit => hit || fetch(req).then(res => {
-        const copy = res.clone();
-        caches.open(CACHE).then(c => c.put(req, copy));
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(req, copy));
+        }
         return res;
       }))
     );
