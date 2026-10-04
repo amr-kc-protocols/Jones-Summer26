@@ -42,6 +42,12 @@ and the selected day's schedule listed underneath — tap any date to see it.
 *Week* lists all seven days in full. *Agenda* is a rolling list of what's
 coming up. *Money* is the spending tracker — see below.
 
+**Getting around.** Swipe sideways on the month grid or the week to turn
+the page; ‹ › and *Today* do the same. In Week, each day has its own
+*+ Add*. Deleting an event or a purchase offers **Undo** for a few seconds
+rather than asking "are you sure" first. Moving an event's start in the
+editor carries its end along with it.
+
 **Colour is per person.** Everyone gets a colour, set in ⚙ Settings. An event
 can belong to several people at once ("first day of school — Sam and Lars"),
 or to nobody, which makes it a whole-family event. The chips along the top
