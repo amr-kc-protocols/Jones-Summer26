@@ -64,10 +64,13 @@ squat, hinge, both presses, both pulls and the isolation slots.
 - **Session clock** — enter a start and end time, or tap one button at each end of
   the session, and the duration works itself out. Times that cross midnight still
   read positive.
+- **Undo, not "are you sure"** — clearing a set, clearing an exercise or removing a
+  logged conditioning session offers Undo for a few seconds. Settings save as you
+  change them; there is no Save button to forget.
 - Rest timer, e1RM trends by lift family, 1RM / EMOM / target-weight / protein
   calculators, JSON export & import.
 
-Both interval timers queue their cues onto the Web Audio clock the moment you tap
+The rest timer and both interval timers queue their cues onto the Web Audio clock the moment you tap
 start, instead of firing them from `setInterval` — background tabs throttle timers
 hard, but audio already scheduled still plays. The visual countdown is derived from
 an absolute start timestamp, so it stays correct through a reload or a backgrounded
