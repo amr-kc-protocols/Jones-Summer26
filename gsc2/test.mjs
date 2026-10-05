@@ -207,6 +207,20 @@ for (const [bk, block] of Object.entries(PROGRAM.blocks)) {
   }
 }
 
+/* ── heart-rate zones match the eBook's 5-zone model (pp. 21–22) ── */
+{
+  const zm = html.match(/^const ZONE_ROWS = (\[[\s\S]*?\]);$/m);
+  ok('ZONE_ROWS is in index.html', !!zm);
+  if (zm) {
+    const ZONES = new Function('return ' + zm[1])();
+    check('% FTHR bands are the eBook\'s, overlap included',
+      ZONES.map(z => z.f), [[0.70,0.80],[0.80,0.88],[0.88,0.95],[0.93,0.99],[0.95,null]]);
+    check('% max HR bands are the eBook\'s',
+      ZONES.map(z => z.max), [[0.50,0.60],[0.60,0.70],[0.70,0.80],[0.80,0.90],[0.90,null]]);
+    check('RPE per zone', ZONES.map(z => z.rpe), ['< 4','4-6','6-7','7-9','> 8']);
+  }
+}
+
 /* ── report ──────────────────────────────────────────── */
 console.log(results.join('\n'));
 console.log(`\n${pass} passed, ${fail} failed\n`);

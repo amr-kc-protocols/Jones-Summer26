@@ -109,10 +109,26 @@ stops being necessary — so this list can't quietly go stale:
 
 ## Heart-rate zones
 
-`HRmax = 208 − 0.7 × age` (Tanaka), per the eBook. FTHR is the better basis and
-overrides it. Zone bands follow the spreadsheet's Training Zone calculator
-(70–80 / 80–88 / 88–94 / 95–99 / 100–106 % FTHR); the eBook's prose gives slightly
-overlapping Zone 3/4 bands, so the spreadsheet's non-overlapping ones are used.
+`HRmax = 208 − 0.7 × age`, per the eBook (which cites Roy 2015). FTHR — 95% of
+average heart rate over the 20-minute field test — is the better basis and
+overrides it.
+
+Zone bands are the eBook's 5-zone model as printed (Instructions pp. 21–22):
+
+| Zone | RPE | % max HR | % FTHR |
+|---|---|---|---|
+| 1 Active recovery | < 4 | 50–60 | 70–80 |
+| 2 Aerobic endurance | 4–6 | 60–70 | 80–88 |
+| 3 Tempo | 6–7 | 70–80 | 88–95 |
+| 4 Threshold | 7–9 | 80–90 | 93–99 |
+| 5 VO₂max | > 8 | > 90 | > 95 |
+
+The FTHR bands **overlap** from Zone 3 up, and that is kept rather than tidied:
+the Conditioning tab shows the shared range in your own bpm and says to go by the
+session's RPE there. Zone 5 has no upper bound. Zone 2's RPE is 4–6 as in the
+eBook's worked example and 3-zone model; its 5-zone list says 3–6, the one place
+it disagrees with itself. `node gsc2/test.mjs` checks the table against these
+numbers.
 
 ## Evidence
 

@@ -739,13 +739,20 @@ function warmupHtml(week, key){
        + '<div class="wu-body" id="wub-'+k+'">'+parts.join(' &nbsp;·&nbsp; ')+'</div></details>';
 }
 
-/* ---------- Heart-rate zones ---------- */
+/* ---------- Heart-rate zones ----------
+   The 5-zone model exactly as the eBook gives it (Instructions pp. 21–22).
+   Its FTHR bands overlap from Zone 3 up — Zone 4 starts at 93%, inside
+   Zone 3, and Zone 5 at 95%, inside Zone 4 — and they are kept that way
+   rather than tidied, with the overlap spelled out under the table. Zone 5
+   has no upper bound in the eBook, so it has none here (null). Zone 2's RPE
+   follows the eBook's own worked example and 3-zone model (4-6); its 5-zone
+   list says 3-6, the one place it disagrees with itself. */
 const ZONE_ROWS = [
   {z:'Zone 1', name:'Active recovery',   rpe:'< 4',  max:[0.50,0.60], f:[0.70,0.80]},
   {z:'Zone 2', name:'Aerobic endurance', rpe:'4-6',  max:[0.60,0.70], f:[0.80,0.88]},
-  {z:'Zone 3', name:'Tempo',             rpe:'6-7',  max:[0.70,0.80], f:[0.88,0.94]},
-  {z:'Zone 4', name:'Threshold',         rpe:'7-9',  max:[0.80,0.90], f:[0.95,0.99]},
-  {z:'Zone 5', name:'VO₂max',            rpe:'> 8',  max:[0.90,1.00], f:[1.00,1.06]}
+  {z:'Zone 3', name:'Tempo',             rpe:'6-7',  max:[0.70,0.80], f:[0.88,0.95]},
+  {z:'Zone 4', name:'Threshold',         rpe:'7-9',  max:[0.80,0.90], f:[0.93,0.99]},
+  {z:'Zone 5', name:'VO₂max',            rpe:'> 8',  max:[0.90,null], f:[0.95,null]}
 ];
 function hrBasis(){
   const age = parseFloat(STATE.meta.age);
@@ -757,7 +764,21 @@ function hrBasis(){
 }
 function zoneBpm(row, basis){
   const p = basis.kind==='fthr' ? row.f : row.max;
-  return [Math.round(basis.value*p[0]), Math.round(basis.value*p[1])];
+  return [Math.round(basis.value*p[0]), p[1]==null ? null : Math.round(basis.value*p[1])];
+}
+function bpmText(b){ return b[1]==null ? '> '+b[0] : b[0]+'–'+b[1]; }
+/* Where one zone's band starts before the previous one's ends, say so in the
+   user's own bpm. Computed from the table, so it can't drift from it. */
+function zoneOverlapHtml(basis){
+  const parts = [];
+  for(let i=1;i<ZONE_ROWS.length;i++){
+    const lo = zoneBpm(ZONE_ROWS[i], basis)[0], prevHi = zoneBpm(ZONE_ROWS[i-1], basis)[1];
+    if(prevHi!=null && lo < prevHi)
+      parts.push('<b>'+lo+'–'+prevHi+'</b> is both '+ZONE_ROWS[i-1].z+' and '+ZONE_ROWS[i].z);
+  }
+  if(!parts.length) return '';
+  return '<div class="tiny dim" style="margin-top:7px;line-height:1.5;">The bands overlap, as they do in the eBook: '
+       + parts.join('; ')+'. There, go by the session&rsquo;s RPE.</div>';
 }
 
 /* ---------- "What do I do today?" ---------- */
@@ -1113,9 +1134,10 @@ function renderConditioning(){
     ? '<table class="zone-table"><thead><tr><th>Zone</th><th>RPE</th><th>bpm</th></tr></thead><tbody>'
       + ZONE_ROWS.map(r=>{
           const b = zoneBpm(r, basis);
-          return '<tr><td><b>'+r.z+'</b><span class="dim"> '+r.name+'</span></td><td>'+r.rpe+'</td><td>'+b[0]+'–'+b[1]+'</td></tr>';
+          return '<tr><td><b>'+r.z+'</b><span class="dim"> '+r.name+'</span></td><td>'+r.rpe+'</td><td>'+bpmText(b)+'</td></tr>';
         }).join('')
       + '</tbody></table>'
+      + zoneOverlapHtml(basis)
       + '<div class="tiny dim" style="margin-top:7px;">From your '
       + (basis.kind==='fthr' ? '<b>FTHR '+basis.value+'</b> (the accurate basis)' : '<b>estimated max HR '+basis.value+'</b> — run the week 1 test and enter your FTHR in Settings for real numbers')
       + '.</div>'
