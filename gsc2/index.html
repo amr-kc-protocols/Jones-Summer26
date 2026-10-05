@@ -143,7 +143,7 @@ table.sets input{
 table.sets input::placeholder{color:#525c6b;font-weight:500;}
 table.sets input:focus{outline:2px solid var(--accent);}
 .set-num{font-size:11px;color:var(--dim);text-align:center;font-variant-numeric:tabular-nums;}
-.set-del{background:none;border:none;color:#525c6b;font-size:15px;cursor:pointer;padding:4px 2px;}
+.set-del{background:none;border:none;color:var(--faint);font-size:15px;cursor:pointer;padding:4px 2px;}
 .addset{
   background:none;border:none;color:var(--dim);font-weight:600;font-size:12.5px;
   cursor:pointer;padding:8px 0 0;
@@ -211,9 +211,12 @@ table.sets input:focus{outline:2px solid var(--accent);}
   border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);
 }
 .bottom-nav button{
-  flex:1;background:none;border:none;color:var(--faint);min-height:56px;padding:0;
-  display:flex;align-items:center;justify-content:center;cursor:pointer;transition:color .12s;
+  flex:1;background:none;border:none;color:var(--faint);min-height:56px;padding:6px 0 5px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  cursor:pointer;transition:color .12s;
 }
+/* five icons alone left a barbell, a pulse and two sliders to guess at */
+.bottom-nav button span{font-size:10px;font-weight:600;letter-spacing:.2px;pointer-events:none;}
 .bottom-nav button svg{width:22px;height:22px;pointer-events:none;}
 .bottom-nav button.active{color:var(--accent);}
 .bottom-nav button:active svg{transform:scale(.88);}
@@ -250,6 +253,17 @@ body[data-tab="today"] .timer-fab{display:flex;}
   pointer-events:none;z-index:300;
 }
 .savedtoast.show{opacity:1;}
+body.ivl-on .savedtoast{bottom:calc(300px + env(safe-area-inset-bottom));}
+.undotoast{
+  position:fixed;left:16px;right:16px;bottom:calc(72px + env(safe-area-inset-bottom));width:fit-content;margin:0 auto;
+  display:flex;align-items:center;gap:16px;background:var(--ink);color:var(--bg);
+  font-weight:700;font-size:13px;padding:10px 16px;border-radius:999px;z-index:310;
+  box-shadow:0 6px 20px rgba(0,0,0,.45);opacity:0;pointer-events:none;transform:translateY(8px);
+  transition:opacity .2s,transform .2s;
+}
+.undotoast.show{opacity:1;pointer-events:auto;transform:none;}
+.undotoast button{background:none;border:none;color:#1a6fbf;font:inherit;font-weight:800;cursor:pointer;padding:2px 0;}
+body.ivl-on .undotoast{bottom:calc(270px + env(safe-area-inset-bottom));}
 :focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
 h1,h2,h3{color:var(--ink);}
 
@@ -376,6 +390,7 @@ body.ivl-on .timer-wrap{display:none;}
 </main>
 
 <div class="savedtoast" id="savedToast">Saved</div>
+<div class="undotoast" id="undoToast" role="status" aria-live="polite"></div>
 
 <div class="timer-wrap" id="timerWrap">
   <div class="timer-presets" id="timerPresets">
@@ -395,19 +410,19 @@ body.ivl-on .timer-wrap{display:none;}
 
 <nav class="bottom-nav">
   <button data-tab="today" aria-label="Today">
-    <svg viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="9.2" width="2.6" height="5.6" rx="1.1"/><rect x="4.6" y="7" width="3" height="10" rx="1.2"/><rect x="16.4" y="7" width="3" height="10" rx="1.2"/><rect x="20.4" y="9.2" width="2.6" height="5.6" rx="1.1"/><rect x="8.4" y="10.9" width="7.2" height="2.2" rx="1.1"/></svg>
+    <svg viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="9.2" width="2.6" height="5.6" rx="1.1"/><rect x="4.6" y="7" width="3" height="10" rx="1.2"/><rect x="16.4" y="7" width="3" height="10" rx="1.2"/><rect x="20.4" y="9.2" width="2.6" height="5.6" rx="1.1"/><rect x="8.4" y="10.9" width="7.2" height="2.2" rx="1.1"/></svg><span>Today</span>
   </button>
   <button data-tab="conditioning" aria-label="Conditioning">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 13 7 13 10 5.5 14 19 16.5 13 22 13"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 13 7 13 10 5.5 14 19 16.5 13 22 13"/></svg><span>Cardio</span>
   </button>
   <button data-tab="done" aria-label="Completion">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 10.5 17 4 11"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 10.5 17 4 11"/></svg><span>Done</span>
   </button>
   <button data-tab="progress" aria-label="Stats">
-    <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="12" width="4" height="9" rx="1.3"/><rect x="10" y="7" width="4" height="14" rx="1.3"/><rect x="17" y="3" width="4" height="18" rx="1.3"/></svg>
+    <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="12" width="4" height="9" rx="1.3"/><rect x="10" y="7" width="4" height="14" rx="1.3"/><rect x="17" y="3" width="4" height="18" rx="1.3"/></svg><span>Stats</span>
   </button>
   <button data-tab="settings" aria-label="Settings">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><circle cx="9.5" cy="7" r="2.4" fill="var(--bg)"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="15" cy="17" r="2.4" fill="var(--bg)"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><circle cx="9.5" cy="7" r="2.4" fill="var(--bg)"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="15" cy="17" r="2.4" fill="var(--bg)"/></svg><span>Settings</span>
   </button>
 </nav>
 
@@ -473,12 +488,27 @@ function loadState(){
   }catch(e){ return defaultState(); }
 }
 let saveTimer=null;
-function save(){
+/* `quiet` is for remembering where you are — which week, which day. Only
+   saving something you entered earns the "Saved" flash. */
+let saveLoud = false;
+function save(quiet){
+  if(!quiet) saveLoud = true;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(()=>{
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); }catch(e){}
-    toast();
+    if(saveLoud) toast();
+    saveLoud = false;
   }, 250);
+}
+/* "Deleted · Undo" — kinder than a confirm box, and it catches the mis-tap
+   on a small ✕ that a confirm box would have been tapped straight through. */
+function undoToast(text, undo){
+  const el = document.getElementById('undoToast');
+  el.innerHTML = '<span>'+esc(text)+'</span><button>Undo</button>';
+  el.querySelector('button').onclick = ()=>{ el.classList.remove('show'); undo(); };
+  el.classList.add('show');
+  clearTimeout(undoToast._t);
+  undoToast._t = setTimeout(()=>el.classList.remove('show'), 6000);
 }
 function toast(){
   const el = document.getElementById('savedToast');
@@ -490,6 +520,12 @@ function toast(){
 /* ---------- Helpers ---------- */
 function esc(s){
   return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+/* Today's date as YYYY-MM-DD on the phone's own clock. toISOString() is UTC,
+   which in the US evening is already tomorrow. */
+function localYmd(d){
+  d = d || new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 function clamp(v,lo,hi){ return Math.max(lo, Math.min(hi, v)); }
 function blockOf(week){ return week<=5 ? 'I' : 'II'; }
@@ -634,7 +670,10 @@ function suggestionFor(key, week){
     const prevSlot = slotFor(prev.week, key);
     const prevHi = repsFor(prevSlot, weekInBlock(prev.week))[1];
     const topW = Math.max(...prev.sets.map(s=>+s.w));
-    const maxed = prev.sets.every(s=>+s.r >= prevHi);
+    // "Every set" means every set that was prescribed: one logged set of 6
+    // out of three is not the rep range hit across the board.
+    const enough = prev.sets.length >= setsFor(prevSlot, weekInBlock(prev.week));
+    const maxed = enough && prev.sets.every(s=>+s.r >= prevHi);
     if(maxed) return {weights:[roundLoad(topW + slot.inc)],
                       note:'hit '+prevHi+'s on every set in wk '+prev.week+' — add '+slot.inc+' lb'};
     return {weights:[topW], note:'same weight as wk '+prev.week+' — add reps first (cap '+r[1]+')'};
@@ -700,13 +739,20 @@ function warmupHtml(week, key){
        + '<div class="wu-body" id="wub-'+k+'">'+parts.join(' &nbsp;·&nbsp; ')+'</div></details>';
 }
 
-/* ---------- Heart-rate zones ---------- */
+/* ---------- Heart-rate zones ----------
+   The 5-zone model exactly as the eBook gives it (Instructions pp. 21–22).
+   Its FTHR bands overlap from Zone 3 up — Zone 4 starts at 93%, inside
+   Zone 3, and Zone 5 at 95%, inside Zone 4 — and they are kept that way
+   rather than tidied, with the overlap spelled out under the table. Zone 5
+   has no upper bound in the eBook, so it has none here (null). Zone 2's RPE
+   follows the eBook's own worked example and 3-zone model (4-6); its 5-zone
+   list says 3-6, the one place it disagrees with itself. */
 const ZONE_ROWS = [
   {z:'Zone 1', name:'Active recovery',   rpe:'< 4',  max:[0.50,0.60], f:[0.70,0.80]},
   {z:'Zone 2', name:'Aerobic endurance', rpe:'4-6',  max:[0.60,0.70], f:[0.80,0.88]},
-  {z:'Zone 3', name:'Tempo',             rpe:'6-7',  max:[0.70,0.80], f:[0.88,0.94]},
-  {z:'Zone 4', name:'Threshold',         rpe:'7-9',  max:[0.80,0.90], f:[0.95,0.99]},
-  {z:'Zone 5', name:'VO₂max',            rpe:'> 8',  max:[0.90,1.00], f:[1.00,1.06]}
+  {z:'Zone 3', name:'Tempo',             rpe:'6-7',  max:[0.70,0.80], f:[0.88,0.95]},
+  {z:'Zone 4', name:'Threshold',         rpe:'7-9',  max:[0.80,0.90], f:[0.93,0.99]},
+  {z:'Zone 5', name:'VO₂max',            rpe:'> 8',  max:[0.90,null], f:[0.95,null]}
 ];
 function hrBasis(){
   const age = parseFloat(STATE.meta.age);
@@ -718,7 +764,21 @@ function hrBasis(){
 }
 function zoneBpm(row, basis){
   const p = basis.kind==='fthr' ? row.f : row.max;
-  return [Math.round(basis.value*p[0]), Math.round(basis.value*p[1])];
+  return [Math.round(basis.value*p[0]), p[1]==null ? null : Math.round(basis.value*p[1])];
+}
+function bpmText(b){ return b[1]==null ? '> '+b[0] : b[0]+'–'+b[1]; }
+/* Where one zone's band starts before the previous one's ends, say so in the
+   user's own bpm. Computed from the table, so it can't drift from it. */
+function zoneOverlapHtml(basis){
+  const parts = [];
+  for(let i=1;i<ZONE_ROWS.length;i++){
+    const lo = zoneBpm(ZONE_ROWS[i], basis)[0], prevHi = zoneBpm(ZONE_ROWS[i-1], basis)[1];
+    if(prevHi!=null && lo < prevHi)
+      parts.push('<b>'+lo+'–'+prevHi+'</b> is both '+ZONE_ROWS[i-1].z+' and '+ZONE_ROWS[i].z);
+  }
+  if(!parts.length) return '';
+  return '<div class="tiny dim" style="margin-top:7px;line-height:1.5;">The bands overlap, as they do in the eBook: '
+       + parts.join('; ')+'. There, go by the session&rsquo;s RPE.</div>';
 }
 
 /* ---------- "What do I do today?" ---------- */
@@ -727,7 +787,9 @@ function todayInfo(){
   const start = new Date(STATE.meta.startDate+'T00:00:00');
   if(isNaN(start)) return null;
   const now = new Date(); now.setHours(0,0,0,0);
-  const diffDays = Math.floor((now - start)/86400000);
+  // Rounded, not floored: across the spring clock change a day is 23 hours,
+  // and flooring would put every later Monday back in the previous week.
+  const diffDays = Math.round((now - start)/86400000);
   if(diffDays < 0) return {status:'notstarted', daysUntil:-diffDays};
   const week = Math.floor(diffDays/7)+1;
   if(week > 10) return {status:'finished'};
@@ -747,7 +809,7 @@ function goToToday(){
   if(!ti) return;
   if(ti.status==='train'){ STATE.currentWeek=ti.week; STATE.ui.day=ti.day; }
   else if(ti.status==='rest'){ STATE.currentWeek=ti.week; }
-  save(); renderToday();
+  save(true); renderToday();
 }
 function todayBannerHtml(){
   const ti = todayInfo();
@@ -759,13 +821,18 @@ function todayBannerHtml(){
     return '<div class="today-line"><span class="dot rest"></span><b>Rest / conditioning day</b> '+next+'</div>';
   }
   const onIt = (STATE.currentWeek===ti.week && STATE.ui.day===ti.day);
+  // The focus line is printed under "Day X." already when that's the day on
+  // screen; it only earns a place here when you're looking at another one.
   return '<div class="today-line"><span class="dot"></span><b>Today: Week '+ti.week+' · Day '+ti.day+'</b>'
-       + '<span class="dim">· '+DAY_META[ti.day].focus+'</span>'
-       + (onIt?'':'<button class="textlink" onclick="goToToday()">Show today →</button>')+'</div>';
+       + (onIt?'':'<span class="dim">· '+DAY_META[ti.day].short+'</span>'
+                + '<button class="textlink" onclick="goToToday()">Show today →</button>')+'</div>';
 }
 
 /* ---------- Nav ---------- */
 function jumpTo(tabName){
+  if(draftDays && tabName !== 'settings'){
+    draftDays = null;     // an unfinished pick is dropped, and the saved four stand
+  }
   document.body.dataset.tab = tabName;
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+tabName).classList.add('active');
@@ -821,16 +888,21 @@ function statHtml(stats){
 function addSet(k){ getLog(k).sets.push({w:null,r:null,p:null}); save(); rerenderExercise(k); }
 function delSet(k, idx){
   const log = getLog(k), s = log.sets[idx];
+  const before = JSON.stringify(log.sets);
   if(s && hasVals(s)) log.sets[idx] = {w:null,r:null,p:null};
   else if(log.sets.length > 1) log.sets.splice(idx,1);
   if(!log.sets.length) log.sets.push({w:null,r:null,p:null});
   save(); renderToday();
+  if(s && hasVals(s)) undoToast('Set '+(idx+1)+' cleared', ()=>{
+    getLog(k).sets = JSON.parse(before); save(); renderToday();
+  });
 }
 function clearSets(k, week, key){
-  if(!confirm('Clear all sets for this exercise?')) return;
+  const before = JSON.stringify(STATE.logs[k].sets);
   const n = plannedRows(slotFor(week,key), weekInBlock(week));
   STATE.logs[k].sets = Array.from({length:n}, ()=>({w:null,r:null,p:null}));
   save(); renderToday();
+  undoToast('All sets cleared', ()=>{ STATE.logs[k].sets = JSON.parse(before); save(); renderToday(); });
 }
 function rerenderExercise(k){
   const wrap = document.querySelector('[data-setswrap="'+k+'"]');
@@ -853,6 +925,7 @@ document.addEventListener('input', e=>{
     save();
     const statsEl = document.getElementById('stats-'+k);
     if(statsEl) statsEl.innerHTML = statHtml(exerciseStats(k));
+    refreshDayProgress();
     const cell = el.closest('tr').lastElementChild;
     const showX = hasVals(log.sets[idx]);
     const hasX = !!cell.querySelector('.set-del');
@@ -895,8 +968,8 @@ function renderToday(){
   + '<div class="hero-row">'
   +   '<div><div class="hero-day">Day '+day+'<em>.</em></div>'
   +   '<div class="tiny dim" style="margin-top:2px;">'+DAY_META[day].focus+'</div></div>'
-  +   '<div class="hero-side"><div class="frac">'+logged+'/'+slots.length+' logged</div>'
-  +   '<div class="progressbar" style="width:90px;"><i style="width:'+Math.round(logged/slots.length*100)+'%"></i></div></div>'
+  +   '<div class="hero-side"><div class="frac" id="dayFrac">'+logged+'/'+slots.length+' logged</div>'
+  +   '<div class="progressbar" style="width:90px;"><i id="dayBar" style="width:'+Math.round(logged/slots.length*100)+'%"></i></div></div>'
   + '</div>'
   + '<div class="weekstrip" id="weekstrip">'
   +   [1,2,3,4,5,6,7,8,9,10].map(n=>'<button class="'+(n===week?'active':'')+'" onclick="setWeek('+n+')">'+n+'</button>').join('')
@@ -922,7 +995,7 @@ function renderToday(){
   + '</div>'
   + '<div class="tiny dim" style="margin-top:8px;">5 = easy · 8 = tough but repeatable · 10 = maximal</div>'
   + '<div class="divider"></div>'
-  + dayDoneHtml(week, day, slots)
+  + '<div id="dayDone">'+dayDoneHtml(week, day, slots)+'</div>'
   + '</div>';
 
   const strip = document.getElementById('weekstrip');
@@ -935,7 +1008,7 @@ function exerciseBlock(slot, week, isLead){
   const done = exerciseStats(k).hasData;
   return '<div class="card'+(isLead?' lead':'')+'">'
   + '<div class="ex-top">'
-  +   '<div class="ex-name">'+esc(exName(week, slot.key))+(done?'<span class="donedot"></span>':'')+'</div>'
+  +   '<div class="ex-name">'+esc(exName(week, slot.key))+'<span class="donedot" id="dd-'+k+'"'+(done?'':' style="display:none"')+'></span></div>'
   +   '<span class="chip">'+esc(slot.sub)+'</span>'
   + '</div>'
   + '<div class="ex-role">'+esc(slot.label)+(isLead?' · opens the session':'')+(slot.rest?(slot.kind==='power'?' · '+esc(slot.rest)+' pacing':' · rest '+esc(slot.rest)):'')+'</div>'
@@ -950,8 +1023,28 @@ function exerciseBlock(slot, week, isLead){
   + '<div data-setswrap="'+k+'" data-week="'+week+'" data-slot="'+slot.key+'">'+setsTableHtml(week, slot.key)+'</div>'
   + '</div>';
 }
-function setWeek(n){ STATE.currentWeek=n; save(); renderToday(); }
-function setDay(d){ STATE.ui.day=d; save(); renderToday(); }
+/* Typing a set changes how much of the day is logged; the counter, the
+   green dot on the card and the complete button follow along rather than
+   waiting for the next full redraw. */
+function refreshDayProgress(){
+  const week = STATE.currentWeek, day = STATE.ui.day;
+  const slots = slotsFor(week).filter(s=>s.day===day);
+  let logged = 0;
+  slots.forEach(s=>{
+    const k = logKey(week, s.key), has = exerciseStats(k).hasData;
+    if(has) logged++;
+    const dot = document.getElementById('dd-'+k);
+    if(dot) dot.style.display = has ? '' : 'none';
+  });
+  const frac = document.getElementById('dayFrac');
+  if(frac) frac.textContent = logged+'/'+slots.length+' logged';
+  const bar = document.getElementById('dayBar');
+  if(bar) bar.style.width = Math.round(logged/slots.length*100)+'%';
+  const dd = document.getElementById('dayDone');
+  if(dd) dd.innerHTML = dayDoneHtml(week, day, slots);
+}
+function setWeek(n){ STATE.currentWeek=n; save(true); renderToday(); }
+function setDay(d){ STATE.ui.day=d; save(true); renderToday(); }
 
 /* Duration comes off the clock times; a session running past midnight still
    reads as a positive length rather than a negative one. */
@@ -1026,7 +1119,9 @@ function renderConditioning(){
 
   const sessionHtml = c.sessions.map((s,i)=>{
     const on = !!STATE.condDone[week+'_'+i];
-    return '<div class="cond-item'+(on?' on':'')+'" onclick="toggleCond('+week+','+i+')">'
+    return '<div class="cond-item'+(on?' on':'')+'" role="checkbox" tabindex="0" aria-checked="'+on+'" '
+      + 'onclick="toggleCond('+week+','+i+')" '
+      + 'onkeydown="if(event.key===\' \'||event.key===\'Enter\'){event.preventDefault();toggleCond('+week+','+i+')}">'
       + '<div class="cond-check">'+(on?'✓':'')+'</div>'
       + '<div style="flex:1;min-width:0;">'
       +   '<div class="cond-label">'+esc(s.label)+' <span class="dim">· '+s.min+' min</span></div>'
@@ -1039,9 +1134,10 @@ function renderConditioning(){
     ? '<table class="zone-table"><thead><tr><th>Zone</th><th>RPE</th><th>bpm</th></tr></thead><tbody>'
       + ZONE_ROWS.map(r=>{
           const b = zoneBpm(r, basis);
-          return '<tr><td><b>'+r.z+'</b><span class="dim"> '+r.name+'</span></td><td>'+r.rpe+'</td><td>'+b[0]+'–'+b[1]+'</td></tr>';
+          return '<tr><td><b>'+r.z+'</b><span class="dim"> '+r.name+'</span></td><td>'+r.rpe+'</td><td>'+bpmText(b)+'</td></tr>';
         }).join('')
       + '</tbody></table>'
+      + zoneOverlapHtml(basis)
       + '<div class="tiny dim" style="margin-top:7px;">From your '
       + (basis.kind==='fthr' ? '<b>FTHR '+basis.value+'</b> (the accurate basis)' : '<b>estimated max HR '+basis.value+'</b> — run the week 1 test and enter your FTHR in Settings for real numbers')
       + '.</div>'
@@ -1068,7 +1164,7 @@ function renderConditioning(){
 
   + '<div class="card"><h2>Log a session</h2>'
   + '<div class="grid2">'
-  +   '<div class="field"><label>Date</label><input type="date" id="condDate" value="'+new Date().toISOString().slice(0,10)+'"></div>'
+  +   '<div class="field"><label>Date</label><input type="date" id="condDate" value="'+localYmd()+'"></div>'
   +   '<div class="field"><label>Zone</label><select id="condZone">'
   +     ['Zone 1 (easy)','Zone 2 (steady)','Zone 3 (tempo)','Zone 4 (threshold)','Intervals / sprints','20-min test']
         .map(o=>'<option>'+o+'</option>').join('')
@@ -1093,7 +1189,7 @@ function renderConditioning(){
       +   (l.dist?' · '+(+parseFloat(l.dist).toFixed(2))+' mi':'')
       +   (paceStr(l)?' · '+paceStr(l)+' /mi':'')+'</div>'
       + '<div class="tiny muted">'+esc(l.date)+(l.hr?' · '+l.hr+' bpm avg':'')+(l.notes?' · '+esc(l.notes):'')+'</div>'
-      + '</div><button class="set-del" onclick="delCondLog('+STATE.conditioningLogs.indexOf(l)+')">✕</button></div>'
+      + '</div><button class="set-del" onclick="delCondLog('+STATE.conditioningLogs.indexOf(l)+')" aria-label="Remove session">✕</button></div>'
     ).join('') : '<div class="small muted">Nothing logged yet this week.</div>')
   + '</div>';
 
@@ -1101,7 +1197,7 @@ function renderConditioning(){
   const act = strip && strip.querySelector('.active');
   if(act) act.scrollIntoView({block:'nearest', inline:'center'});
 }
-function setWeekCond(n){ STATE.currentWeek=n; save(); renderConditioning(); }
+function setWeekCond(n){ STATE.currentWeek=n; save(true); renderConditioning(); }
 function paceStr(l){
   const min = parseFloat(l.duration), mi = parseFloat(l.dist);
   if(!min || !mi || mi<=0) return '';
@@ -1128,7 +1224,13 @@ function addCondLog(){
   save();
   renderConditioning();
 }
-function delCondLog(i){ STATE.conditioningLogs.splice(i,1); save(); renderConditioning(); }
+function delCondLog(i){
+  const [gone] = STATE.conditioningLogs.splice(i,1);
+  save(); renderConditioning();
+  if(gone) undoToast('Session removed', ()=>{
+    STATE.conditioningLogs.splice(i, 0, gone); save(); renderConditioning();
+  });
+}
 
 /* ---------- Completion ----------
    A day counts as done when you say so. Logging every exercise marks it
@@ -1235,11 +1337,11 @@ function renderDone(){
   + '</div>';
 }
 function jumpToDay(week, day){
-  STATE.currentWeek = week; STATE.ui.day = day; save();
+  STATE.currentWeek = week; STATE.ui.day = day; save(true);
   jumpTo('today');
 }
 function jumpToCond(week){
-  STATE.currentWeek = week; save();
+  STATE.currentWeek = week; save(true);
   jumpTo('conditioning');
 }
 
@@ -1350,8 +1452,11 @@ function runCalcProtein(){
 }
 
 /* ---------- Settings tab ---------- */
+/* A half-made pick of lifting days lives here, not in STATE: three days
+   saved to storage would be "repaired" back to the defaults on next load. */
+let draftDays = null;
 function dayMapHtml(){
-  const days = [...STATE.meta.trainDays].sort((a,b)=>a-b);
+  const days = [...(draftDays || STATE.meta.trainDays)].sort((a,b)=>a-b);
   const order = STATE.meta.dayOrder;
   if(days.length!==4) return '<div class="tiny muted">Pick exactly 4 days, then assign a session to each.</div>';
   return '<div class="grid2" style="grid-template-columns:repeat(4,1fr);gap:8px;">'
@@ -1364,7 +1469,7 @@ function dayMapHtml(){
   + 'Barbell Medicine suggests 2 on / 1 off / 2 on / 2 off, e.g. Mon Tue Thu Fri.</div>';
 }
 function renderSettings(){
-  const days = STATE.meta.trainDays;
+  const days = draftDays || STATE.meta.trainDays;
   let exHtml = '';
   ['I','II'].forEach(bk=>{
     const b = PROGRAM.blocks[bk];
@@ -1409,8 +1514,7 @@ function renderSettings(){
   +   '<div class="field"><label>Age</label><input type="number" id="setAge" value="'+esc(STATE.meta.age)+'"></div>'
   +   '<div class="field"><label>FTHR (bpm)</label><input type="number" id="setFthr" value="'+esc(STATE.meta.fthr)+'"></div>'
   + '</div>'
-  + '<button class="btn primary block" onclick="saveSettingsGeneral()">Save</button>'
-  + '<div class="tiny muted" style="margin-top:8px;">Age gives estimated zones (HRmax = 208 − 0.7 × age). FTHR — 95% of your average heart rate '
+  + '<div class="tiny muted">Age gives estimated zones (HRmax = 208 − 0.7 × age). FTHR — 95% of your average heart rate '
   + 'over the week 1 twenty-minute test — is the accurate basis and overrides it.</div></div>'
   + exHtml
   + '<div class="card"><h2>Data</h2>'
@@ -1462,6 +1566,10 @@ function renderSettings(){
     inp.addEventListener('input', e=>{ STATE.meta.startE1RM[e.target.dataset.e1rm] = e.target.value; save(); });
   });
   document.getElementById('importFile').addEventListener('change', importData);
+  // Saved as you change them, like everything else on this tab — a Save
+  // button here alone meant a start date typed and left behind was lost.
+  ['setStart','setAge','setFthr'].forEach(id=>
+    document.getElementById(id).addEventListener('change', saveSettingsGeneral));
 }
 function setDayMap(idx, letter){
   const order = [...STATE.meta.dayOrder];
@@ -1472,18 +1580,18 @@ function setDayMap(idx, letter){
   save(); renderSettings();
 }
 function toggleTrainDay(d){
-  let days = [...STATE.meta.trainDays];
+  let days = [...(draftDays || STATE.meta.trainDays)];
   if(days.includes(d)) days = days.filter(x=>x!==d);
   else {
     if(days.length>=4){ alert('You already have 4 lifting days — unselect one first.'); return; }
     days.push(d);
   }
-  STATE.meta.trainDays = days.sort((a,b)=>a-b);
-  if(days.length===4) save();
+  days.sort((a,b)=>a-b);
+  if(days.length===4){ STATE.meta.trainDays = days; draftDays = null; save(); }
+  else draftDays = days;
   renderSettings();
 }
 function saveSettingsGeneral(){
-  if(STATE.meta.trainDays.length!==4){ alert('Pick exactly 4 lifting days.'); return; }
   STATE.meta.startDate = document.getElementById('setStart').value;
   STATE.meta.age = document.getElementById('setAge').value;
   STATE.meta.fthr = document.getElementById('setFthr').value;
@@ -1492,7 +1600,7 @@ function saveSettingsGeneral(){
     STATE.currentWeek = ti.week;
     if(ti.status==='train') STATE.ui.day = ti.day;
   }
-  save(); toast(); refreshHeader(); renderSettings();
+  save(); refreshHeader();
 }
 /* Nudge toward a backup once there is something worth losing. */
 function backupNoteHtml(){
@@ -1540,6 +1648,7 @@ function exportData(){
 }
 function importData(e){
   const file = e.target.files[0];
+  e.target.value = '';             // so picking the same file again still fires
   if(!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
@@ -1640,6 +1749,7 @@ function ivlStop(){
   localStorage.removeItem(IVL_KEY);
   const panel = document.getElementById('ivlPanel');
   panel.classList.remove('open');
+  document.getElementById('ivlInner').dataset.run = '';
   setTimeout(()=>{ if(!ivlLoad()) document.getElementById('ivlInner').innerHTML=''; }, 240);
   document.body.classList.remove('ivl-on');
 }
@@ -1676,20 +1786,34 @@ function ivlTick(){
       : (idx === 0 ? 'Settle in around RPE 7 — you get a checkpoint every 5 minutes.'
                    : 'Hold this pace to the next checkpoint.');
   }
-  const bars = Array.from({length:plan.rounds}, (_,i)=>
-    '<i class="'+(i<idx?'on':(i===idx?'now':''))+'"></i>').join('');
-
-  document.getElementById('ivlInner').innerHTML =
-    '<div class="ivl-top"><div class="ivl-name">'+esc(plan.name)+'</div>'
-  + '<div class="ivl-round">'+roundLabel+'</div></div>'
-  + '<div class="ivl-count'+(fresh?' go':'')+'">'+fmtTime(Math.max(0,left))+'</div>'
-  + '<div class="ivl-cue">'+cue+'</div>'
-  + '<div class="ivl-bars">'+bars+'</div>'
-  + '<div class="ivl-actions"><button class="btn" onclick="ivlStop()">Stop</button></div>';
+  /* The panel is built once per run and only its text changes after that.
+     Rebuilding it four times a second replaced the Stop button under your
+     finger, so a tap that spanned a redraw never registered. */
+  const inner = document.getElementById('ivlInner');
+  if(inner.dataset.run !== String(plan.startedAt)){
+    inner.dataset.run = String(plan.startedAt);
+    inner.innerHTML =
+      '<div class="ivl-top"><div class="ivl-name">'+esc(plan.name)+'</div>'
+    + '<div class="ivl-round" id="ivlRound"></div></div>'
+    + '<div class="ivl-count" id="ivlCount"></div>'
+    + '<div class="ivl-cue" id="ivlCue"></div>'
+    + '<div class="ivl-bars" id="ivlBars">'+'<i></i>'.repeat(plan.rounds)+'</div>'
+    + '<div class="ivl-actions"><button class="btn" onclick="ivlStop()">Stop</button></div>';
+  }
+  document.getElementById('ivlRound').textContent = roundLabel;
+  const count = document.getElementById('ivlCount');
+  count.textContent = fmtTime(Math.max(0,left));
+  count.classList.toggle('go', fresh);
+  const cueEl = document.getElementById('ivlCue');
+  if(cueEl.innerHTML !== cue) cueEl.innerHTML = cue;
+  [...document.getElementById('ivlBars').children].forEach((b,i)=>{
+    b.className = i<idx ? 'on' : (i===idx ? 'now' : '');
+  });
 }
 function ivlRenderDone(plan){
   clearInterval(ivlInt); ivlInt = null;
   const isTest = plan.kind === 'test';
+  document.getElementById('ivlInner').dataset.run = '';
   document.getElementById('ivlPanel').classList.add('open');
   document.body.classList.add('ivl-on');
   document.getElementById('ivlInner').innerHTML =
@@ -1711,7 +1835,7 @@ function ivlSaveTest(){
   STATE.meta.fthr = String(Math.round(hr*0.95));
   STATE.conditioningLogs.push({
     week: (plan && plan.week) || STATE.currentWeek,
-    date: new Date().toISOString().slice(0,10),
+    date: localYmd(),
     zone: '20-min test', duration: '20', dist: '', hr: String(Math.round(hr)),
     notes: 'field test — FTHR set to ' + STATE.meta.fthr
   });
@@ -1742,9 +1866,23 @@ function timerTap(){
   if((+localStorage.getItem(TIMER_KEY)||0) > Date.now()){ stopTimer(); return; }
   document.getElementById('timerPresets').classList.toggle('open');
 }
+/* The finish beep is queued on the audio clock now, inside the tap, the
+   way the EMOM timer does it. Made later from a setInterval tick, an
+   AudioContext has no user gesture behind it — iOS keeps it silent — and
+   a backgrounded tab's throttled timers would sound it late anyway. */
+let restCtx = null;
+function killRestAudio(){ if(restCtx){ try{ restCtx.close(); }catch(e){} restCtx = null; } }
 function startTimer(sec){
   localStorage.setItem(TIMER_KEY, String(Date.now() + sec*1000));
   document.getElementById('timerPresets').classList.remove('open');
+  killRestAudio();
+  try{
+    restCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if(restCtx.state === 'suspended') restCtx.resume();
+    const t = restCtx.currentTime + sec;
+    beepAt(restCtx, t, 880, .18);
+    beepAt(restCtx, t + .18, 1175, .18);
+  }catch(e){ restCtx = null; }
   runTimer();
 }
 function runTimer(){
@@ -1766,20 +1904,13 @@ function finishTimer(){
   fab.className = 'timer-fab done';
   fab.textContent = 'GO';
   if(navigator.vibrate) navigator.vibrate([200,100,200]);
-  try{
-    const ctx = new (window.AudioContext||window.webkitAudioContext)();
-    [0,0.18].forEach((t,i)=>{
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
-      o.frequency.value = i ? 1175 : 880;
-      g.gain.setValueAtTime(.18, ctx.currentTime+t);
-      g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime+t+.15);
-      o.start(ctx.currentTime+t); o.stop(ctx.currentTime+t+.16);
-    });
-  }catch(e){}
+  // Already sounded from the clock it was queued on; just tidy up after it.
+  // (A timer resumed after a reload has nothing queued, and stays quiet.)
+  const ctx = restCtx; restCtx = null;
+  if(ctx) setTimeout(()=>{ try{ ctx.close(); }catch(e){} }, 1000);
   setTimeout(resetTimerFab, 2500);
 }
-function stopTimer(){ clearInterval(timerInt); localStorage.removeItem(TIMER_KEY); resetTimerFab(); }
+function stopTimer(){ clearInterval(timerInt); localStorage.removeItem(TIMER_KEY); killRestAudio(); resetTimerFab(); }
 function resetTimerFab(){
   const fab = document.getElementById('timerFab');
   fab.className = 'timer-fab';
@@ -1802,6 +1933,9 @@ function resetTimerFab(){
   const fab = document.getElementById('timerFab');
   fab.addEventListener(downEvt, e=>{ e.preventDefault(); timerTap(); });
   fab.addEventListener('click', e=>e.preventDefault());
+  document.addEventListener(downEvt, e=>{
+    if(!e.target.closest('#timerWrap')) document.getElementById('timerPresets').classList.remove('open');
+  });
   refreshHeader();
   jumpTo('today');
   if((+localStorage.getItem(TIMER_KEY)||0) > Date.now()) runTimer();
