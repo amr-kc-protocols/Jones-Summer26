@@ -14,7 +14,7 @@
 <style>
 :root{
   --bg:#0b0d10; --surface:#111419; --surface2:#1a1e25; --line:#20252d;
-  --ink:#f2f4f7; --dim:#8c95a3; --faint:#525c6b; --accent:#ff5a3c; --good:#3ecf8e; --red:#ff5a5a;
+  --ink:#f2f4f7; --dim:#8c95a3; --faint:#7a8594; --accent:#ff5a3c; --good:#3ecf8e; --red:#ff5a5a;
   --r:16px; --r-sm:10px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -142,7 +142,7 @@ table.sets input{
 table.sets input::placeholder{color:#525c6b;font-weight:500;}
 table.sets input:focus{outline:2px solid var(--accent);}
 .set-num{font-size:11px;color:var(--dim);text-align:center;font-variant-numeric:tabular-nums;}
-.set-del{background:none;border:none;color:#525c6b;font-size:15px;cursor:pointer;padding:4px 2px;}
+.set-del{background:none;border:none;color:var(--faint);font-size:15px;cursor:pointer;padding:4px 2px;}
 .addset{
   background:none;border:none;color:var(--dim);font-weight:600;font-size:12.5px;
   cursor:pointer;padding:8px 0 0;
@@ -208,8 +208,10 @@ table.sets input:focus{outline:2px solid var(--accent);}
   background:rgba(12,14,17,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);
 }
+.bottom-nav button span{font-size:10px;font-weight:600;letter-spacing:.2px;pointer-events:none;}
 .bottom-nav button{
-  flex:1;background:none;border:none;color:var(--faint);min-height:56px;padding:0;
+  flex-direction:column;gap:3px;
+  flex:1;background:none;border:none;color:var(--faint);min-height:56px;padding:6px 0 5px;
   display:flex;align-items:center;justify-content:center;cursor:pointer;transition:color .12s;
 }
 .bottom-nav button svg{width:22px;height:22px;pointer-events:none;}
@@ -248,6 +250,15 @@ body[data-tab="today"] .timer-fab{display:flex;}
   pointer-events:none;z-index:300;
 }
 .savedtoast.show{opacity:1;}
+.undotoast{
+  position:fixed;left:16px;right:16px;bottom:calc(72px + env(safe-area-inset-bottom));width:fit-content;margin:0 auto;
+  display:flex;align-items:center;gap:16px;background:var(--ink);color:var(--bg);
+  font-weight:700;font-size:13px;padding:10px 16px;border-radius:999px;z-index:310;
+  box-shadow:0 6px 20px rgba(0,0,0,.45);opacity:0;pointer-events:none;transform:translateY(8px);
+  transition:opacity .2s,transform .2s;
+}
+.undotoast.show{opacity:1;pointer-events:auto;transform:none;}
+.undotoast button{background:none;border:none;color:#c2391f;font:inherit;font-weight:800;cursor:pointer;padding:2px 0;}
 :focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
 h1,h2,h3{color:var(--ink);}
 </style>
@@ -272,6 +283,7 @@ h1,h2,h3{color:var(--ink);}
 </main>
 
 <div class="savedtoast" id="savedToast">Saved</div>
+<div class="undotoast" id="undoToast" role="status" aria-live="polite"></div>
 
 <div class="timer-wrap" id="timerWrap">
   <div class="timer-presets" id="timerPresets">
@@ -286,16 +298,16 @@ h1,h2,h3{color:var(--ink);}
 
 <nav class="bottom-nav">
   <button data-tab="today" aria-label="Today">
-    <svg viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="9.2" width="2.6" height="5.6" rx="1.1"/><rect x="4.6" y="7" width="3" height="10" rx="1.2"/><rect x="16.4" y="7" width="3" height="10" rx="1.2"/><rect x="20.4" y="9.2" width="2.6" height="5.6" rx="1.1"/><rect x="8.4" y="10.9" width="7.2" height="2.2" rx="1.1"/></svg>
+    <svg viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="9.2" width="2.6" height="5.6" rx="1.1"/><rect x="4.6" y="7" width="3" height="10" rx="1.2"/><rect x="16.4" y="7" width="3" height="10" rx="1.2"/><rect x="20.4" y="9.2" width="2.6" height="5.6" rx="1.1"/><rect x="8.4" y="10.9" width="7.2" height="2.2" rx="1.1"/></svg><span>Today</span>
   </button>
   <button data-tab="conditioning" aria-label="Cardio">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 13 7 13 10 5.5 14 19 16.5 13 22 13"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 13 7 13 10 5.5 14 19 16.5 13 22 13"/></svg><span>Run</span>
   </button>
   <button data-tab="progress" aria-label="Stats">
-    <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="13" width="4" height="8" rx="1.2"/><rect x="10" y="8" width="4" height="13" rx="1.2"/><rect x="17" y="3" width="4" height="18" rx="1.2"/></svg>
+    <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="13" width="4" height="8" rx="1.2"/><rect x="10" y="8" width="4" height="13" rx="1.2"/><rect x="17" y="3" width="4" height="18" rx="1.2"/></svg><span>Stats</span>
   </button>
   <button data-tab="settings" aria-label="Settings">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="3" y1="7" x2="21" y2="7"/><circle cx="9" cy="7" r="2.4" fill="var(--bg)"/><line x1="3" y1="16" x2="21" y2="16"/><circle cx="15.5" cy="16" r="2.4" fill="var(--bg)"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="3" y1="7" x2="21" y2="7"/><circle cx="9" cy="7" r="2.4" fill="var(--bg)"/><line x1="3" y1="16" x2="21" y2="16"/><circle cx="15.5" cy="16" r="2.4" fill="var(--bg)"/></svg><span>Settings</span>
   </button>
 </nav>
 
@@ -329,11 +341,9 @@ function defaultState(){
     currentWeek: 1
   };
 }
-function loadState(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return defaultState();
-    const parsed = JSON.parse(raw);
+/* Repair anything a stored or imported blob is missing. Restoring a backup is
+   the one path that must not be able to break the app, so both go through here. */
+function normalizeState(parsed){
     const st = Object.assign(defaultState(), parsed, {
       meta: Object.assign(defaultState().meta, parsed.meta||{}),
       ui: Object.assign(defaultState().ui, parsed.ui||{})
@@ -342,16 +352,40 @@ function loadState(){
     if(!Array.isArray(st.meta.trainDays) || st.meta.trainDays.length!==4) st.meta.trainDays = [1,2,4,5];
     if(!Array.isArray(st.meta.dayOrder) || [...st.meta.dayOrder].sort().join('')!=='ABCD') st.meta.dayOrder = ['A','C','D','B'];
     if(!'ABCD'.includes(st.ui.day)) st.ui.day = 'A';
+    if(!st.meta.overrides || typeof st.meta.overrides !== 'object') st.meta.overrides = {};
+    if(!st.logs || typeof st.logs !== 'object') st.logs = {};
+    if(!Array.isArray(st.conditioningLogs)) st.conditioningLogs = [];
+    if(!(st.currentWeek>=1 && st.currentWeek<=10)) st.currentWeek = 1;
     return st;
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? normalizeState(JSON.parse(raw)) : defaultState();
   }catch(e){ return defaultState(); }
 }
 let saveTimer=null;
-function save(){
+/* `quiet` is for remembering where you are — which week, which day. Only
+   saving something you entered earns the "Saved" flash. */
+let saveLoud = false;
+function save(quiet){
+  if(!quiet) saveLoud = true;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(()=>{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE));
-    toast();
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); }catch(e){}
+    if(saveLoud) toast();
+    saveLoud = false;
   }, 250);
+}
+/* "Removed · Undo" — kinder than a confirm box, and it catches the mis-tap
+   on a small ✕ that a confirm box would have been tapped straight through. */
+function undoToast(text, undo){
+  const el = document.getElementById('undoToast');
+  el.innerHTML = '<span>'+esc(text)+'</span><button>Undo</button>';
+  el.querySelector('button').onclick = ()=>{ el.classList.remove('show'); undo(); };
+  el.classList.add('show');
+  clearTimeout(undoToast._t);
+  undoToast._t = setTimeout(()=>el.classList.remove('show'), 6000);
 }
 function toast(){
   const el = document.getElementById('savedToast');
@@ -369,6 +403,12 @@ function getSlot(key){ return SLOTS.find(s=>s.key===key); }
 function exName(key, weekObj){
   const ov = STATE.meta.overrides[key];
   return ov && ov.trim() ? ov.trim() : weekObj[key].name;
+}
+/* Today's date as YYYY-MM-DD on the phone's own clock. toISOString() is UTC,
+   which in the US evening is already tomorrow. */
+function localYmd(d){
+  d = d || new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 function clamp(v,lo,hi){ return Math.max(lo, Math.min(hi, v)); }
 
@@ -426,7 +466,9 @@ function todayInfo(){
   const start = new Date(STATE.meta.startDate+'T00:00:00');
   if(isNaN(start)) return null;
   const now = new Date(); now.setHours(0,0,0,0);
-  const diffDays = Math.floor((now - start)/86400000);
+  // Rounded, not floored: across the spring clock change a day is 23 hours,
+  // and flooring would put every later Monday back in the previous week.
+  const diffDays = Math.round((now - start)/86400000);
   if(diffDays < 0) return {status:'notstarted', daysUntil:-diffDays};
   const week = Math.floor(diffDays/7)+1;
   if(week > 10) return {status:'finished'};
@@ -448,7 +490,7 @@ function goToToday(){
   if(!ti) return;
   if(ti.status==='train'){ STATE.currentWeek=ti.week; STATE.ui.day=ti.day; }
   else if(ti.status==='rest'){ STATE.currentWeek=ti.week; }
-  save();
+  save(true);
   renderToday();
 }
 function todayBannerHtml(){
@@ -587,6 +629,7 @@ function parseTargetMinutes(text){
 
 /* ---------- Nav ---------- */
 function jumpTo(tabName){
+  if(draftDays && tabName !== 'settings') draftDays = null;   // unfinished pick dropped; the saved four stand
   document.body.dataset.tab = tabName;
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+tabName).classList.add('active');
@@ -647,6 +690,7 @@ function addSet(key){
 function delSet(key,idx){
   const log = getLog(key);
   const s = log.sets[idx];
+  const before = JSON.stringify(log.sets), had = s && hasVals(s);
   if(s && hasVals(s)){
     // first tap clears the values; the row stays for re-entry
     log.sets[idx] = {w:null,r:null,p:null};
@@ -657,12 +701,14 @@ function delSet(key,idx){
   if(log.sets.length===0) log.sets.push({w:null,r:null,p:null});
   save();
   renderToday();
+  if(had) undoToast('Set '+(idx+1)+' cleared', ()=>{ getLog(key).sets = JSON.parse(before); save(); renderToday(); });
 }
 function clearSets(key){
-  if(!confirm('Clear all sets for this exercise?')) return;
+  const before = JSON.stringify(STATE.logs[key].sets);
   STATE.logs[key].sets = [{w:null,r:null,p:null},{w:null,r:null,p:null},{w:null,r:null,p:null}];
   save();
   renderToday();
+  undoToast('All sets cleared', ()=>{ STATE.logs[key].sets = JSON.parse(before); save(); renderToday(); });
 }
 function rerenderExercise(key){
   const wrap = document.querySelector(`[data-setswrap="${key}"]`);
@@ -685,6 +731,7 @@ document.addEventListener('input', e=>{
     save();
     const statsEl = document.getElementById('stats-'+key);
     if(statsEl) statsEl.innerHTML = statHtml(exerciseStats(key));
+    refreshDayProgress();
     // keep the row's clear button in sync as values come and go
     const cell = el.closest('tr').lastElementChild;
     const showX = hasVals(log.sets[idx]) || idx >= 3;
@@ -729,8 +776,8 @@ function renderToday(){
         <div class="tiny dim" style="margin-top:2px;">${DAY_META[day].focus}</div>
       </div>
       <div class="hero-side">
-        <div class="frac">${loggedCount}/${slots.length} logged</div>
-        <div class="progressbar" style="width:90px;"><i style="width:${Math.round(loggedCount/slots.length*100)}%"></i></div>
+        <div class="frac" id="dayFrac">${loggedCount}/${slots.length} logged</div>
+        <div class="progressbar" style="width:90px;"><i id="dayBar" style="width:${Math.round(loggedCount/slots.length*100)}%"></i></div>
       </div>
     </div>
     <div class="weekstrip" id="weekstrip">
@@ -764,7 +811,7 @@ function exerciseBlock(s, w, week){
   return `
     <div class="card">
       <div class="ex-top">
-        <div class="ex-name">${esc(name)}${done?'<span class="donedot"></span>':''}</div>
+        <div class="ex-name">${esc(name)}<span class="donedot" id="dd-${key}"${done?'':' style="display:none"'}></span></div>
         <span class="chip">${esc(s.sub||s.day)}</span>
       </div>
       <div class="ex-prog clamp clampable" onclick="this.classList.toggle('clamp')">${esc(prog)}</div>
@@ -773,8 +820,25 @@ function exerciseBlock(s, w, week){
     </div>
   `;
 }
-function setWeek(n){ STATE.currentWeek=n; save(); renderToday(); }
-function setDay(d){ STATE.ui.day=d; save(); renderToday(); }
+/* Typing a set changes how much of the day is logged; the counter and the
+   green dot on the card follow along rather than waiting for a redraw. */
+function refreshDayProgress(){
+  const week = STATE.currentWeek;
+  const slots = SLOTS.filter(s=>s.day===STATE.ui.day);
+  let logged = 0;
+  slots.forEach(s=>{
+    const k = logKey(week, s.key), has = exerciseStats(k).hasData;
+    if(has) logged++;
+    const dot = document.getElementById('dd-'+k);
+    if(dot) dot.style.display = has ? '' : 'none';
+  });
+  const frac = document.getElementById('dayFrac');
+  if(frac) frac.textContent = logged+'/'+slots.length+' logged';
+  const bar = document.getElementById('dayBar');
+  if(bar) bar.style.width = Math.round(logged/slots.length*100)+'%';
+}
+function setWeek(n){ STATE.currentWeek=n; save(true); renderToday(); }
+function setDay(d){ STATE.ui.day=d; save(true); renderToday(); }
 
 /* ---------- Conditioning Tab ---------- */
 function renderConditioning(){
@@ -811,7 +875,7 @@ function renderConditioning(){
   <div class="card">
     <h2>Log a Run</h2>
     <div class="grid2">
-      <div class="field"><label>Date</label><input type="date" id="condDate" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div class="field"><label>Date</label><input type="date" id="condDate" value="${localYmd()}"></div>
       <div class="field"><label>Zone</label>
         <select id="condZone">
           <option value="Zone 1 (easy)">Zone 1 (easy)</option>
@@ -839,7 +903,7 @@ function renderConditioning(){
           <div style="font-weight:700">${esc(l.zone)} · ${l.duration} min${l.dist?` · ${(+parseFloat(l.dist).toFixed(2))} mi`:''}${paceStr(l)?` · ${paceStr(l)} /mi`:''}</div>
           <div class="tiny muted">${esc(l.date)}${l.hr?` · ${l.hr} bpm avg`:''}${l.notes?` · ${esc(l.notes)}`:''}</div>
         </div>
-        <button class="set-del" onclick="delCondLog(${STATE.conditioningLogs.indexOf(l)})">✕</button>
+        <button class="set-del" onclick="delCondLog(${STATE.conditioningLogs.indexOf(l)})" aria-label="Remove run">✕</button>
       </div>`).join('') : `<div class="small muted">No runs logged yet this week.</div>`}
   </div>
   `;
@@ -848,13 +912,14 @@ function renderConditioning(){
   const act = strip && strip.querySelector('.active');
   if(act) act.scrollIntoView({block:'nearest', inline:'center'});
 }
-function setWeekCond(n){ STATE.currentWeek=n; save(); renderConditioning(); }
+function setWeekCond(n){ STATE.currentWeek=n; save(true); renderConditioning(); }
 function paceStr(l){
   const min = parseFloat(l.duration), mi = parseFloat(l.dist);
   if(!min || !mi || mi<=0) return '';
   const p = min/mi;
   const mm = Math.floor(p), ss = Math.round((p-mm)*60);
-  return `${mm}:${String(ss===60?0:ss).padStart(2,'0')}`;
+  // 7:59.7 rounds to 8:00, not 7:00
+  return ss===60 ? `${mm+1}:00` : `${mm}:${String(ss).padStart(2,'0')}`;
 }
 function addCondLog(){
   const date = document.getElementById('condDate').value;
@@ -869,9 +934,10 @@ function addCondLog(){
   renderConditioning();
 }
 function delCondLog(i){
-  STATE.conditioningLogs.splice(i,1);
+  const [gone] = STATE.conditioningLogs.splice(i,1);
   save();
   renderConditioning();
+  if(gone) undoToast('Run removed', ()=>{ STATE.conditioningLogs.splice(i, 0, gone); save(); renderConditioning(); });
 }
 
 /* ---------- Stats Tab (trends + calculators) ---------- */
@@ -977,8 +1043,11 @@ function runCalcProtein(){
 }
 
 /* ---------- Settings Tab ---------- */
+/* A half-made pick of lifting days lives here, not in STATE: three days
+   saved to storage would be "repaired" back to the defaults on next load. */
+let draftDays = null;
 function dayMapHtml(){
-  const days = [...STATE.meta.trainDays].sort((a,b)=>a-b);
+  const days = [...(draftDays || STATE.meta.trainDays)].sort((a,b)=>a-b);
   const order = STATE.meta.dayOrder;
   if(days.length!==4) return `<div class="tiny muted">Pick exactly 4 days, then assign a session to each.</div>`;
   return `
@@ -994,7 +1063,7 @@ function dayMapHtml(){
     <div class="tiny muted" style="margin-top:7px;">Assigning a session to a day swaps it with wherever it was before.</div>`;
 }
 function renderSettings(){
-  const days = STATE.meta.trainDays;
+  const days = draftDays || STATE.meta.trainDays;
   let html = `
   <div class="card">
     <h2>Program Setup</h2>
@@ -1006,8 +1075,7 @@ function renderSettings(){
     </div>
     <div class="field"><label>Session on each day</label>${dayMapHtml()}</div>
     <div class="field"><label>Age (for heart-rate zones)</label><input type="number" id="setAge" value="${esc(STATE.meta.age)}"></div>
-    <button class="btn primary block" onclick="saveSettingsGeneral()">Save</button>
-    <div class="tiny muted" style="margin-top:8px;">With a start date set, the Today tab opens straight to the right week and day automatically.</div>
+    <div class="tiny muted">With a start date set, the Today tab opens straight to the right week and day automatically.</div>
   </div>
   <div class="card" style="padding-top:2px;padding-bottom:2px;">
     ${['A','B','C','D'].map(d=>`
@@ -1095,6 +1163,10 @@ function renderSettings(){
     });
   });
   document.getElementById('importFile').addEventListener('change', importData);
+  // Saved as you change them, like everything else on this tab — a Save
+  // button here alone meant a start date typed and left behind was lost.
+  ['setStart','setAge'].forEach(id=>
+    document.getElementById(id).addEventListener('change', saveSettingsGeneral));
 }
 function setDayMap(idx, letter){
   const order = [...STATE.meta.dayOrder];
@@ -1107,7 +1179,7 @@ function setDayMap(idx, letter){
   renderSettings();
 }
 function toggleTrainDay(d){
-  let days = [...STATE.meta.trainDays];
+  let days = [...(draftDays || STATE.meta.trainDays)];
   if(days.includes(d)){
     days = days.filter(x=>x!==d);
   } else {
@@ -1117,26 +1189,21 @@ function toggleTrainDay(d){
     }
     days.push(d);
   }
-  STATE.meta.trainDays = days.sort((a,b)=>a-b);
-  if(days.length===4) save();
+  days.sort((a,b)=>a-b);
+  if(days.length===4){ STATE.meta.trainDays = days; draftDays = null; save(); }
+  else draftDays = days;
   renderSettings();
 }
 function saveSettingsGeneral(){
   STATE.meta.startDate = document.getElementById('setStart').value;
   STATE.meta.age = document.getElementById('setAge').value;
-  if(STATE.meta.trainDays.length!==4){
-    alert('Pick exactly 4 lifting days.');
-    return;
-  }
   const ti = todayInfo();
   if(ti && (ti.status==='train' || ti.status==='rest')){
     STATE.currentWeek = ti.week;
     if(ti.status==='train') STATE.ui.day = ti.day;
   }
   save();
-  toast();
   refreshHeader();
-  renderSettings();
 }
 function exportData(){
   const blob = new Blob([JSON.stringify(STATE,null,2)], {type:'application/json'});
@@ -1148,17 +1215,22 @@ function exportData(){
 }
 function importData(e){
   const file = e.target.files[0];
+  e.target.value = '';             // so picking the same file again still fires
   if(!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
     try{
       const parsed = JSON.parse(ev.target.result);
-      STATE = Object.assign(defaultState(), parsed);
+      if(!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('not a backup');
+      // A backup missing a piece (say, no overrides) used to replace the whole
+      // meta object and break the Today tab until a reload repaired it.
+      STATE = normalizeState(parsed);
       save();
-      alert('Import successful.');
-      renderSettings();
-      refreshHeader();
-    }catch(err){ alert('Could not read that file.'); }
+      const n = Object.keys(STATE.logs).filter(k=>exerciseStats(k).hasData).length;
+      alert('Import successful — '+n+' exercise'+(n===1?'':'s')+' logged, '
+            + STATE.conditioningLogs.length+' run'+(STATE.conditioningLogs.length===1?'':'s')+'.');
+      refreshHeader(); jumpTo('today');
+    }catch(err){ alert('Could not read that file — it does not look like a backup from this app.'); }
   };
   reader.readAsText(file);
 }
@@ -1183,9 +1255,31 @@ function timerTap(){
   if(end > Date.now()){ stopTimer(); return; }
   document.getElementById('timerPresets').classList.toggle('open');
 }
+/* The finish beep is queued on the audio clock now, inside the tap. Made
+   later from a setInterval tick, an AudioContext has no user gesture behind
+   it — iOS keeps it silent — and a backgrounded tab's throttled timers would
+   sound it late anyway. */
+let restCtx = null;
+function killRestAudio(){ if(restCtx){ try{ restCtx.close(); }catch(e){} restCtx = null; } }
+function beepAt(ctx, when, freq, gain){
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.connect(g); g.connect(ctx.destination);
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(gain, when);
+  g.gain.exponentialRampToValueAtTime(.001, when + .15);
+  o.start(when); o.stop(when + .16);
+}
 function startTimer(sec){
   localStorage.setItem(TIMER_KEY, String(Date.now() + sec*1000));
   document.getElementById('timerPresets').classList.remove('open');
+  killRestAudio();
+  try{
+    restCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if(restCtx.state === 'suspended') restCtx.resume();
+    const t = restCtx.currentTime + sec;
+    beepAt(restCtx, t, 880, .18);
+    beepAt(restCtx, t + .18, 1175, .18);
+  }catch(e){ restCtx = null; }
   runTimer();
 }
 function runTimer(){
@@ -1208,22 +1302,15 @@ function finishTimer(){
   fab.className = 'timer-fab done';
   fab.textContent = 'GO';
   if(navigator.vibrate) navigator.vibrate([200,100,200]);
-  try{
-    const ctx = new (window.AudioContext||window.webkitAudioContext)();
-    [0,0.18].forEach((t,i)=>{
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
-      o.frequency.value = i ? 1175 : 880;
-      g.gain.setValueAtTime(.18, ctx.currentTime+t);
-      g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime+t+.15);
-      o.start(ctx.currentTime+t); o.stop(ctx.currentTime+t+.16);
-    });
-  }catch(e){}
+  // Already sounded from the clock it was queued on; just tidy up after it.
+  const ctx = restCtx; restCtx = null;
+  if(ctx) setTimeout(()=>{ try{ ctx.close(); }catch(e){} }, 1000);
   setTimeout(resetTimerFab, 2500);
 }
 function stopTimer(){
   clearInterval(timerInt);
   localStorage.removeItem(TIMER_KEY);
+  killRestAudio();
   resetTimerFab();
 }
 function resetTimerFab(){
@@ -1249,6 +1336,9 @@ function resetTimerFab(){
   const fab = document.getElementById('timerFab');
   fab.addEventListener(downEvt, e=>{ e.preventDefault(); timerTap(); });
   fab.addEventListener('click', e=>e.preventDefault());
+  document.addEventListener(downEvt, e=>{
+    if(!e.target.closest('#timerWrap')) document.getElementById('timerPresets').classList.remove('open');
+  });
   refreshHeader();
   jumpTo('today');
   if((+localStorage.getItem(TIMER_KEY)||0) > Date.now()) runTimer();
