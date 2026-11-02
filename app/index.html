@@ -257,6 +257,30 @@ body[data-tab="today"] .timer-fab{display:flex;}
   box-shadow:0 6px 20px rgba(0,0,0,.45);opacity:0;pointer-events:none;transform:translateY(8px);
   transition:opacity .2s,transform .2s;
 }
+/* completion grid — the same tracker as Gen S&C II */
+.cgrid{display:grid;grid-template-columns:auto repeat(4,1fr);gap:6px;align-items:center;}
+.cgrid .chead{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--faint);text-align:center;padding-bottom:2px;}
+.cgrid .cwk{font-size:11px;font-weight:700;color:var(--faint);padding-right:4px;
+  font-variant-numeric:tabular-nums;}
+.cgrid .cwk.now{color:var(--accent);}
+.cell{position:relative;height:38px;border-radius:9px;background:var(--surface2);border:none;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:var(--faint);font-variant-numeric:tabular-nums;
+  font-family:inherit;padding:0;overflow:hidden;}
+.cell .fill{position:absolute;left:0;bottom:0;width:100%;background:var(--accent);opacity:.22;}
+.cell span{position:relative;}
+.cell.part{color:var(--ink);}
+.cell.done{background:var(--good);color:#0b0d10;}
+.cell.done .fill{display:none;}
+.cell.today{box-shadow:0 0 0 1.6px var(--accent);}
+.clegend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--dim);margin-top:11px;}
+.clegend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;}
+.streak{font-size:34px;font-weight:800;letter-spacing:-1.4px;line-height:1;}
+.donerow{display:flex;align-items:center;gap:11px;}
+.donebtn{flex:1;background:var(--surface2);border:none;border-radius:11px;color:var(--ink);
+  font-family:inherit;font-size:13.5px;font-weight:700;padding:13px;cursor:pointer;}
+.donebtn.on{background:var(--good);color:#0b0d10;}
 .undotoast.show{opacity:1;pointer-events:auto;transform:none;}
 .undotoast button{background:none;border:none;color:#c2391f;font:inherit;font-weight:800;cursor:pointer;padding:2px 0;}
 :focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
@@ -278,6 +302,7 @@ h1,h2,h3{color:var(--ink);}
 <main>
   <div class="tab active" id="tab-today"></div>
   <div class="tab" id="tab-conditioning"></div>
+  <div class="tab" id="tab-done"></div>
   <div class="tab" id="tab-progress"></div>
   <div class="tab" id="tab-settings"></div>
 </main>
@@ -302,6 +327,9 @@ h1,h2,h3{color:var(--ink);}
   </button>
   <button data-tab="conditioning" aria-label="Cardio">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 13 7 13 10 5.5 14 19 16.5 13 22 13"/></svg><span>Run</span>
+  </button>
+  <button data-tab="done" aria-label="Completion">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 10.5 17 4 11"/></svg><span>Done</span>
   </button>
   <button data-tab="progress" aria-label="Stats">
     <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="13" width="4" height="8" rx="1.2"/><rect x="10" y="8" width="4" height="13" rx="1.2"/><rect x="17" y="3" width="4" height="18" rx="1.2"/></svg><span>Stats</span>
@@ -337,6 +365,7 @@ function defaultState(){
     meta:{ startDate:'', age:'', units:'lb', overrides:{}, startE1RM:{}, trainDays:[1,2,4,5], dayOrder:['A','C','D','B'] },
     logs:{},           // key -> {sets:[{w,r,p}], time:'', srpe:''}
     conditioningLogs:[],// [{week,date,zone,duration,hr,notes}]
+    daysDone:{},       // "<week>_<day>" -> ISO timestamp the day was ticked off
     ui:{ day:'A' },
     currentWeek: 1
   };
@@ -355,6 +384,7 @@ function normalizeState(parsed){
     if(!st.meta.overrides || typeof st.meta.overrides !== 'object') st.meta.overrides = {};
     if(!st.logs || typeof st.logs !== 'object') st.logs = {};
     if(!Array.isArray(st.conditioningLogs)) st.conditioningLogs = [];
+    if(!st.daysDone || typeof st.daysDone !== 'object') st.daysDone = {};
     if(!(st.currentWeek>=1 && st.currentWeek<=10)) st.currentWeek = 1;
     return st;
 }
@@ -634,7 +664,7 @@ function jumpTo(tabName){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+tabName).classList.add('active');
   document.querySelectorAll('.bottom-nav button').forEach(b=>b.classList.toggle('active', b.dataset.tab===tabName));
-  const renderers = {today:renderToday, conditioning:renderConditioning, progress:renderProgress, settings:renderSettings};
+  const renderers = {today:renderToday, conditioning:renderConditioning, done:renderDone, progress:renderProgress, settings:renderSettings};
   if(renderers[tabName]) renderers[tabName]();
   window.scrollTo(0,0);
 }
@@ -795,6 +825,8 @@ function renderToday(){
       <div class="field" style="margin-bottom:0;"><label>Session RPE</label><input type="number" step="0.5" data-sessionmeta="${sessionKey}" data-field="srpe" value="${esc(sessLog.srpe)}"></div>
     </div>
     <div class="tiny dim" style="margin-top:8px;">5 = easy · 8 = tough but repeatable · 10 = maximal</div>
+    <div class="divider"></div>
+    <div id="dayDone">${dayDoneHtml(week, day)}</div>
   </div>
   `;
   document.getElementById('tab-today').innerHTML = html;
@@ -836,6 +868,8 @@ function refreshDayProgress(){
   if(frac) frac.textContent = logged+'/'+slots.length+' logged';
   const bar = document.getElementById('dayBar');
   if(bar) bar.style.width = Math.round(logged/slots.length*100)+'%';
+  const dd = document.getElementById('dayDone');
+  if(dd) dd.innerHTML = dayDoneHtml(week, STATE.ui.day);
 }
 function setWeek(n){ STATE.currentWeek=n; save(true); renderToday(); }
 function setDay(d){ STATE.ui.day=d; save(true); renderToday(); }
@@ -938,6 +972,119 @@ function delCondLog(i){
   save();
   renderConditioning();
   if(gone) undoToast('Run removed', ()=>{ STATE.conditioningLogs.splice(i, 0, gone); save(); renderConditioning(); });
+}
+
+/* ---------- Completion ----------
+   A day counts as done when you say so. Logging every exercise marks it
+   automatically, but plenty of sessions end with something unlogged — a
+   bodyweight set, a lift you swapped out — so the explicit tick wins. */
+function dayStatus(week, day){
+  const slots = SLOTS.filter(s=>s.day===day);
+  const logged = slots.filter(s=>exerciseStats(logKey(week,s.key)).hasData).length;
+  const marked = !!STATE.daysDone[week+'_'+day];
+  return {logged, total:slots.length, marked, done: marked || logged===slots.length};
+}
+function toggleDayDone(week, day){
+  const k = week+'_'+day;
+  if(STATE.daysDone[k]) delete STATE.daysDone[k]; else STATE.daysDone[k] = new Date().toISOString();
+  save();
+  if(document.body.dataset.tab === 'done') renderDone();
+  else { const dd = document.getElementById('dayDone'); if(dd) dd.innerHTML = dayDoneHtml(week, day); }
+}
+function dayDoneHtml(week, day){
+  const st = dayStatus(week, day);
+  return `<div class="donerow"><button class="donebtn${st.done?' on':''}" onclick="toggleDayDone(${week},'${day}')">`
+    + (st.done ? `✓ Day ${day} complete` : `Mark day ${day} complete`) + `</button></div>`
+    + `<div class="tiny dim" style="margin-top:7px;">${st.logged} of ${st.total} exercises logged`
+    + (st.done && !st.marked ? ' — counted complete automatically' : '') + `</div>`;
+}
+/* A week's running counts as done once the logged minutes reach that
+   week's target — the same number the Run tab counts down. */
+function runStatus(week){
+  const target = parseTargetMinutes(getWeek(week).conditioning);
+  const mins = STATE.conditioningLogs.filter(l=>l.week===week).reduce((a,l)=>a+(parseFloat(l.duration)||0),0);
+  return {mins, target, done: target>0 && mins>=target};
+}
+
+/* ---------- Completion tab ---------- */
+function renderDone(){
+  const ti = todayInfo();
+  const here = (ti && (ti.status==='train'||ti.status==='rest')) ? ti : null;
+  let doneDays = 0;
+  const totalDays = 40;
+  const rows = [];
+  for(let wk=1; wk<=10; wk++){
+    let cells = `<div class="cwk${here && here.week===wk?' now':''}">wk ${wk}</div>`;
+    for(const d of ['A','B','C','D']){
+      const st = dayStatus(wk, d);
+      if(st.done) doneDays++;
+      const pct = Math.round(st.logged/st.total*100);
+      const isToday = here && here.week===wk && here.status==='train' && here.day===d;
+      cells += `<button class="cell ${st.done?'done':(st.logged?'part':'')}${isToday?' today':''}" `
+             + `onclick="jumpToDay(${wk},'${d}')" aria-label="Week ${wk} day ${d}, ${st.logged} of ${st.total} logged${st.done?', complete':''}">`
+             + (st.done ? '' : `<i class="fill" style="height:${pct}%"></i>`)
+             + `<span>${st.done ? '✓' : (st.logged ? st.logged+'/'+st.total : d)}</span></button>`;
+    }
+    rows.push(cells);
+  }
+
+  let runDone = 0;
+  const runCells = [];
+  for(let wk=1; wk<=10; wk++){
+    const r = runStatus(wk);
+    if(r.done) runDone++;
+    const pct = r.target ? Math.min(100, Math.round(r.mins/r.target*100)) : 0;
+    runCells.push(`<button class="cell ${r.done?'done':(r.mins?'part':'')}" onclick="jumpToCond(${wk})" `
+      + `aria-label="Week ${wk} running, ${r.mins} of ${r.target} minutes">`
+      + (r.done ? '' : `<i class="fill" style="height:${pct}%"></i>`)
+      + `<span>${r.done ? '✓' : (r.mins ? pct+'%' : wk)}</span></button>`);
+  }
+
+  // current streak: consecutive completed training days counting back from the last one done,
+  // in the order you actually lift them (Settings → session on each day), not A-B-C-D
+  const flat = [];
+  for(let wk=1; wk<=10; wk++) for(const d of STATE.meta.dayOrder) flat.push(dayStatus(wk,d).done);
+  let streak = 0;
+  for(let i=flat.lastIndexOf(true); i>=0 && flat[i]; i--) streak++;
+
+  document.getElementById('tab-done').innerHTML = `
+  <div class="card">
+    <h2>Completion</h2>
+    <div class="hero-row" style="margin-top:10px;">
+      <div><div class="streak">${doneDays}<span class="dim" style="font-size:17px;font-weight:600;"> / ${totalDays}</span></div>
+        <div class="tiny dim" style="margin-top:3px;">training days complete</div></div>
+      <div style="text-align:right;"><div class="streak">${streak}</div>
+        <div class="tiny dim" style="margin-top:3px;">in a row</div></div>
+    </div>
+    <div class="progressbar wide" style="margin-top:12px;"><i style="width:${Math.round(doneDays/totalDays*100)}%"></i></div>
+  </div>
+  <div class="card"><h2>Lifting <span class="dim" style="font-weight:500;">· tap any day to open it</span></h2>
+    <div class="cgrid">
+      <div></div>${['A','B','C','D'].map(d=>`<div class="chead">${d}</div>`).join('')}
+      ${rows.join('')}
+    </div>
+    <div class="clegend">
+      <span><i style="background:var(--good)"></i>complete</span>
+      <span><i style="background:var(--accent);opacity:.35"></i>part-logged</span>
+      <span><i style="background:var(--surface2)"></i>not started</span>
+    </div>
+  </div>
+  <div class="card"><h2>Running <span class="dim" style="font-weight:500;">· minutes against each week's target</span></h2>
+    <div class="cgrid" style="grid-template-columns:auto repeat(5,1fr);">
+      <div></div>${[1,2,3,4,5].map(n=>`<div class="chead">${n}</div>`).join('')}
+      <div class="cwk">wk 1-5</div>${runCells.slice(0,5).join('')}
+      <div class="cwk">wk 6-10</div>${runCells.slice(5).join('')}
+    </div>
+    <div class="tiny dim" style="margin-top:11px;">${runDone} of 10 weeks at their running target.</div>
+  </div>`;
+}
+function jumpToDay(week, day){
+  STATE.currentWeek = week; STATE.ui.day = day; save(true);
+  jumpTo('today');
+}
+function jumpToCond(week){
+  STATE.currentWeek = week; save(true);
+  jumpTo('conditioning');
 }
 
 /* ---------- Stats Tab (trends + calculators) ---------- */

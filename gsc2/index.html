@@ -1298,9 +1298,10 @@ function renderDone(){
          + '<span>'+(full?'✓':ticked+'/'+c.sessions.length)+'</span></button>';
   });
 
-  // current streak: consecutive completed training days counting back from the last one done
+  // current streak: consecutive completed training days counting back from the last one done,
+  // in the order you actually lift them (Settings → session on each day), not A-B-C-D
   const flat = [];
-  for(let wk=1; wk<=10; wk++) for(const d of ['A','B','C','D']) flat.push(dayStatus(wk,d).done);
+  for(let wk=1; wk<=10; wk++) for(const d of STATE.meta.dayOrder) flat.push(dayStatus(wk,d).done);
   let lastDone = flat.lastIndexOf(true), streak = 0;
   for(let i=lastDone; i>=0 && flat[i]; i--) streak++;
 
