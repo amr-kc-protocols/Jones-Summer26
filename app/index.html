@@ -257,6 +257,43 @@ body[data-tab="today"] .timer-fab{display:flex;}
   box-shadow:0 6px 20px rgba(0,0,0,.45);opacity:0;pointer-events:none;transform:translateY(8px);
   transition:opacity .2s,transform .2s;
 }
+/* completion grid — the same tracker as Gen S&C II */
+.cgrid{display:grid;grid-template-columns:auto repeat(4,1fr);gap:6px;align-items:center;}
+.cgrid .chead{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--faint);text-align:center;padding-bottom:2px;}
+.cgrid .cwk{font-size:11px;font-weight:700;color:var(--faint);padding-right:4px;
+  font-variant-numeric:tabular-nums;}
+.cgrid .cwk.now{color:var(--accent);}
+.cell{position:relative;height:38px;border-radius:9px;background:var(--surface2);border:none;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:var(--faint);font-variant-numeric:tabular-nums;
+  font-family:inherit;padding:0;overflow:hidden;}
+.cell .fill{position:absolute;left:0;bottom:0;width:100%;background:var(--accent);opacity:.22;}
+.cell span{position:relative;}
+.cell.part{color:var(--ink);}
+.cell.done{background:var(--good);color:#0b0d10;}
+.cell.done .fill{display:none;}
+.cell.today{box-shadow:0 0 0 1.6px var(--accent);}
+.clegend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--dim);margin-top:11px;}
+.clegend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;}
+.streak{font-size:34px;font-weight:800;letter-spacing:-1.4px;line-height:1;}
+.donerow{display:flex;align-items:center;gap:11px;}
+.donebtn{flex:1;background:var(--surface2);border:none;border-radius:11px;color:var(--ink);
+  font-family:inherit;font-size:13.5px;font-weight:700;padding:13px;cursor:pointer;}
+.donebtn.on{background:var(--good);color:#0b0d10;}
+/* last week's sets, on the card */
+.lastwk{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-size:12.5px;
+  color:var(--dim);margin:0 0 7px;font-variant-numeric:tabular-nums;line-height:1.5;}
+.lastwk .wk{font-size:10px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;color:var(--faint);flex:none;}
+.lastwk b{color:var(--ink);font-weight:700;}
+.lastwk .rpe{color:var(--faint);}
+/* session clock + backups */
+.readout{background:var(--surface2);border-radius:11px;padding:12px;font-size:15px;font-variant-numeric:tabular-nums;}
+.backup-note{font-size:11px;margin-top:9px;line-height:1.5;}
+.backup-note.stale{color:var(--red);}
+#backupOut textarea{width:100%;height:150px;margin-top:10px;background:var(--surface2);
+  border:none;border-radius:11px;color:var(--ink);padding:11px;font-size:11px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;resize:vertical;}
 .undotoast.show{opacity:1;pointer-events:auto;transform:none;}
 .undotoast button{background:none;border:none;color:#c2391f;font:inherit;font-weight:800;cursor:pointer;padding:2px 0;}
 :focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
@@ -278,6 +315,7 @@ h1,h2,h3{color:var(--ink);}
 <main>
   <div class="tab active" id="tab-today"></div>
   <div class="tab" id="tab-conditioning"></div>
+  <div class="tab" id="tab-done"></div>
   <div class="tab" id="tab-progress"></div>
   <div class="tab" id="tab-settings"></div>
 </main>
@@ -302,6 +340,9 @@ h1,h2,h3{color:var(--ink);}
   </button>
   <button data-tab="conditioning" aria-label="Cardio">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 13 7 13 10 5.5 14 19 16.5 13 22 13"/></svg><span>Run</span>
+  </button>
+  <button data-tab="done" aria-label="Completion">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 10.5 17 4 11"/></svg><span>Done</span>
   </button>
   <button data-tab="progress" aria-label="Stats">
     <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="13" width="4" height="8" rx="1.2"/><rect x="10" y="8" width="4" height="13" rx="1.2"/><rect x="17" y="3" width="4" height="18" rx="1.2"/></svg><span>Stats</span>
@@ -337,6 +378,7 @@ function defaultState(){
     meta:{ startDate:'', age:'', units:'lb', overrides:{}, startE1RM:{}, trainDays:[1,2,4,5], dayOrder:['A','C','D','B'] },
     logs:{},           // key -> {sets:[{w,r,p}], time:'', srpe:''}
     conditioningLogs:[],// [{week,date,zone,duration,hr,notes}]
+    daysDone:{},       // "<week>_<day>" -> ISO timestamp the day was ticked off
     ui:{ day:'A' },
     currentWeek: 1
   };
@@ -355,6 +397,7 @@ function normalizeState(parsed){
     if(!st.meta.overrides || typeof st.meta.overrides !== 'object') st.meta.overrides = {};
     if(!st.logs || typeof st.logs !== 'object') st.logs = {};
     if(!Array.isArray(st.conditioningLogs)) st.conditioningLogs = [];
+    if(!st.daysDone || typeof st.daysDone !== 'object') st.daysDone = {};
     if(!(st.currentWeek>=1 && st.currentWeek<=10)) st.currentWeek = 1;
     return st;
 }
@@ -537,6 +580,21 @@ function lastPerformance(slotKey, beforeWeek){
   }
   return null;
 }
+/* The progression turns on what you managed last time, so put the actual
+   sets on the card rather than only the suggestion drawn from them. */
+function lastWeekHtml(slotKey, week){
+  const prev = lastPerformance(slotKey, week);
+  if(!prev) return '';
+  const groups = [];
+  prev.sets.forEach(s=>{
+    const w = +s.w, r = +s.r, last = groups[groups.length-1];
+    if(last && last.w === w) last.reps.push(r); else groups.push({w, reps:[r]});
+  });
+  const body = groups.map(g=>'<b>'+g.w+'</b> × '+g.reps.join(', ')).join(' &nbsp;·&nbsp; ');
+  const rpes = prev.sets.map(s=>s.p).filter(v=>v!=null && v!=='').map(Number);
+  const top = rpes.length ? '<span class="rpe">top RPE '+Math.max(...rpes)+'</span>' : '';
+  return '<div class="lastwk"><span class="wk">wk '+prev.week+'</span>'+body+top+'</div>';
+}
 function roundLoad(x){ return Math.max(5, Math.round(x/5)*5); }
 function suggestionFor(slotKey, week){
   const parsed = parsePrescription(getWeek(week)[slotKey].prog);
@@ -634,7 +692,7 @@ function jumpTo(tabName){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+tabName).classList.add('active');
   document.querySelectorAll('.bottom-nav button').forEach(b=>b.classList.toggle('active', b.dataset.tab===tabName));
-  const renderers = {today:renderToday, conditioning:renderConditioning, progress:renderProgress, settings:renderSettings};
+  const renderers = {today:renderToday, conditioning:renderConditioning, done:renderDone, progress:renderProgress, settings:renderSettings};
   if(renderers[tabName]) renderers[tabName]();
   window.scrollTo(0,0);
 }
@@ -753,6 +811,7 @@ document.addEventListener('input', e=>{
     const log = getLog(key);
     log[field] = el.value;
     save();
+    if(field === 'start' || field === 'end') refreshSessionTimes(key);
   }
 });
 
@@ -791,10 +850,20 @@ function renderToday(){
   <div class="card">
     <h2>Session</h2>
     <div class="grid2">
-      <div class="field" style="margin-bottom:0;"><label>Time (min)</label><input type="number" data-sessionmeta="${sessionKey}" data-field="time" value="${esc(sessLog.time)}"></div>
+      <div class="field" style="margin-bottom:0;"><label>Start</label>
+        <input type="time" data-sessionmeta="${sessionKey}" data-field="start" value="${esc(sessLog.start||'')}"></div>
+      <div class="field" style="margin-bottom:0;"><label>End</label>
+        <input type="time" data-sessionmeta="${sessionKey}" data-field="end" value="${esc(sessLog.end||'')}"></div>
+    </div>
+    <div id="stamp-${sessionKey}" style="margin-top:10px;">${stampBtnHtml(sessionKey, sessLog)}</div>
+    <div class="grid2" style="margin-top:10px;">
+      <div class="field" style="margin-bottom:0;"><label>Duration</label>
+        <div class="readout" id="dur-${sessionKey}">${durationText(sessLog)}</div></div>
       <div class="field" style="margin-bottom:0;"><label>Session RPE</label><input type="number" step="0.5" data-sessionmeta="${sessionKey}" data-field="srpe" value="${esc(sessLog.srpe)}"></div>
     </div>
     <div class="tiny dim" style="margin-top:8px;">5 = easy · 8 = tough but repeatable · 10 = maximal</div>
+    <div class="divider"></div>
+    <div id="dayDone">${dayDoneHtml(week, day)}</div>
   </div>
   `;
   document.getElementById('tab-today').innerHTML = html;
@@ -815,6 +884,7 @@ function exerciseBlock(s, w, week){
         <span class="chip">${esc(s.sub||s.day)}</span>
       </div>
       <div class="ex-prog clamp clampable" onclick="this.classList.toggle('clamp')">${esc(prog)}</div>
+      ${lastWeekHtml(s.key, week)}
       ${sug?`<div class="suggest"><span class="s-w">${sug.weights.join(' · ')}</span><span class="dim">lb · ${esc(sug.note)}</span><button class="textlink" onclick="applySuggestion('${s.key}',${week})">Fill</button></div>`:''}
       <div data-setswrap="${key}">${setsTableHtml(key)}</div>
     </div>
@@ -836,6 +906,60 @@ function refreshDayProgress(){
   if(frac) frac.textContent = logged+'/'+slots.length+' logged';
   const bar = document.getElementById('dayBar');
   if(bar) bar.style.width = Math.round(logged/slots.length*100)+'%';
+  const dd = document.getElementById('dayDone');
+  if(dd) dd.innerHTML = dayDoneHtml(week, STATE.ui.day);
+}
+/* Duration comes off the clock times; a session running past midnight still
+   reads as a positive length rather than a negative one. */
+function minutesBetween(start, end){
+  if(!start || !end) return null;
+  const [sh,sm] = start.split(':').map(Number), [eh,em] = end.split(':').map(Number);
+  if([sh,sm,eh,em].some(n=>isNaN(n))) return null;
+  let mins = (eh*60+em) - (sh*60+sm);
+  if(mins < 0) mins += 24*60;
+  return mins;
+}
+function sessionMinutes(log){
+  const m = minutesBetween(log.start, log.end);
+  if(m != null) return m;
+  const legacy = parseFloat(log.time);       // sessions logged as minutes before the clock existed
+  return legacy > 0 ? legacy : null;
+}
+function durationText(log){
+  const m = sessionMinutes(log);
+  if(m == null) return '<span class="dim">—</span>';
+  const h = Math.floor(m/60), mm = m%60;
+  return '<b>'+m+'</b> min' + (h ? ' <span class="dim">· '+h+'h '+mm+'m</span>' : '');
+}
+/* One tap when you start, one when you rack the last bar. */
+function stampBtnHtml(key, log){
+  if(!log.start) return `<button class="btn block" onclick="stampNow('${key}','start')">Start now</button>`;
+  if(!log.end)   return `<button class="btn block primary" onclick="stampNow('${key}','end')">Finish now</button>`;
+  return `<button class="btn block" onclick="clearTimes('${key}')">Clear times</button>`;
+}
+function refreshSessionTimes(key){
+  const log = getLog(key);
+  ['start','end'].forEach(f=>{
+    const el = document.querySelector(`[data-sessionmeta="${key}"][data-field="${f}"]`);
+    if(el && el !== document.activeElement) el.value = log[f] || '';
+  });
+  const out = document.getElementById('dur-'+key);
+  if(out) out.innerHTML = durationText(log);
+  const stamp = document.getElementById('stamp-'+key);
+  if(stamp) stamp.innerHTML = stampBtnHtml(key, log);    // patched in place: no scroll jump
+}
+function stampNow(key, field){
+  const d = new Date();
+  getLog(key)[field] = String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  save();
+  refreshSessionTimes(key);
+}
+function clearTimes(key){
+  const log = getLog(key), before = {start:log.start, end:log.end, time:log.time};
+  log.start = ''; log.end = ''; log.time = '';
+  save();
+  refreshSessionTimes(key);
+  undoToast('Times cleared', ()=>{ Object.assign(getLog(key), before); save(); refreshSessionTimes(key); });
 }
 function setWeek(n){ STATE.currentWeek=n; save(true); renderToday(); }
 function setDay(d){ STATE.ui.day=d; save(true); renderToday(); }
@@ -938,6 +1062,119 @@ function delCondLog(i){
   save();
   renderConditioning();
   if(gone) undoToast('Run removed', ()=>{ STATE.conditioningLogs.splice(i, 0, gone); save(); renderConditioning(); });
+}
+
+/* ---------- Completion ----------
+   A day counts as done when you say so. Logging every exercise marks it
+   automatically, but plenty of sessions end with something unlogged — a
+   bodyweight set, a lift you swapped out — so the explicit tick wins. */
+function dayStatus(week, day){
+  const slots = SLOTS.filter(s=>s.day===day);
+  const logged = slots.filter(s=>exerciseStats(logKey(week,s.key)).hasData).length;
+  const marked = !!STATE.daysDone[week+'_'+day];
+  return {logged, total:slots.length, marked, done: marked || logged===slots.length};
+}
+function toggleDayDone(week, day){
+  const k = week+'_'+day;
+  if(STATE.daysDone[k]) delete STATE.daysDone[k]; else STATE.daysDone[k] = new Date().toISOString();
+  save();
+  if(document.body.dataset.tab === 'done') renderDone();
+  else { const dd = document.getElementById('dayDone'); if(dd) dd.innerHTML = dayDoneHtml(week, day); }
+}
+function dayDoneHtml(week, day){
+  const st = dayStatus(week, day);
+  return `<div class="donerow"><button class="donebtn${st.done?' on':''}" onclick="toggleDayDone(${week},'${day}')">`
+    + (st.done ? `✓ Day ${day} complete` : `Mark day ${day} complete`) + `</button></div>`
+    + `<div class="tiny dim" style="margin-top:7px;">${st.logged} of ${st.total} exercises logged`
+    + (st.done && !st.marked ? ' — counted complete automatically' : '') + `</div>`;
+}
+/* A week's running counts as done once the logged minutes reach that
+   week's target — the same number the Run tab counts down. */
+function runStatus(week){
+  const target = parseTargetMinutes(getWeek(week).conditioning);
+  const mins = STATE.conditioningLogs.filter(l=>l.week===week).reduce((a,l)=>a+(parseFloat(l.duration)||0),0);
+  return {mins, target, done: target>0 && mins>=target};
+}
+
+/* ---------- Completion tab ---------- */
+function renderDone(){
+  const ti = todayInfo();
+  const here = (ti && (ti.status==='train'||ti.status==='rest')) ? ti : null;
+  let doneDays = 0;
+  const totalDays = 40;
+  const rows = [];
+  for(let wk=1; wk<=10; wk++){
+    let cells = `<div class="cwk${here && here.week===wk?' now':''}">wk ${wk}</div>`;
+    for(const d of ['A','B','C','D']){
+      const st = dayStatus(wk, d);
+      if(st.done) doneDays++;
+      const pct = Math.round(st.logged/st.total*100);
+      const isToday = here && here.week===wk && here.status==='train' && here.day===d;
+      cells += `<button class="cell ${st.done?'done':(st.logged?'part':'')}${isToday?' today':''}" `
+             + `onclick="jumpToDay(${wk},'${d}')" aria-label="Week ${wk} day ${d}, ${st.logged} of ${st.total} logged${st.done?', complete':''}">`
+             + (st.done ? '' : `<i class="fill" style="height:${pct}%"></i>`)
+             + `<span>${st.done ? '✓' : (st.logged ? st.logged+'/'+st.total : d)}</span></button>`;
+    }
+    rows.push(cells);
+  }
+
+  let runDone = 0;
+  const runCells = [];
+  for(let wk=1; wk<=10; wk++){
+    const r = runStatus(wk);
+    if(r.done) runDone++;
+    const pct = r.target ? Math.min(100, Math.round(r.mins/r.target*100)) : 0;
+    runCells.push(`<button class="cell ${r.done?'done':(r.mins?'part':'')}" onclick="jumpToCond(${wk})" `
+      + `aria-label="Week ${wk} running, ${r.mins} of ${r.target} minutes">`
+      + (r.done ? '' : `<i class="fill" style="height:${pct}%"></i>`)
+      + `<span>${r.done ? '✓' : (r.mins ? pct+'%' : wk)}</span></button>`);
+  }
+
+  // current streak: consecutive completed training days counting back from the last one done,
+  // in the order you actually lift them (Settings → session on each day), not A-B-C-D
+  const flat = [];
+  for(let wk=1; wk<=10; wk++) for(const d of STATE.meta.dayOrder) flat.push(dayStatus(wk,d).done);
+  let streak = 0;
+  for(let i=flat.lastIndexOf(true); i>=0 && flat[i]; i--) streak++;
+
+  document.getElementById('tab-done').innerHTML = `
+  <div class="card">
+    <h2>Completion</h2>
+    <div class="hero-row" style="margin-top:10px;">
+      <div><div class="streak">${doneDays}<span class="dim" style="font-size:17px;font-weight:600;"> / ${totalDays}</span></div>
+        <div class="tiny dim" style="margin-top:3px;">training days complete</div></div>
+      <div style="text-align:right;"><div class="streak">${streak}</div>
+        <div class="tiny dim" style="margin-top:3px;">in a row</div></div>
+    </div>
+    <div class="progressbar wide" style="margin-top:12px;"><i style="width:${Math.round(doneDays/totalDays*100)}%"></i></div>
+  </div>
+  <div class="card"><h2>Lifting <span class="dim" style="font-weight:500;">· tap any day to open it</span></h2>
+    <div class="cgrid">
+      <div></div>${['A','B','C','D'].map(d=>`<div class="chead">${d}</div>`).join('')}
+      ${rows.join('')}
+    </div>
+    <div class="clegend">
+      <span><i style="background:var(--good)"></i>complete</span>
+      <span><i style="background:var(--accent);opacity:.35"></i>part-logged</span>
+      <span><i style="background:var(--surface2)"></i>not started</span>
+    </div>
+  </div>
+  <div class="card"><h2>Running <span class="dim" style="font-weight:500;">· minutes against each week's target</span></h2>
+    <div class="cgrid" style="grid-template-columns:auto repeat(5,1fr);">
+      <div></div>${[1,2,3,4,5].map(n=>`<div class="chead">${n}</div>`).join('')}
+      <div class="cwk">wk 1-5</div>${runCells.slice(0,5).join('')}
+      <div class="cwk">wk 6-10</div>${runCells.slice(5).join('')}
+    </div>
+    <div class="tiny dim" style="margin-top:11px;">${runDone} of 10 weeks at their running target.</div>
+  </div>`;
+}
+function jumpToDay(week, day){
+  STATE.currentWeek = week; STATE.ui.day = day; save(true);
+  jumpTo('today');
+}
+function jumpToCond(week){
+  STATE.currentWeek = week; save(true);
+  jumpTo('conditioning');
 }
 
 /* ---------- Stats Tab (trends + calculators) ---------- */
@@ -1107,7 +1344,12 @@ function renderSettings(){
   </div>
   <div class="card">
     <h2>Data</h2>
+    <div class="small muted" style="line-height:1.55;margin-bottom:11px;">Your log lives in this browser on this device —
+      nothing is sent anywhere. <b>Add it to your home screen</b> (Share → Add to Home Screen): browsers can clear storage for
+      sites that aren't installed and haven't been opened in a while, and this is a 10-week log.</div>
     <button class="btn block" onclick="exportData()">Export backup (.json)</button>
+    <div style="height:8px;"></div>
+    <button class="btn block" onclick="copyBackup()">Copy backup as text</button>
     <div style="height:8px;"></div>
     <label class="btn block" style="display:block;text-align:center;cursor:pointer;">
       Import backup
@@ -1115,6 +1357,7 @@ function renderSettings(){
     </label>
     <div style="height:8px;"></div>
     <button class="btn block" style="color:var(--red);border-color:var(--red);" onclick="resetAll()">Reset all data</button>
+    ${backupNoteHtml()}<div id="backupOut"></div>
   </div>
   <div class="card" style="padding-top:2px;padding-bottom:2px;">
     <details>
@@ -1205,7 +1448,40 @@ function saveSettingsGeneral(){
   save();
   refreshHeader();
 }
+/* Nudge toward a backup once there is something worth losing. */
+function backupNoteHtml(){
+  const logged = Object.keys(STATE.logs).filter(k=>exerciseStats(k).hasData).length;
+  if(!logged) return '';
+  const last = STATE.meta.lastExport ? new Date(STATE.meta.lastExport) : null;
+  if(!last) return `<div class="backup-note stale">${logged} exercise${logged>1?'s':''} logged and never backed up.</div>`;
+  const days = Math.floor((Date.now()-last.getTime())/86400000);
+  const when = days===0 ? 'today' : days===1 ? 'yesterday' : days+' days ago';
+  return `<div class="backup-note${days>=14?' stale':' muted'}">Last backup ${when}.</div>`;
+}
+function markBackedUp(){
+  STATE.meta.lastExport = new Date().toISOString();
+  save();
+  const note = document.querySelector('.backup-note');
+  if(note) note.outerHTML = backupNoteHtml();
+}
+/* Downloads can fail silently in an installed iOS app; the clipboard doesn't. */
+async function copyBackup(){
+  const json = JSON.stringify(STATE, null, 2);
+  try{
+    await navigator.clipboard.writeText(json);
+    markBackedUp();
+    alert('Backup copied. Paste it somewhere it will keep — a note to yourself, an email, a file.');
+  }catch(e){
+    // No clipboard permission (or not a secure context): hand over the text instead.
+    const out = document.getElementById('backupOut');
+    out.innerHTML = '<div class="tiny dim" style="margin-top:10px;">Select all and copy:</div><textarea readonly id="backupText"></textarea>';
+    const ta = document.getElementById('backupText');
+    ta.value = json; ta.focus(); ta.select();
+    markBackedUp();
+  }
+}
 function exportData(){
+  markBackedUp();
   const blob = new Blob([JSON.stringify(STATE,null,2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
